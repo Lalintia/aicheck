@@ -1,8 +1,9 @@
 'use client';
 
-import { CheckCircle, AlertCircle, XCircle } from 'lucide-react';
+import { CheckCircle, AlertTriangle, XCircle, Sparkles } from 'lucide-react';
 import type { CheckResult, CheckType } from '@/lib/types/checker';
-import type { CheckLabel } from '@/lib/utils/check-helpers';
+import { useI18n } from '@/lib/i18n';
+import { checkLabels } from '@/lib/utils/check-helpers';
 import { SchemaDetails, type SchemaDetail } from './schema-details';
 import { CheckReferenceButton } from './check-references';
 
@@ -11,8 +12,7 @@ type StatusType = 'good' | 'partial' | 'missing';
 interface ChecklistItemProps {
   readonly index: number;
   readonly check: CheckResult;
-  readonly label: CheckLabel;
-  readonly checkType?: CheckType;
+  readonly checkType: CheckType;
 }
 
 interface SchemaCheckData {
@@ -23,44 +23,74 @@ interface SchemaCheckData {
   readonly localBusinesses?: readonly SchemaDetail[];
 }
 
-export function ChecklistItem({ index, check, label, checkType }: ChecklistItemProps): React.ReactElement {
-  const status = getStatusInfo(check.score, check.found);
+export function ChecklistItem({ index, check, checkType }: ChecklistItemProps): React.ReactElement {
+  const { t } = useI18n();
+  const status = getStatusInfo(check.score, check.found, t);
   const isSchema = checkType === 'schema';
+  const isAIVisibility = checkType === 'aiVisibility';
+
+  const label = t.checks[checkType] || checkLabels[checkType];
+  const weight = checkLabels[checkType]?.weight;
 
   return (
-    <div className="p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
+    <div
+      className={`animate-fade-up stagger-${index + 1} p-4 rounded-xl transition-all duration-200 hover:scale-[1.005] ${
+        isAIVisibility
+          ? 'ai-badge'
+          : 'bg-frost-50/50 hover:bg-frost-100/80 border border-frost-200/50 hover:border-frost-300/50'
+      }`}
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="text-gray-400 font-medium text-sm w-5 flex-shrink-0">
-            {index + 1}
+          <span className="text-frost-400 font-mono text-sm w-6 flex-shrink-0 text-right">
+            {String(index + 1).padStart(2, '0')}
           </span>
           <div className="min-w-0">
-            <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">
+            <h3 className="font-semibold text-frost-900 text-sm sm:text-base truncate flex items-center gap-2">
               {label.title}
+              {isAIVisibility && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-frost-500/10 text-frost-600 text-xs font-medium">
+                  <Sparkles className="w-3 h-3" aria-hidden="true" />
+                  AI
+                </span>
+              )}
+              {weight !== undefined && (
+                <span className="text-frost-400 text-xs font-normal hidden sm:inline">
+                  {weight}%
+                </span>
+              )}
             </h3>
-            <p className="text-gray-500 text-xs hidden sm:block">{label.description}</p>
+            <p className="text-frost-500 text-xs hidden sm:block">{label.description}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-          <CheckReferenceButton checkType={checkType || ''} />
+          <span className={`font-mono text-sm font-bold ${
+            check.score >= 80 ? 'text-emerald-600' :
+            check.score >= 50 ? 'text-amber-600' :
+            'text-red-600'
+          }`}>
+            {check.score}
+          </span>
+
+          <CheckReferenceButton checkType={checkType} />
+
           <span
             aria-label={status.label}
-            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium ${
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors duration-200 ${
               status.status === 'good'
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
                 : status.status === 'partial'
-                  ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                  : 'bg-rose-50 text-rose-700 border border-rose-200'
+                  ? 'bg-amber-50 text-amber-600 border border-amber-200'
+                  : 'bg-red-50 text-red-600 border border-red-200'
             }`}
           >
             <span aria-hidden="true">{status.icon}</span>
-            <span className="hidden sm:inline" aria-hidden="true">{status.label}</span>
+            <span className="hidden sm:inline">{status.label}</span>
           </span>
         </div>
       </div>
 
-      {/* Show Schema Details for Schema.org check */}
       {isSchema && check.data && (
         <SchemaDetails {...(check.data as SchemaCheckData)} />
       )}
@@ -74,26 +104,20 @@ interface StatusInfo {
   readonly icon: React.ReactNode;
 }
 
-function getStatusInfo(score: number, found: boolean): StatusInfo {
-  if (score >= 80) {
-    return {
-      status: 'good',
-      label: 'Present',
-      icon: <CheckCircle className="w-4 h-4" />,
-    };
-  }
-
-  if (found || score >= 50) {
-    return {
-      status: 'partial',
-      label: 'Partial',
-      icon: <AlertCircle className="w-4 h-4" />,
-    };
-  }
-
-  return {
-    status: 'missing',
-    label: 'Missing',
-    icon: <XCircle className="w-4 h-4" />,
+interface StatusTranslations {
+  readonly results: {
+    readonly pass: string;
+    readonly partial: string;
+    readonly fail: string;
   };
+}
+
+function getStatusInfo(score: number, found: boolean, t: StatusTranslations): StatusInfo {
+  if (score >= 80) {
+    return { status: 'good', label: t.results.pass, icon: <CheckCircle className="w-3.5 h-3.5" /> };
+  }
+  if (found || score >= 50) {
+    return { status: 'partial', label: t.results.partial, icon: <AlertTriangle className="w-3.5 h-3.5" /> };
+  }
+  return { status: 'missing', label: t.results.fail, icon: <XCircle className="w-3.5 h-3.5" /> };
 }

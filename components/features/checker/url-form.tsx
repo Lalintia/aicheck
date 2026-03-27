@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertCircle, Search, Loader2 } from 'lucide-react';
+import { AlertCircle, ArrowRight, Loader2, Globe } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
 import type { CheckResponse } from '@/lib/types/checker';
 
 interface UrlFormProps {
@@ -10,6 +11,7 @@ interface UrlFormProps {
 }
 
 export function UrlForm({ onSuccess, onError }: UrlFormProps): React.ReactElement {
+  const { t } = useI18n();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [clientError, setClientError] = useState<string>('');
 
@@ -21,7 +23,7 @@ export function UrlForm({ onSuccess, onError }: UrlFormProps): React.ReactElemen
     const formData = new FormData(e.currentTarget);
     const rawUrl = formData.get('url');
     if (typeof rawUrl !== 'string' || rawUrl.trim() === '') {
-      setClientError('Please enter a valid URL');
+      setClientError(t.form.errorEmpty);
       setIsLoading(false);
       return;
     }
@@ -56,22 +58,22 @@ export function UrlForm({ onSuccess, onError }: UrlFormProps): React.ReactElemen
   return (
     <form onSubmit={handleSubmit} className="space-y-4" aria-label="Website Analysis Form">
       <div className="text-left">
-        <label htmlFor="website-url" className="block text-gray-700 text-sm font-medium mb-2">
-          Website URL
+        <label htmlFor="website-url" className="block text-frost-700 text-sm font-medium mb-2">
+          {t.form.label}
         </label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none" aria-hidden="true">
-            <Search className="h-5 w-5 text-gray-400" />
+            <Globe className="h-5 w-5 text-frost-400" />
           </div>
           <input
             id="website-url"
             name="url"
             type="text"
-            placeholder="www.example.com"
+            placeholder={t.form.placeholder}
             autoComplete="url"
             required
-            className={`w-full bg-gray-50 border rounded-xl pl-11 pr-4 py-4 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all ${
-              clientError ? 'border-rose-300 bg-rose-50/50' : 'border-gray-200'
+            className={`w-full bg-frost-50 border rounded-xl pl-11 pr-4 py-4 text-frost-900 placeholder-frost-400 focus:outline-none focus:ring-2 focus:ring-frost-500/20 focus:border-frost-500 transition-all duration-200 ${
+              clientError ? 'border-red-300 bg-red-50/30' : 'border-frost-200'
             }`}
             aria-required="true"
             aria-invalid={clientError ? 'true' : 'false'}
@@ -79,7 +81,7 @@ export function UrlForm({ onSuccess, onError }: UrlFormProps): React.ReactElemen
           />
         </div>
         {clientError && (
-          <div id="url-error" className="flex items-center gap-2 mt-2 text-rose-600 text-sm" role="alert">
+          <div id="url-error" className="flex items-center gap-2 mt-2 text-red-600 text-sm" role="alert">
             <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
             <span>{clientError}</span>
           </div>
@@ -89,18 +91,18 @@ export function UrlForm({ onSuccess, onError }: UrlFormProps): React.ReactElemen
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full bg-gray-900 hover:bg-gray-800 disabled:bg-gray-400 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 mt-2 shadow-md hover:shadow-lg"
-        aria-label={isLoading ? 'Analyzing website...' : 'Analyze Website'}
+        className="w-full bg-gradient-to-r from-frost-500 to-frost-400 hover:from-frost-600 hover:to-frost-500 disabled:from-frost-300 disabled:to-frost-300 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-frost-500/20 hover:shadow-frost-500/30 hover:scale-[1.01] active:scale-[0.99] disabled:shadow-none disabled:scale-100"
+        aria-label={isLoading ? t.form.scanning : t.form.submit}
       >
         {isLoading ? (
           <>
             <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-            <span>Analyzing...</span>
+            <span>{t.form.scanning}</span>
           </>
         ) : (
           <>
-            <Search className="h-5 w-5" aria-hidden="true" />
-            <span>Analyze Website</span>
+            <span>{t.form.submit}</span>
+            <ArrowRight className="h-5 w-5" aria-hidden="true" />
           </>
         )}
       </button>

@@ -6,52 +6,67 @@ export const checkLabels: Record<CheckType, CheckLabel> = {
   schema: {
     title: 'Schema.org (JSON-LD)',
     description: 'Structured data for AI to understand content',
-    weight: 25,
+    weight: 18,
+  },
+  ssrCsr: {
+    title: 'Server-Side Rendering',
+    description: 'Content visible without JavaScript',
+    weight: 14,
   },
   robotsTxt: {
     title: 'robots.txt',
     description: 'Tells AI which pages to access',
-    weight: 20,
-  },
-  llmsTxt: {
-    title: 'llms.txt',
-    description: 'Data usage policy for AI',
-    weight: 5,
-  },
-  sitemap: {
-    title: 'Sitemap.xml',
-    description: 'Site map for AI discovery',
-    weight: 15,
-  },
-  openGraph: {
-    title: 'Open Graph & Twitter Cards',
-    description: 'Meta tags for preview display (social only)',
-    weight: 0,
-  },
-  semanticHTML: {
-    title: 'Semantic HTML',
-    description: 'Meaningful HTML structure',
-    weight: 10,
+    weight: 11,
   },
   headingHierarchy: {
     title: 'Heading Hierarchy',
     description: 'Clear H1 → H2 → H3 order',
-    weight: 10,
+    weight: 9,
+  },
+  imageAI: {
+    title: 'Image AI Readiness',
+    description: 'Alt text and context for AI to understand images',
+    weight: 8,
+  },
+  semanticHTML: {
+    title: 'Semantic HTML',
+    description: 'Meaningful HTML structure',
+    weight: 7,
+  },
+  sitemap: {
+    title: 'Sitemap.xml',
+    description: 'Site map for AI discovery',
+    weight: 7,
+  },
+  openGraph: {
+    title: 'Open Graph',
+    description: 'Preview tags for AI and social platforms',
+    weight: 5,
+  },
+  llmsTxt: {
+    title: 'llms.txt',
+    description: 'LLM-specific guidance file',
+    weight: 5,
   },
   faqBlocks: {
     title: 'FAQ/QA Blocks',
-    description: 'Question-answer format for AI',
+    description: 'Question-answer format for zero-click results',
+    weight: 4,
+  },
+  authorAuthority: {
+    title: 'Author Authority (E-E-A-T)',
+    description: 'Author info and credibility signals',
     weight: 3,
   },
   pageSpeed: {
     title: 'Page Speed',
-    description: 'Page loading performance',
-    weight: 10,
+    description: 'Page loading performance for crawlers',
+    weight: 4,
   },
-  authorAuthority: {
-    title: 'Author Authority (EEAT)',
-    description: 'Author info and credibility',
-    weight: 2,
+  aiVisibility: {
+    title: 'AI Visibility',
+    description: 'Does AI recognize this website?',
+    weight: 5,
   },
 };
 

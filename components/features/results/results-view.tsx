@@ -14,18 +14,18 @@ interface ResultsViewProps {
 
 export function ResultsView({ result, onReset }: ResultsViewProps): React.ReactElement {
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-20 py-10">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-20 pt-10 relative z-10">
       {/* Score Card */}
-      <div className="bg-white rounded-3xl shadow-lg border border-gray-100 p-8 sm:p-10 mb-8">
-        <ScoreDisplay 
-          score={result.overallScore} 
-          grade={result.grade} 
-          url={result.url} 
+      <div className="animate-fade-up glass-card rounded-3xl p-8 sm:p-10 mb-6 glow-accent-strong">
+        <ScoreDisplay
+          score={result.overallScore}
+          grade={result.grade}
+          url={result.url}
         />
-        <StatsSummary 
-          passed={result.summary.passed} 
-          warning={result.summary.warning} 
-          failed={result.summary.failed} 
+        <StatsSummary
+          passed={result.summary.passed}
+          warning={result.summary.warning}
+          failed={result.summary.failed}
         />
       </div>
 

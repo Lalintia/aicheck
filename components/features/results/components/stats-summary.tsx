@@ -1,4 +1,7 @@
-import { CheckCircle, AlertCircle, XCircle } from 'lucide-react';
+'use client';
+
+import { CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
 
 interface StatsSummaryProps {
   readonly passed: number;
@@ -7,26 +10,13 @@ interface StatsSummaryProps {
 }
 
 export function StatsSummary({ passed, warning, failed }: StatsSummaryProps): React.ReactElement {
+  const { t } = useI18n();
+
   return (
-    <div className="grid grid-cols-3 gap-3 sm:gap-4">
-      <StatCard
-        icon={<CheckCircle className="w-5 h-5" />}
-        value={passed}
-        label="Passed"
-        color="emerald"
-      />
-      <StatCard
-        icon={<AlertCircle className="w-5 h-5" />}
-        value={warning}
-        label="Partial"
-        color="amber"
-      />
-      <StatCard
-        icon={<XCircle className="w-5 h-5" />}
-        value={failed}
-        label="Missing"
-        color="rose"
-      />
+    <div className="grid grid-cols-3 gap-3">
+      <StatCard icon={<CheckCircle className="w-5 h-5" />} value={passed} label={t.results.passed} color="emerald" />
+      <StatCard icon={<AlertTriangle className="w-5 h-5" />} value={warning} label={t.results.partial} color="amber" />
+      <StatCard icon={<XCircle className="w-5 h-5" />} value={failed} label={t.results.failed} color="red" />
     </div>
   );
 }
@@ -35,43 +25,23 @@ interface StatCardProps {
   readonly icon: React.ReactNode;
   readonly value: number;
   readonly label: string;
-  readonly color: 'emerald' | 'amber' | 'rose';
+  readonly color: 'emerald' | 'amber' | 'red';
 }
 
-const STAT_CARD_COLORS = {
-  emerald: {
-    bg: 'bg-emerald-50',
-    text: 'text-emerald-700',
-    iconBg: 'bg-emerald-100',
-    iconColor: 'text-emerald-600',
-    border: 'border-emerald-100',
-  },
-  amber: {
-    bg: 'bg-amber-50',
-    text: 'text-amber-700',
-    iconBg: 'bg-amber-100',
-    iconColor: 'text-amber-600',
-    border: 'border-amber-100',
-  },
-  rose: {
-    bg: 'bg-rose-50',
-    text: 'text-rose-700',
-    iconBg: 'bg-rose-100',
-    iconColor: 'text-rose-600',
-    border: 'border-rose-100',
-  },
+const COLORS = {
+  emerald: { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100' },
+  amber: { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100' },
+  red: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-100' },
 } as const;
 
 function StatCard({ icon, value, label, color }: StatCardProps): React.ReactElement {
-  const c = STAT_CARD_COLORS[color];
+  const c = COLORS[color];
 
   return (
-    <div className={`${c.bg} rounded-2xl p-4 text-center border ${c.border}`}>
-      <div className={`w-10 h-10 ${c.iconBg} rounded-full flex items-center justify-center mx-auto mb-2`}>
-        <span className={c.iconColor}>{icon}</span>
-      </div>
-      <div className={`text-2xl sm:text-3xl font-bold ${c.text}`}>{value}</div>
-      <div className={`${c.text} text-xs sm:text-sm font-medium`}>{label}</div>
+    <div className={`${c.bg} rounded-2xl p-4 text-center border ${c.border} transition-transform duration-200 hover:scale-105`}>
+      <div className={`${c.text} flex justify-center mb-2`} aria-hidden="true">{icon}</div>
+      <div className={`text-2xl sm:text-3xl font-bold font-mono ${c.text}`}>{value}</div>
+      <div className="text-frost-500 text-xs sm:text-sm font-medium">{label}</div>
     </div>
   );
 }

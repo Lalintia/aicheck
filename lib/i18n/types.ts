@@ -1,0 +1,55 @@
+export type Locale = 'en' | 'th';
+
+export interface Translations {
+  readonly hero: {
+    readonly badge: string;
+    readonly title: string;
+    readonly titleHighlight: string;
+    readonly subtitle: string;
+    readonly trustFree: string;
+    readonly trustChecks: string;
+    readonly trustAI: string;
+  };
+  readonly form: {
+    readonly label: string;
+    readonly placeholder: string;
+    readonly submit: string;
+    readonly scanning: string;
+    readonly errorEmpty: string;
+  };
+  readonly results: {
+    readonly title: string;
+    readonly checklist: string;
+    readonly checksCount: string;
+    readonly recommendations: string;
+    readonly itemsToImprove: string;
+    readonly allClear: string;
+    readonly allClearMessage: string;
+    readonly criticalIssues: string;
+    readonly highPriority: string;
+    readonly mediumPriority: string;
+    readonly lowPriority: string;
+    readonly passed: string;
+    readonly partial: string;
+    readonly failed: string;
+    readonly pass: string;
+    readonly fail: string;
+    readonly analyzeAnother: string;
+  };
+  readonly grades: {
+    readonly excellent: string;
+    readonly good: string;
+    readonly fair: string;
+    readonly poor: string;
+  };
+  readonly checks: Record<string, {
+    readonly title: string;
+    readonly description: string;
+  }>;
+  readonly error: {
+    readonly title: string;
+    readonly message: string;
+    readonly tryAgain: string;
+  };
+  readonly loading: string;
+}

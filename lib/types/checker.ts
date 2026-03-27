@@ -7,17 +7,20 @@ export type CheckGrade = 'excellent' | 'good' | 'fair' | 'poor';
 
 export type PriorityLevel = 'critical' | 'high' | 'medium' | 'low';
 
-export type CheckType = 
+export type CheckType =
   | 'schema'
+  | 'ssrCsr'
   | 'robotsTxt'
-  | 'llmsTxt'
+  | 'headingHierarchy'
+  | 'imageAI'
+  | 'semanticHTML'
   | 'sitemap'
   | 'openGraph'
-  | 'semanticHTML'
-  | 'headingHierarchy'
+  | 'llmsTxt'
   | 'faqBlocks'
+  | 'authorAuthority'
   | 'pageSpeed'
-  | 'authorAuthority';
+  | 'aiVisibility';
 
 export interface CheckResult {
   readonly found: boolean;

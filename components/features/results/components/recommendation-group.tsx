@@ -10,34 +10,34 @@ interface RecommendationGroupProps {
 
 const colorStyles = {
   rose: {
-    bg: 'bg-rose-50',
-    border: 'border-rose-100',
-    headerBg: 'bg-rose-100',
-    headerText: 'text-rose-600',
-    titleText: 'text-rose-700',
-    itemBorder: 'border-rose-200',
-    badgeBg: 'bg-rose-100',
-    badgeText: 'text-rose-700',
+    bg: 'bg-red-50/50',
+    border: 'border-red-200',
+    headerBg: 'bg-red-100',
+    headerText: 'text-red-600',
+    itemBg: 'bg-white',
+    itemBorder: 'border-red-100',
+    badgeBg: 'bg-red-50',
+    badgeText: 'text-red-600',
   },
   amber: {
-    bg: 'bg-amber-50',
-    border: 'border-amber-100',
+    bg: 'bg-amber-50/50',
+    border: 'border-amber-200',
     headerBg: 'bg-amber-100',
     headerText: 'text-amber-600',
-    titleText: 'text-amber-700',
-    itemBorder: 'border-amber-200',
-    badgeBg: 'bg-amber-100',
-    badgeText: 'text-amber-700',
+    itemBg: 'bg-white',
+    itemBorder: 'border-amber-100',
+    badgeBg: 'bg-amber-50',
+    badgeText: 'text-amber-600',
   },
   blue: {
-    bg: 'bg-blue-50',
-    border: 'border-blue-100',
-    headerBg: 'bg-blue-100',
-    headerText: 'text-blue-600',
-    titleText: 'text-blue-700',
-    itemBorder: 'border-blue-200',
-    badgeBg: 'bg-blue-100',
-    badgeText: 'text-blue-700',
+    bg: 'bg-frost-50',
+    border: 'border-frost-200',
+    headerBg: 'bg-frost-100',
+    headerText: 'text-frost-600',
+    itemBg: 'bg-white',
+    itemBorder: 'border-frost-100',
+    badgeBg: 'bg-frost-50',
+    badgeText: 'text-frost-600',
   },
 } as const;
 
@@ -48,7 +48,9 @@ export function RecommendationGroup({
   color,
   icon,
 }: RecommendationGroupProps): React.ReactElement | null {
-  if (items.length === 0) return null;
+  if (items.length === 0) {
+    return null;
+  }
 
   const c = colorStyles[color];
 
@@ -56,22 +58,21 @@ export function RecommendationGroup({
     <div className={`${c.bg} rounded-2xl border ${c.border} p-4`}>
       <div className="flex items-center gap-2 mb-3">
         <span className={`${c.headerBg} ${c.headerText} p-1.5 rounded-lg`}>{icon}</span>
-        <h3 className={`font-semibold ${c.titleText}`}>{title}</h3>
-        <span className={`ml-auto text-xs ${c.titleText} opacity-70`}>{count}</span>
+        <h3 className={`font-semibold ${c.headerText}`}>{title}</h3>
+        <span className={`ml-auto text-xs font-mono ${c.headerText} opacity-70`}>{count}</span>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-2">
         {items.map((item) => (
-          <div key={`${item.category}-${item.message}`} className={`bg-white rounded-xl p-4 border ${c.itemBorder}`}>
-            <div className="flex items-start gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-900 mb-1">{item.message}</p>
-                <p className="text-sm text-gray-500 mb-2">{item.action}</p>
-                <span
-                  className={`inline-block text-xs px-2 py-1 rounded-md ${c.badgeBg} ${c.badgeText} font-medium`}
-                >
-                  {item.category}
-                </span>
-              </div>
+          <div
+            key={`${item.category}-${item.message}`}
+            className={`${c.itemBg} rounded-xl p-4 border ${c.itemBorder} transition-all duration-200 hover:shadow-sm`}
+          >
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-frost-900 mb-1 text-sm">{item.message}</p>
+              <p className="text-sm text-frost-500 mb-2">{item.action}</p>
+              <span className={`inline-block text-xs px-2 py-0.5 rounded-md ${c.badgeBg} ${c.badgeText} font-medium`}>
+                {item.category}
+              </span>
             </div>
           </div>
         ))}

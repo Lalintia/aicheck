@@ -12,20 +12,23 @@ export interface Checker {
   check(url: string, html: string): Promise<CheckResult> | CheckResult;
 }
 
-// Updated weights for AI Search readiness (2025)
-// Focus on factors that actually impact AI Search visibility
+// Updated weights for AI Search readiness (2026)
+// 13 checks ordered by importance for AI Search visibility
 // Total: 100%
 export const weights = {
-  schema: 25,           // Increased: Most important for AI understanding
-  robotsTxt: 20,        // Increased: Controls AI bot access
-  sitemap: 15,          // Increased: Helps AI discover content
-  pageSpeed: 10,        // Increased: Core Web Vitals matter for crawling
-  semanticHTML: 10,     // Increased: Better structure helps AI parse content
-  headingHierarchy: 10, // Increased: Clear document structure
-  faqBlocks: 3,         // Decreased: Optional enhancement
-  authorAuthority: 2,   // Decreased: Important for YMYL but not all sites
-  llmsTxt: 5,           // Decreased: New standard, adoption still low
-  openGraph: 0,         // Removed: Social media only, not AI Search
+  schema: 18,           // Most important for AI understanding
+  ssrCsr: 14,           // Critical: if CSR, AI sees blank page
+  robotsTxt: 11,        // Controls AI bot access
+  headingHierarchy: 9,  // Clear document structure
+  imageAI: 8,           // Image alt text for AI understanding
+  semanticHTML: 7,      // Better structure helps AI parse content
+  sitemap: 7,           // Helps AI discover content
+  openGraph: 5,         // Social/AI preview cards
+  llmsTxt: 5,           // LLM-specific guidance file
+  faqBlocks: 4,         // FAQ content for zero-click results
+  authorAuthority: 3,   // E-E-A-T signals
+  pageSpeed: 4,         // Core Web Vitals for crawling
+  aiVisibility: 5,      // Real AI recognition check
 } as const;
 
 export type CheckType = keyof typeof weights;
@@ -65,12 +68,19 @@ export function generateRecommendations(
     });
   }
 
-  if (!checks.llmsTxt.found || checks.llmsTxt.score! < 60) {
+  if (checks.ssrCsr.score! < 50) {
+    recommendations.push({
+      priority: 'critical',
+      category: 'SSR/CSR',
+      message: 'AI crawlers may see a blank page — content loads via JavaScript',
+      action: 'Enable Server-Side Rendering (SSR) or Static Site Generation (SSG)',
+    });
+  } else if (checks.ssrCsr.score! < 80) {
     recommendations.push({
       priority: 'high',
-      category: 'llms.txt',
-      message: checks.llmsTxt.found ? 'llms.txt needs improvement' : 'llms.txt file not found',
-      action: 'Create llms.txt following Answer.AI standard',
+      category: 'SSR/CSR',
+      message: 'Content is partially server-rendered',
+      action: 'Ensure critical content is in initial HTML, not loaded via JavaScript',
     });
   }
 
@@ -90,17 +100,30 @@ export function generateRecommendations(
     });
   }
 
-  if (!checks.sitemap.found) {
+  if (checks.headingHierarchy.score! < 70) {
     recommendations.push({
-      priority: 'high',
-      category: 'Sitemap',
-      message: 'Sitemap.xml not found',
-      action: 'Create Sitemap.xml and reference it in robots.txt',
+      priority: 'medium',
+      category: 'Headings',
+      message: 'Heading Hierarchy issues',
+      action: 'Have 1 H1, followed by H2, H3 in order',
     });
   }
 
-  // Open Graph removed - not relevant for AI Search
-  // Keeping for backward compatibility but no recommendations
+  if (checks.imageAI.score! < 50) {
+    recommendations.push({
+      priority: 'high',
+      category: 'Images',
+      message: 'Most images missing alt text — AI cannot understand your images',
+      action: 'Add descriptive alt text to all content images',
+    });
+  } else if (checks.imageAI.score! < 80) {
+    recommendations.push({
+      priority: 'medium',
+      category: 'Images',
+      message: 'Some images missing alt text',
+      action: 'Add alt text and consider using <figure>/<figcaption> for context',
+    });
+  }
 
   if (!checks.semanticHTML.found) {
     recommendations.push({
@@ -111,12 +134,30 @@ export function generateRecommendations(
     });
   }
 
-  if (checks.headingHierarchy.score! < 70) {
+  if (!checks.sitemap.found) {
+    recommendations.push({
+      priority: 'high',
+      category: 'Sitemap',
+      message: 'Sitemap.xml not found',
+      action: 'Create Sitemap.xml and reference it in robots.txt',
+    });
+  }
+
+  if (checks.openGraph.score! < 50) {
     recommendations.push({
       priority: 'medium',
-      category: 'Headings',
-      message: 'Heading Hierarchy issues',
-      action: 'Have 1 H1, followed by H2, H3 in order',
+      category: 'Open Graph',
+      message: 'Open Graph tags missing or incomplete',
+      action: 'Add og:title, og:description, og:image for better AI/social previews',
+    });
+  }
+
+  if (!checks.llmsTxt.found || checks.llmsTxt.score! < 60) {
+    recommendations.push({
+      priority: 'medium',
+      category: 'llms.txt',
+      message: checks.llmsTxt.found ? 'llms.txt needs improvement' : 'llms.txt file not found',
+      action: 'Create llms.txt following Answer.AI standard',
     });
   }
 
@@ -129,6 +170,15 @@ export function generateRecommendations(
     });
   }
 
+  if (!checks.authorAuthority.found) {
+    recommendations.push({
+      priority: 'low',
+      category: 'EEAT',
+      message: 'No author information found',
+      action: 'Add Author meta, Publisher info per EEAT guidelines',
+    });
+  }
+
   if (checks.pageSpeed.score! < 60) {
     recommendations.push({
       priority: 'high',
@@ -138,12 +188,12 @@ export function generateRecommendations(
     });
   }
 
-  if (!checks.authorAuthority.found) {
+  if (checks.aiVisibility.score! < 50 && !checks.aiVisibility.data?.skipped) {
     recommendations.push({
-      priority: 'low',
-      category: 'EEAT',
-      message: 'No author information found',
-      action: 'Add Author meta, Publisher info per EEAT guidelines',
+      priority: 'high',
+      category: 'AI Visibility',
+      message: 'AI does not recognize this website or organization',
+      action: 'Increase online presence — create quality content, get mentions on authoritative sites',
     });
   }
 

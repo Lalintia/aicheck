@@ -1,62 +1,56 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
+import { I18nProvider } from '@/components/i18n-provider';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import './globals.css';
 
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-inter',
-});
-
 export const metadata: Metadata = {
-  title: 'AI Search Checker',
+  title: 'AI Search Checker — Is Your Website AI-Ready?',
   description:
-    'Check if your website is ready for AI search engines. Analyze 10 key factors including Schema.org, robots.txt, llms.txt, sitemap, Open Graph, and more.',
-  keywords: ['AI Search', 'SEO', 'Schema.org', 'Open Graph', 'Website Analysis', 'AI Readiness'],
-  authors: [{ name: 'AI Search Checker Team' }],
-  creator: 'AI Search Checker',
-  publisher: 'AI Search Checker',
+    'Analyze 13 key factors that determine how AI search engines discover, understand, and cite your website. Free instant analysis.',
+  keywords: ['AI Search', 'SEO', 'GEO', 'Schema.org', 'AI Readiness', 'LLMO', 'AI Visibility'],
+  authors: [{ name: 'OhmAI' }],
+  creator: 'OhmAI',
+  publisher: 'OhmAI',
   robots: 'index, follow',
   metadataBase: new URL('https://aicheck.ohmai.me'),
   openGraph: {
     type: 'website',
-    title: 'AI Search Checker',
+    title: 'AI Search Checker — Is Your Website AI-Ready?',
     description:
-      'Check if your website is ready for AI search engines. Analyze 10 key factors for better AI discoverability.',
+      'Analyze 13 key factors that determine how AI search engines discover, understand, and cite your website.',
     siteName: 'AI Search Checker',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'AI Search Checker',
     description:
-      'Check if your website is ready for AI search engines. Analyze 10 key factors for better AI discoverability.',
+      'Analyze 13 key factors for AI search readiness. Free instant analysis.',
   },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#f8f9fa',
+  themeColor: '#f4f8fc',
 };
 
-// Schema.org JSON-LD structured data
 const websiteSchema: Record<string, unknown> = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
   name: 'AI Search Checker',
   url: 'https://aicheck.ohmai.me',
   description:
-    'Check if your website is ready for AI search engines. Analyze 10 key factors for better AI discoverability.',
+    'Analyze 13 key factors that determine how AI search engines discover, understand, and cite your website.',
   publisher: {
     '@type': 'Organization',
-    name: 'AI Search Checker',
-    url: 'https://aicheck.ohmai.me',
+    name: 'OhmAI',
+    url: 'https://ohmai.me',
   },
   potentialAction: {
     '@type': 'SearchAction',
     target: {
       '@type': 'EntryPoint',
-      'urlTemplate': 'https://aicheck.ohmai.me/?url={search_term_string}',
+      urlTemplate: 'https://aicheck.ohmai.me/?url={search_term_string}',
     },
     'query-input': 'required name=search_term_string',
   },
@@ -65,14 +59,9 @@ const websiteSchema: Record<string, unknown> = {
 const organizationSchema: Record<string, unknown> = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  name: 'AI Search Checker',
-  url: 'https://aicheck.ohmai.me',
-  description: 'AI Search Checker helps websites optimize for AI search engines.',
-  contactPoint: {
-    '@type': 'ContactPoint',
-    contactType: 'Support',
-    email: 'support@aicheck.ohmai.me',
-  },
+  name: 'OhmAI',
+  url: 'https://ohmai.me',
+  description: 'AI solutions for business — chatbots, AI search optimization, and more.',
 };
 
 const faqSchema: Record<string, unknown> = {
@@ -84,15 +73,15 @@ const faqSchema: Record<string, unknown> = {
       name: 'What is AI Search Checker?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'AI Search Checker is a free tool that analyzes your website\'s readiness for AI search engines. It checks 10 key factors including Schema.org markup, robots.txt, llms.txt, sitemap, Open Graph tags, semantic HTML, heading hierarchy, FAQ blocks, page speed, and author authority.',
+        text: 'AI Search Checker analyzes 13 key factors that determine how AI search engines like ChatGPT, Perplexity, and Google AI Overview discover and cite your website.',
       },
     },
     {
       '@type': 'Question',
-      name: 'Why is Schema.org important for AI search?',
+      name: 'How does AI Visibility Check work?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'Schema.org structured data helps AI search engines understand your website\'s content better. It provides context about your organization, articles, products, and FAQs.',
+        text: 'The AI Visibility Check uses GPT-4.1 nano to determine whether AI systems recognize your website or organization, providing a real-world test of your AI search presence.',
       },
     },
   ],
@@ -104,8 +93,16 @@ export default function RootLayout({
   readonly children: React.ReactNode;
 }): React.ReactElement {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en">
       <head>
+        <link
+          href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap"
+          rel="stylesheet"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap"
+          rel="stylesheet"
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
@@ -119,7 +116,12 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
         />
       </head>
-      <body className="antialiased min-h-screen bg-[#f8f9fa] font-sans">{children}</body>
+      <body className="antialiased min-h-screen bg-frost-50 font-sans bg-grid">
+        <I18nProvider>
+          <LanguageSwitcher />
+          {children}
+        </I18nProvider>
+      </body>
     </html>
   );
 }

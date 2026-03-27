@@ -7,15 +7,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { CheckResponse } from '@/lib/types/checker';
 import {
   checkSchema,
+  checkSSR,
   checkRobotsTxt,
-  checkLlmsTxt,
+  checkHeadingHierarchy,
+  checkImageAI,
+  checkSemanticHTML,
   checkSitemap,
   checkOpenGraph,
-  checkSemanticHTML,
-  checkHeadingHierarchy,
+  checkLlmsTxt,
   checkFAQBlocks,
-  checkPageSpeed,
   checkAuthorAuthority,
+  checkPageSpeed,
+  checkAIVisibility,
   weights,
   getGrade,
   calculateOverallScore,
@@ -124,39 +127,49 @@ export async function POST(request: NextRequest) {
         : undefined;
 
     // Phase 2: run all remaining checks in parallel, passing robots content to sitemap
+    const defaultFail = { found: false, score: 0, details: 'Check failed', data: {} };
     const [
       schemaResult,
-      llmsResult,
+      ssrResult,
+      headingResult,
+      imageResult,
+      semanticResult,
       sitemapResult,
       ogResult,
-      semanticResult,
-      headingResult,
+      llmsResult,
       faqResult,
-      speedResult,
       authorResult,
+      speedResult,
+      aiVisibilityResult,
     ] = await Promise.all([
-      safeCheck('schema', () => checkSchema(normalizedUrl, html), { found: false, score: 0, details: 'Check failed', data: {} }),
-      safeCheck('llmsTxt', () => checkLlmsTxt(normalizedUrl), { found: false, score: 0, details: 'Check failed', data: {} }),
-      safeCheck('sitemap', () => checkSitemap(normalizedUrl, robotsContent), { found: false, score: 0, details: 'Check failed', data: {} }),
-      safeCheck('openGraph', () => checkOpenGraph(html), { found: false, score: 0, details: 'Check failed', data: {} }),
-      safeCheck('semanticHTML', () => checkSemanticHTML(html), { found: false, score: 0, details: 'Check failed', data: {} }),
-      safeCheck('headingHierarchy', () => checkHeadingHierarchy(html), { found: false, score: 0, details: 'Check failed', data: {} }),
-      safeCheck('faqBlocks', () => checkFAQBlocks(html), { found: false, score: 0, details: 'Check failed', data: {} }),
-      safeCheck('pageSpeed', () => checkPageSpeed(pageTtfb), { found: false, score: 0, details: 'Check failed', data: {} }),
-      safeCheck('authorAuthority', () => checkAuthorAuthority(html), { found: false, score: 0, details: 'Check failed', data: {} }),
+      safeCheck('schema', () => checkSchema(normalizedUrl, html), defaultFail),
+      safeCheck('ssrCsr', () => checkSSR(html), defaultFail),
+      safeCheck('headingHierarchy', () => checkHeadingHierarchy(html), defaultFail),
+      safeCheck('imageAI', () => checkImageAI(html), defaultFail),
+      safeCheck('semanticHTML', () => checkSemanticHTML(html), defaultFail),
+      safeCheck('sitemap', () => checkSitemap(normalizedUrl, robotsContent), defaultFail),
+      safeCheck('openGraph', () => checkOpenGraph(html), defaultFail),
+      safeCheck('llmsTxt', () => checkLlmsTxt(normalizedUrl), defaultFail),
+      safeCheck('faqBlocks', () => checkFAQBlocks(html), defaultFail),
+      safeCheck('authorAuthority', () => checkAuthorAuthority(html), defaultFail),
+      safeCheck('pageSpeed', () => checkPageSpeed(pageTtfb), defaultFail),
+      safeCheck('aiVisibility', () => checkAIVisibility(normalizedUrl, html), defaultFail),
     ]);
 
     const checks = {
       schema: schemaResult,
+      ssrCsr: ssrResult,
       robotsTxt: robotsResult,
-      llmsTxt: llmsResult,
+      headingHierarchy: headingResult,
+      imageAI: imageResult,
+      semanticHTML: semanticResult,
       sitemap: sitemapResult,
       openGraph: ogResult,
-      semanticHTML: semanticResult,
-      headingHierarchy: headingResult,
+      llmsTxt: llmsResult,
       faqBlocks: faqResult,
-      pageSpeed: speedResult,
       authorAuthority: authorResult,
+      pageSpeed: speedResult,
+      aiVisibility: aiVisibilityResult,
     };
 
     const overallScore = calculateOverallScore(checks, weights);
@@ -180,7 +193,7 @@ export async function POST(request: NextRequest) {
         passed,
         warning,
         failed,
-        total: 10,
+        total: 13,
       },
     };
 
