@@ -2,9 +2,9 @@
  * Base types and utilities for checkers
  */
 
-import type { CheckResult, CheckGrade, Recommendation } from '@/lib/types/checker';
+import type { CheckResult, CheckGrade, CheckType, Recommendation } from '@/lib/types/checker';
 
-export type { CheckResult };
+export type { CheckResult, CheckType };
 
 export interface Checker {
   name: string;
@@ -15,7 +15,7 @@ export interface Checker {
 // Updated weights for AI Search readiness (2026)
 // 13 checks ordered by importance for AI Search visibility
 // Total: 100%
-export const weights = {
+export const weights: Record<CheckType, number> = {
   schema: 18,           // Most important for AI understanding
   ssrCsr: 14,           // Critical: if CSR, AI sees blank page
   robotsTxt: 11,        // Controls AI bot access
@@ -29,9 +29,7 @@ export const weights = {
   authorAuthority: 3,   // E-E-A-T signals
   pageSpeed: 4,         // Core Web Vitals for crawling
   aiVisibility: 5,      // Real AI recognition check
-} as const;
-
-export type CheckType = keyof typeof weights;
+};
 
 export function getGrade(score: number): CheckGrade {
   if (score >= 90) return 'excellent';
@@ -59,7 +57,7 @@ export function generateRecommendations(
 ): Recommendation[] {
   const recommendations: Recommendation[] = [];
 
-  if (!checks.schema.found || checks.schema.score! < 80) {
+  if (!checks.schema.found || checks.schema.score < 80) {
     recommendations.push({
       priority: 'critical',
       category: 'Schema.org',
@@ -68,14 +66,14 @@ export function generateRecommendations(
     });
   }
 
-  if (checks.ssrCsr.score! < 50) {
+  if (checks.ssrCsr.score < 50) {
     recommendations.push({
       priority: 'critical',
       category: 'SSR/CSR',
       message: 'AI crawlers may see a blank page — content loads via JavaScript',
       action: 'Enable Server-Side Rendering (SSR) or Static Site Generation (SSG)',
     });
-  } else if (checks.ssrCsr.score! < 80) {
+  } else if (checks.ssrCsr.score < 80) {
     recommendations.push({
       priority: 'high',
       category: 'SSR/CSR',
@@ -100,7 +98,7 @@ export function generateRecommendations(
     });
   }
 
-  if (checks.headingHierarchy.score! < 70) {
+  if (checks.headingHierarchy.score < 70) {
     recommendations.push({
       priority: 'medium',
       category: 'Headings',
@@ -109,14 +107,14 @@ export function generateRecommendations(
     });
   }
 
-  if (checks.imageAI.score! < 50) {
+  if (checks.imageAI.score < 50) {
     recommendations.push({
       priority: 'high',
       category: 'Images',
       message: 'Most images missing alt text — AI cannot understand your images',
       action: 'Add descriptive alt text to all content images',
     });
-  } else if (checks.imageAI.score! < 80) {
+  } else if (checks.imageAI.score < 80) {
     recommendations.push({
       priority: 'medium',
       category: 'Images',
@@ -143,7 +141,7 @@ export function generateRecommendations(
     });
   }
 
-  if (checks.openGraph.score! < 50) {
+  if (checks.openGraph.score < 50) {
     recommendations.push({
       priority: 'medium',
       category: 'Open Graph',
@@ -152,7 +150,7 @@ export function generateRecommendations(
     });
   }
 
-  if (!checks.llmsTxt.found || checks.llmsTxt.score! < 60) {
+  if (!checks.llmsTxt.found || checks.llmsTxt.score < 60) {
     recommendations.push({
       priority: 'medium',
       category: 'llms.txt',
@@ -179,7 +177,7 @@ export function generateRecommendations(
     });
   }
 
-  if (checks.pageSpeed.score! < 60) {
+  if (checks.pageSpeed.score < 60) {
     recommendations.push({
       priority: 'high',
       category: 'Performance',
@@ -188,7 +186,7 @@ export function generateRecommendations(
     });
   }
 
-  if (checks.aiVisibility.score! < 50 && !checks.aiVisibility.data?.skipped) {
+  if (checks.aiVisibility.score < 50 && !checks.aiVisibility.data?.skipped) {
     recommendations.push({
       priority: 'high',
       category: 'AI Visibility',

@@ -58,7 +58,7 @@ function parseImages(html: string): ImageInfo[] {
   const imgRegex = /<img\b([^>]*)>/gi;
   let match: RegExpExecArray | null;
 
-  while ((match = imgRegex.exec(html)) !== null) {
+  while (images.length < 500 && (match = imgRegex.exec(html)) !== null) {
     const attrs = match[1];
 
     // Skip tracking pixels and tiny images

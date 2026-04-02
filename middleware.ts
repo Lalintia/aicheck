@@ -53,10 +53,10 @@ export function middleware(request: NextRequest) {
 /**
  * Get client IP with spoofing protection.
  * Prefers CF-Connecting-IP (Cloudflare) which is set by Cloudflare and cannot be
- * spoofed. Falls back to the first entry of x-forwarded-for (the original client IP
- * prepended by load balancers).
+ * spoofed. Falls back to the last trusted entry of x-forwarded-for — the rightmost
+ * IP is appended by the closest trusted proxy and cannot be forged by the client.
  *
- * NOTE: Do NOT trust x-real-ip — it can be freely set by any client.
+ * NOTE: Do NOT trust x-real-ip or x-forwarded-for[0] — both can be freely set by any client.
  */
 function getClientIp(request: NextRequest): string {
   // CF-Connecting-IP is authoritative in Cloudflare deployments
@@ -65,12 +65,12 @@ function getClientIp(request: NextRequest): string {
     return cfIp;
   }
 
-  // First entry of x-forwarded-for is the original client IP
+  // Use the last (rightmost) entry — added by the closest trusted proxy, not spoofable
   const forwardedFor = request.headers.get('x-forwarded-for');
   if (forwardedFor) {
     const ips = forwardedFor.split(',').map((ip) => ip.trim()).filter(isValidIpFormat);
     if (ips.length > 0) {
-      return ips[0];
+      return ips[ips.length - 1];
     }
   }
 

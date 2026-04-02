@@ -110,11 +110,10 @@ export async function POST(request: NextRequest) {
 
     // Run all checks with individual error handling
     // Each check is wrapped to prevent one failure from killing all checks
-    const safeCheck = async <T,>(name: string, checkFn: () => Promise<T> | T, defaultValue: T): Promise<T> => {
+    const safeCheck = async <T,>(_name: string, checkFn: () => Promise<T> | T, defaultValue: T): Promise<T> => {
       try {
         return await checkFn();
-      } catch (err) {
-        console.error(`[${name}] checker error for ${normalizedUrl}:`, err instanceof Error ? err.message : err);
+      } catch {
         return defaultValue;
       }
     };
@@ -163,6 +162,11 @@ export async function POST(request: NextRequest) {
       safeCheck('aiVisibility', () => checkAIVisibility(normalizedUrl, html), defaultFail),
     ]);
 
+    // Remove internal-only rawContent before including in API response
+    if (robotsResult.data?.rawContent) {
+      delete robotsResult.data.rawContent;
+    }
+
     const checks = {
       schema: schemaResult,
       ssrCsr: ssrResult,
@@ -206,7 +210,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Check error:', error instanceof Error ? error.message : String(error));
+    // Top-level error — return generic message to client
     return NextResponse.json(
       { error: 'Analysis failed. Please try again.' },
       { status: 500 }

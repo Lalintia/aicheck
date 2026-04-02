@@ -38,17 +38,52 @@ const JS_HEAVY_INDICATORS = [
 ] as const;
 
 const SSR_POSITIVE_INDICATORS = [
-  { name: 'pre-rendered content', pattern: /<main[^>]*>[\s\S]{100,}/i },
-  { name: 'article content', pattern: /<article[^>]*>[\s\S]{100,}/i },
   { name: 'meta description', pattern: /<meta[^>]*name=["']description["'][^>]*content=["'][^"']{10,}["']/i },
   { name: 'Next.js SSR', pattern: /__NEXT_DATA__|__next/i },
   { name: 'Nuxt SSR', pattern: /__NUXT__|nuxt/i },
 ] as const;
 
+/**
+ * Check if a tag has substantial content without using unbounded regex.
+ * Uses indexOf for O(n) scan without backtracking risk.
+ */
+function hasSubstantialContent(html: string, tagName: string, minLength: number): boolean {
+  const openTag = `<${tagName}`;
+  const idx = html.toLowerCase().indexOf(openTag);
+  if (idx === -1) { return false; }
+  const closeIdx = html.indexOf('>', idx);
+  if (closeIdx === -1) { return false; }
+  const contentStart = closeIdx + 1;
+  const remaining = html.length - contentStart;
+  return remaining >= minLength;
+}
+
+/**
+ * Strip script/style blocks and HTML tags safely without regex backtracking.
+ * Uses indexOf-based extraction to avoid ReDoS on malformed HTML.
+ */
 function stripHtmlTags(html: string): string {
-  return html
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+  let result = html;
+  for (const tag of ['script', 'style']) {
+    let cleaned = '';
+    let pos = 0;
+    while (pos < result.length) {
+      const openIdx = result.toLowerCase().indexOf(`<${tag}`, pos);
+      if (openIdx === -1) {
+        cleaned += result.slice(pos);
+        break;
+      }
+      cleaned += result.slice(pos, openIdx);
+      const closeTag = `</${tag}>`;
+      const closeIdx = result.toLowerCase().indexOf(closeTag, openIdx);
+      if (closeIdx === -1) {
+        break;
+      }
+      pos = closeIdx + closeTag.length;
+    }
+    result = cleaned;
+  }
+  return result
     .replace(/<[^>]+>/g, '')
     .replace(/\s+/g, ' ')
     .trim();
@@ -103,6 +138,12 @@ export function checkSSR(html: string): CheckResult {
 
   // Check 4: SSR positive indicators
   const ssrIndicators: string[] = [];
+  if (hasSubstantialContent(html, 'main', 100)) {
+    ssrIndicators.push('pre-rendered content');
+  }
+  if (hasSubstantialContent(html, 'article', 100)) {
+    ssrIndicators.push('article content');
+  }
   for (const indicator of SSR_POSITIVE_INDICATORS) {
     if (indicator.pattern.test(html)) {
       ssrIndicators.push(indicator.name);

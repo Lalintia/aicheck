@@ -31,7 +31,7 @@ const AUTHORITY_CHECKS: readonly AuthorityCheck[] = [
   },
   {
     name: 'byline',
-    pattern: /(class=["'][^"']*byline|class=["'][^"']*author["'])/i,
+    pattern: /class=["'][^"']{0,100}(?:byline|author)["']/i,
     weight: 15,
   },
   {

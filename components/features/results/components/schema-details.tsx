@@ -55,14 +55,16 @@ export function SchemaDetails({
     <div className="mt-4 border-t border-gray-200 pt-4">
       <button
         onClick={() => setExpanded(!expanded)}
+        aria-expanded={expanded}
+        aria-controls="schema-details-panel"
         className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
       >
-        {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        {expanded ? <ChevronUp className="w-4 h-4" aria-hidden="true" /> : <ChevronDown className="w-4 h-4" aria-hidden="true" />}
         Schema Details
       </button>
 
       {expanded && (
-        <div className="mt-3 space-y-3">
+        <div id="schema-details-panel" className="mt-3 space-y-3">
           {organizations && organizations.map((org, i) => (
             <SchemaTypeDetail
               key={`org-${i}`}
@@ -161,6 +163,8 @@ function SchemaTypeDetail({ type, detail, description }: SchemaTypeDetailProps):
           </span>
           <button
             onClick={() => setShowDetails(!showDetails)}
+            aria-expanded={showDetails}
+            aria-label={`${showDetails ? 'Hide' : 'Show'} details for ${type} schema`}
             className="text-gray-500 hover:text-gray-700 text-sm"
           >
             {showDetails ? 'Hide' : 'Details'}

@@ -15,14 +15,6 @@ interface ChecklistItemProps {
   readonly checkType: CheckType;
 }
 
-interface SchemaCheckData {
-  readonly organizations?: readonly SchemaDetail[];
-  readonly websites?: readonly SchemaDetail[];
-  readonly articles?: readonly SchemaDetail[];
-  readonly breadcrumbLists?: readonly SchemaDetail[];
-  readonly localBusinesses?: readonly SchemaDetail[];
-}
-
 export function ChecklistItem({ index, check, checkType }: ChecklistItemProps): React.ReactElement {
   const { t } = useI18n();
   const status = getStatusInfo(check.score, check.found, t);
@@ -93,7 +85,13 @@ export function ChecklistItem({ index, check, checkType }: ChecklistItemProps): 
       </div>
 
       {isSchema && check.data && (
-        <SchemaDetails {...(check.data as SchemaCheckData)} />
+        <SchemaDetails
+          organizations={Array.isArray(check.data.organizations) ? check.data.organizations as readonly SchemaDetail[] : undefined}
+          websites={Array.isArray(check.data.websites) ? check.data.websites as readonly SchemaDetail[] : undefined}
+          articles={Array.isArray(check.data.articles) ? check.data.articles as readonly SchemaDetail[] : undefined}
+          breadcrumbLists={Array.isArray(check.data.breadcrumbLists) ? check.data.breadcrumbLists as readonly SchemaDetail[] : undefined}
+          localBusinesses={Array.isArray(check.data.localBusinesses) ? check.data.localBusinesses as readonly SchemaDetail[] : undefined}
+        />
       )}
     </div>
   );

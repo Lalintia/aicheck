@@ -23,10 +23,6 @@ export const urlSchema = z
     },
     { message: 'Please enter a valid URL (e.g., www.example.com)' }
   )
-  .refine(
-    (val) => /^https?:\/\/[\w\-\.]+\.[a-zA-Z]{2,}(\/\S*)?$/.test(val),
-    { message: 'Invalid URL format' }
-  )
   .transform((val) => val.replace(/\/$/, ''));
 
 export const checkRequestSchema = z.object({

@@ -329,14 +329,14 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
                   aria-controls={checksListId}
                   className="flex items-center gap-2 w-full text-left group mb-3"
                 >
-                  <h4 className="font-medium text-sm text-gray-900 flex items-center gap-2">
+                  <span className="font-medium text-sm text-gray-900 flex items-center gap-2">
                     {expandedChecks ? (
                       <ChevronUp className="h-4 w-4 text-gray-500" />
                     ) : (
                       <ChevronDown className="h-4 w-4 text-gray-500" />
                     )}
                     Checklist items
-                  </h4>
+                  </span>
                   <span className="text-xs text-gray-500">
                     ({reference.checks.length} items)
                   </span>
@@ -365,14 +365,14 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
                   aria-controls={standardsListId}
                   className="flex items-center gap-2 w-full text-left group mb-3"
                 >
-                  <h4 className="font-medium text-sm text-gray-900 flex items-center gap-2">
+                  <span className="font-medium text-sm text-gray-900 flex items-center gap-2">
                     {expandedStandards ? (
                       <ChevronUp className="h-4 w-4 text-gray-500" />
                     ) : (
                       <ChevronDown className="h-4 w-4 text-gray-500" />
                     )}
                     Standards reference
-                  </h4>
+                  </span>
                   <span className="text-xs text-gray-500">
                     ({reference.standards.length} sources)
                   </span>

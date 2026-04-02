@@ -82,7 +82,6 @@ class RateLimiter {
     }
 
     this.lastCleanup = now;
-    
     // Remove expired entries
     for (const [ip, record] of this.map.entries()) {
       if (now > record.resetTime) {

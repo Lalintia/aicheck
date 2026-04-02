@@ -88,7 +88,8 @@ function isPrivateIPv4(hostname: string): boolean {
   if (a === 192 && b === 88 && c === 99) return true; // 192.88.99.0/24 (6to4)
   if (a === 198 && b >= 18 && b <= 19) return true;   // 198.18.0.0/15 (benchmark)
   if (a >= 224 && a <= 239) return true;              // 224.0.0.0/4 (multicast)
-  
+  if (a >= 240) return true;                          // 240.0.0.0/4 (reserved/Class E)
+
   return false;
 }
 
@@ -123,17 +124,39 @@ export function sanitizeContent(content: string, maxLength: number = 1000): stri
  * Validates that a hostname resolves to a safe IP address.
  * Performs an actual DNS lookup to prevent DNS rebinding attacks.
  */
+/**
+ * Check if an IPv6 address is private/internal
+ */
+function isPrivateIPv6(address: string): boolean {
+  const lower = address.toLowerCase();
+  if (lower === '::1' || lower === '::') { return true; }
+  if (lower.startsWith('fc') || lower.startsWith('fd')) { return true; } // fc00::/7 ULA
+  if (lower.startsWith('fe8') || lower.startsWith('fe9') || lower.startsWith('fea') || lower.startsWith('feb')) { return true; } // fe80::/10 link-local
+  if (lower.startsWith('::ffff:')) {
+    const ipv4Part = lower.slice(7);
+    if (/^\d+\.\d+\.\d+\.\d+$/.test(ipv4Part)) { return isPrivateIPv4(ipv4Part); }
+    return true; // hex-encoded IPv4-mapped — block conservatively
+  }
+  if (lower.startsWith('64:ff9b:')) { return true; } // NAT64
+  if (lower.startsWith('2001:db8:')) { return true; } // documentation range
+  if (lower.startsWith('100::')) { return true; } // discard prefix
+  return false;
+}
+
 export async function validateDnsResolution(hostname: string): Promise<boolean> {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
-    const dnsPromise = lookup(hostname, { family: 4 });
+    const dnsPromise = lookup(hostname, { all: true });
     const timeoutPromise = new Promise<never>((_, reject) => {
-      timeoutId = setTimeout(() => reject(new Error('DNS timeout')), 5000);
+      timeoutId = setTimeout(() => reject(new Error('DNS timeout')), 3000);
     });
-    const { address } = await Promise.race([dnsPromise, timeoutPromise]);
-    return !isPrivateIPv4(address);
+    const addresses = await Promise.race([dnsPromise, timeoutPromise]);
+    for (const entry of addresses) {
+      if (entry.family === 4 && isPrivateIPv4(entry.address)) { return false; }
+      if (entry.family === 6 && isPrivateIPv6(entry.address)) { return false; }
+    }
+    return addresses.length > 0;
   } catch {
-    // DNS lookup failed (NXDOMAIN, timeout, network error) — block the request
     return false;
   } finally {
     clearTimeout(timeoutId);
@@ -185,6 +208,11 @@ export async function safeFetch(
   // Block redirects to unsafe (internal/private) addresses — DNS check prevents rebinding
   if (!(await isSafeUrlWithDns(resolvedUrl))) {
     throw new Error('Redirect to unsafe URL blocked');
+  }
+
+  // Abort if the caller's signal already fired during DNS validation
+  if (options.signal?.aborted) {
+    throw new DOMException('Aborted', 'AbortError');
   }
 
   // Follow once — never follow subsequent redirects

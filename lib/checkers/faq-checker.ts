@@ -18,7 +18,7 @@ const FAQ_PATTERNS: readonly FAQPattern[] = [
   { name: 'details/summary', pattern: /<details\s*>/i, weight: 20 },
   { name: 'FAQ class', pattern: /class=["'][^"']*faq/i, weight: 15 },
   { name: 'Accordion class', pattern: /class=["'][^"']*accordion/i, weight: 15 },
-  { name: 'Question heading', pattern: /<h[2-4][^>]*>[^<]*(คำถาม|FAQ|ถามบ่อย|Q&A|Questions)/i, weight: 10 },
+  { name: 'Question heading', pattern: /<h[2-4][^>]*>[^<]{0,200}(คำถาม|FAQ|ถามบ่อย|Q&A|Questions)/i, weight: 10 },
   { name: 'Question class', pattern: /class=["'][^"']*question/i, weight: 10 },
 ];
 
