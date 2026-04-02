@@ -1,151 +1,151 @@
 # AI Search Checker — Progress Report
 
-**วันที่:** 27 มีนาคม 2569
 **โปรเจกต์:** aicheck (https://aicheck.ohmai.me)
 **Repo:** github.com/Lalintia/aicheck
 **AWS:** EC2 Singapore (54.169.168.58) — PM2 process `ai-checker` port 3001
 
 ---
 
-## สิ่งที่ทำวันนี้
+## อัปเดตล่าสุด — 2 เมษายน 2569
 
-### 1. Setup & Sync
+### 1. แยก AI Visibility เป็นหน้าแยก (13 → 12 checks)
 
-- [x] Clone repo จาก GitHub มาในเครื่อง
-- [x] Copy agent skills จาก FTSE project (7 skills)
-- [x] Sync `deploy/server.js` ให้ตรงกับ AWS production
-- [x] ลบ PM2 process ซ้ำ `ai-search-checker` (id 1) บน AWS — เหลือแค่ `ai-checker` (id 0)
-- [x] ยืนยันเว็บ live ยังทำงานปกติ (HTTP 200)
-- [x] Commit + Push ขึ้น GitHub
+**เหตุผล:** AI Visibility ใช้ OpenAI API มีค่าใช้จ่าย — แยกออกเป็น feature ต่างหากให้ผู้ใช้เลือกเอง
 
-### 2. เพิ่ม 3 Checkers ใหม่ (10 → 13 ข้อ)
-
-| # | Checker | ไฟล์ | ประเภท |
+| Feature | URL | API | ค่าใช้จ่าย |
 |---|---|---|---|
-| 11 | SSR/CSR Detection | `lib/checkers/ssr-checker.ts` | Rule-based |
-| 12 | Image AI Readiness | `lib/checkers/image-checker.ts` | Rule-based |
-| 13 | AI Visibility Check | `lib/checkers/ai-visibility-checker.ts` | GPT-4.1 nano (~0.03 บาท/ครั้ง) |
+| **12 Checks** (หลัก) | `/` | `/api/check` | ฟรี |
+| **AI Visibility** (แยก) | `/ai-check` | `/api/ai-check` | ~$0.001/ครั้ง (GPT-4.1 nano) |
 
-**ไฟล์ที่แก้ไข:**
-- `lib/types/checker.ts` — เพิ่ม 3 CheckTypes ใหม่
-- `lib/checkers/base.ts` — weights 13 ข้อ + recommendations ใหม่
-- `lib/checkers/index.ts` — exports ใหม่
-- `app/api/check/route.ts` — รัน 13 checkers ใน Promise.all
-- `lib/utils/check-helpers.ts` — labels + descriptions 13 ข้อ
-- `.env.example` — เพิ่ม `OPENAI_API_KEY`
-
-### 3. Redesign UI — Arctic Frost Theme
-
-**เปลี่ยนจาก:** Light blue generic → Arctic Frost (ฟ้าน้ำแข็ง Steel Blue)
-
-| สี | Hex | ใช้ที่ |
-|---|---|---|
-| Ice Blue (พื้นหลัง) | `#f4f8fc` | Background |
-| Steel Blue (accent) | `#4a6fa5` | ปุ่ม, heading, badge |
-| Silver | `#c0c0c0` | Scrollbar, muted elements |
-| Crisp White | `#fafafa` → `#ffffff` | Cards |
-
-**Font:** Satoshi (หัวข้อ/ปุ่ม) + JetBrains Mono (ตัวเลข/scores)
-
-**Effects ที่เพิ่ม:**
-- Parallax frost orbs บน hero section
-- Staggered fade-up animation ทุก checklist item
-- Animated SVG ring gauge (score นับขึ้นแบบ ease-out)
-- Hover scale + active press บนปุ่ม/cards
-- AI Visibility check มี special glow + scan-line effect + "AI" badge
-- Subtle grid pattern + frost grain overlay
-
-**ไฟล์ที่แก้ไข (16 ไฟล์):**
-- `app/globals.css`, `tailwind.config.ts`, `app/layout.tsx`, `app/page.tsx`
-- `app/loading.tsx`, `app/error.tsx`
-- `components/features/checker/hero-section.tsx`, `url-form.tsx`
-- `components/features/results/results-view.tsx`
-- `components/features/results/components/score-display.tsx`
-- `components/features/results/components/stats-summary.tsx`
-- `components/features/results/components/checklist.tsx`
-- `components/features/results/components/checklist-item.tsx`
-- `components/features/results/components/recommendations.tsx`
-- `components/features/results/components/recommendation-group.tsx`
-- `components/features/results/components/reset-button.tsx`
-
-### 4. ระบบ i18n (TH/EN)
-
-**ไฟล์ใหม่:**
-- `lib/i18n/types.ts` — TypeScript interface สำหรับ translations
-- `lib/i18n/en.ts` — English translations
-- `lib/i18n/th.ts` — Thai translations
-- `lib/i18n/index.ts` — Context + `useI18n()` hook
-- `components/i18n-provider.tsx` — React context provider
-- `components/language-switcher.tsx` — ปุ่ม EN/TH มุมขวาบน
-
-**Components ที่อัปเดตใช้ i18n:**
-- hero-section, url-form, page.tsx
-- score-display, stats-summary, checklist, checklist-item
-- recommendations, reset-button
-
-### 5. Code Review (3 reviews พร้อมกัน)
-
-#### Review 1: React/TypeScript
-- **High (6):** Non-null assertions, unsafe type cast, ARIA live region ผิดที่, `<html lang>` ไม่ sync, dynamic stagger class, modal ไม่ใช้ `<dialog>`
-- **Medium (5):** useI18n ไม่ throw error, prefers-reduced-motion, schema buttons ขาด aria, animated counter รบกวน SR, array index เป็น key
-
-#### Review 2: Performance & Error Handling
-- **High (1):** ReDoS nested quantifier ใน `ssr-checker.ts:43`
-- **Medium (4):** DNS timer leak, ReDoS stripHtmlTags, body read timeout x2
-
-#### Review 3: Security
-- **High (2):** Prompt injection via title/meta, ReDoS (เดียวกัน)
-- **Medium (4):** Rate limiter in-memory, content-length bypass, OpenAI error leak, DNS rebinding
-
----
-
-## น้ำหนัก 13 ข้อ (ลำดับความสำคัญ)
+**น้ำหนัก 12 ข้อ (ปรับใหม่ รวม 100%):**
 
 | # | Checker | น้ำหนัก |
 |---|---|---|
-| 1 | Schema.org (JSON-LD) | 18% |
-| 2 | SSR/CSR Detection ✨ | 14% |
-| 3 | robots.txt | 11% |
+| 1 | Schema.org (JSON-LD) | 20% |
+| 2 | SSR/CSR Detection | 15% |
+| 3 | robots.txt | 12% |
 | 4 | Heading Hierarchy | 9% |
-| 5 | Image AI Readiness ✨ | 8% |
+| 5 | Image AI Readiness | 8% |
 | 6 | Semantic HTML | 7% |
 | 7 | Sitemap.xml | 7% |
 | 8 | Open Graph | 5% |
 | 9 | llms.txt | 5% |
 | 10 | FAQ/QA Blocks | 4% |
 | 11 | Author Authority (E-E-A-T) | 3% |
-| 12 | Page Speed | 4% |
-| 13 | AI Visibility ✨ (GPT-4.1 nano) | 5% |
+| 12 | Page Speed | 5% |
+
+**ไฟล์ใหม่:**
+- `app/ai-check/page.tsx` — หน้า AI Visibility (neural-glow design, gradient ม่วง-ฟ้า)
+- `app/api/ai-check/route.ts` — API endpoint แยก
+- `components/site-nav.tsx` — Floating pill navigation (12 Checks / AI Visibility)
+
+**ไฟล์ที่แก้ไข:**
+- `lib/types/checker.ts` — ลบ `aiVisibility` ออกจาก CheckType
+- `lib/checkers/base.ts` — ลบ aiVisibility จาก weights, ปรับน้ำหนักใหม่
+- `lib/checkers/index.ts` — ลบ export checkAIVisibility
+- `app/api/check/route.ts` — ลบ aiVisibility จาก Promise.all, total 12
+- `lib/utils/check-helpers.ts` — ลบ aiVisibility label, ปรับ weights
+- `lib/i18n/en.ts`, `th.ts`, `types.ts` — เพิ่ม aiCheck translations, แก้ 13→12
+- `components/features/results/components/checklist.tsx` — ลบ aiVisibility จาก order
+- `components/features/results/components/checklist-item.tsx` — ลบ AI badge
+- `app/page.tsx` — เพิ่ม SiteNav
+- `app/globals.css` — เพิ่ม neural-glow CSS
+
+### 2. Code Review + Fix 22 Issues (High/Medium/Low)
+
+รัน 3 review agents พร้อมกัน: React/TypeScript, Performance/Error, Security
+
+#### แก้ไขแล้ว — High (8 ตัว)
+| # | Issue | ไฟล์ | วิธีแก้ |
+|---|---|---|---|
+| 1 | ReDoS `stripHtmlTags` | `ssr-checker.ts` | indexOf loop แทน `[\s\S]*?` regex |
+| 2 | ReDoS SSR indicators | `ssr-checker.ts` | `hasSubstantialContent()` แทน `[\s\S]{100,}` |
+| 3 | SSRF IPv6 DNS gap | `security.ts` | `lookup({all: true})` + `isPrivateIPv6()` |
+| 4 | safeFetch signal check | `security.ts` | เช็ค `signal.aborted` ก่อน redirect |
+| 5 | Reserved IP 240.0.0.0/4 | `security.ts` | เพิ่ม `if (a >= 240) return true` |
+| 6 | IP spoofing x-forwarded-for | `middleware.ts` | ใช้ last entry แทน first |
+| 7 | Unsafe `as` cast | `checklist-item.tsx` | Runtime `Array.isArray()` check |
+| 8 | `<h4>` inside `<button>` | `check-references.tsx` | เปลี่ยนเป็น `<span>` |
+
+#### แก้ไขแล้ว — Medium (10 ตัว)
+| # | Issue | ไฟล์ |
+|---|---|---|
+| 9 | Non-null assertions `!` × 10 | `base.ts` |
+| 10 | Duplicate `CheckType` | `base.ts` + `types/checker.ts` |
+| 11 | ReDoS faq-checker `[^<]*` | `faq-checker.ts` |
+| 12 | ReDoS author-checker alternation | `author-checker.ts` |
+| 13 | Unbounded image array | `image-checker.ts` |
+| 14 | Prompt injection defense | `ai-visibility-checker.ts` |
+| 15 | `console.error` in production × 3 | `route.ts` + `ai-visibility-checker.ts` |
+| 16 | `aria-expanded`/`aria-controls` | `schema-details.tsx` |
+| 17 | `rawContent` leaked in API | `route.ts` |
+| 18 | `rawResponse` leaked in error | `ai-visibility-checker.ts` |
+
+#### แก้ไขแล้ว — Low (4 ตัว)
+| # | Issue | ไฟล์ |
+|---|---|---|
+| 19 | Redundant regex refine (ReDoS) | `url.ts` |
+| 20 | Incomplete Permissions-Policy | `next.config.ts` |
+| 21 | Trailing blank line | `rate-limiter.ts` |
+| 22 | Schema expand aria-label | `schema-details.tsx` |
+
+### 3. AWS Instance Recovery
+
+- Instance networking ค้าง — SSH/HTTP/HTTPS timeout ทุก port
+- Reboot ไม่แก้ — ต้อง Stop + Start ใหม่ถึง reset networking stack
+- Instance กลับมาปกติ IP เดิม (Elastic IP 54.169.168.58)
+
+### 4. Deploy ขึ้น AWS
+
+- [x] Build production
+- [x] Package standalone + upload to EC2
+- [x] PM2 restart `ai-checker` port 3001
+- [x] ยืนยัน HTTP 200 ผ่าน Cloudflare
 
 ---
 
-## สิ่งที่ต้องทำก่อน Deploy
+## ประวัติ — 27 มีนาคม 2569
 
-### ต้องแก้ (High Priority)
+### Setup & Sync
+- Clone repo, copy agent skills, sync deploy/server.js
+- ลบ PM2 process ซ้ำ
 
-1. **ReDoS ใน `ssr-checker.ts:43`** — เปลี่ยน regex เป็น indexOf loop
-2. **Prompt Injection ใน `ai-visibility-checker.ts`** — sanitize title/meta + system message
-3. **OpenAI error body leaked** — log server-side only, return generic message
-4. **`<html lang>` ไม่ sync** — เพิ่ม `useEffect` ใน I18nProvider
-5. **ARIA live region** — แยก container ออกจาก error content
-6. **Dynamic stagger class** — ใช้ inline `style={{ animationDelay }}` แทน
+### เพิ่ม 3 Checkers (10 → 13 ข้อ)
+- SSR/CSR Detection, Image AI Readiness, AI Visibility Check
 
-### ควรแก้ (Medium)
+### Redesign UI — Arctic Frost Theme
+- สี: Ice Blue `#f4f8fc`, Steel Blue `#4a6fa5`
+- Font: Satoshi + JetBrains Mono
+- Effects: parallax orbs, staggered animations, SVG ring gauge
 
-7. DNS timer clearTimeout (`security.ts`)
-8. Body read timeout (`ai-visibility-checker.ts`, `route.ts`)
-9. `prefers-reduced-motion` CSS media query
-10. `useI18n()` throw error เมื่อใช้นอก Provider
-11. Schema details `aria-expanded`
-12. Animated score counter `aria-hidden`
+### ระบบ i18n (TH/EN)
+- `lib/i18n/` — types, en, th, context + hook
+- ปุ่ม EN/TH มุมขวาบน
 
 ---
 
-## ยังไม่ได้ทำ
+## Git Commits
 
-- [ ] แก้ปัญหา High 6 ตัว
-- [ ] ตั้ง `OPENAI_API_KEY` ใน `.env` บน server
-- [ ] Build + Deploy ขึ้น AWS
-- [ ] ทดสอบ AI Visibility Checker กับเว็บจริง
-- [ ] อัปเดต docs/validation-criteria page ให้ครอบคลุม 13 ข้อ
-- [ ] Commit + Push ทั้งหมดขึ้น GitHub
+| Hash | Message |
+|---|---|
+| `03b44bb` | fix: center navigation pill menu on both pages |
+| `6a031a7` | feat: separate AI Visibility into standalone page, reduce to 12 checks |
+| `067fe56` | fix: resolve 22 security, performance, and code quality issues |
+| `d2f27c6` | fix: security hardening and bug fixes across 7 files |
+| `9d0df93` | feat: upgrade to 13 checks, Arctic Frost UI redesign, i18n TH/EN |
+
+---
+
+## สถานะปัจจุบัน
+
+- **เว็บ live:** https://aicheck.ohmai.me ✅
+- **AI Visibility:** https://aicheck.ohmai.me/ai-check ✅
+- **Local = GitHub = AWS:** ทั้ง 3 ตรงกัน ✅
+- **Code review:** 22 issues แก้ครบ ✅
+
+## TODO
+
+- [ ] อัปเดต docs/validation-criteria ให้ครอบคลุม 12 ข้อ (ลบ AI Visibility)
+- [ ] ตั้ง `OPENAI_API_KEY` ใน `.env` บน server (สำหรับ /ai-check)
+- [ ] ทดสอบ AI Visibility page กับเว็บจริง
+- [ ] พิจารณา global rate limit สำหรับ OpenAI calls
