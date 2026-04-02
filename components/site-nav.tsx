@@ -9,8 +9,8 @@ interface SiteNavProps {
 
 export function SiteNav({ active }: SiteNavProps): React.ReactElement {
   return (
-    <nav className="fixed top-14 left-1/2 -translate-x-1/2 z-40 animate-fade-up" aria-label="Main navigation">
-      <div className="flex items-center gap-1 p-1 rounded-full bg-white/80 backdrop-blur-md border border-frost-200/50 shadow-lg shadow-frost-500/5">
+    <nav className="fixed top-4 left-0 right-0 z-40 animate-fade-up flex justify-center pointer-events-none" aria-label="Main navigation">
+      <div className="pointer-events-auto flex items-center gap-1 p-1 rounded-full bg-white/80 backdrop-blur-md border border-frost-200/50 shadow-lg shadow-frost-500/5">
         <Link
           href="/"
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
