@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { I18nContext, getTranslations } from '@/lib/i18n';
 import type { Locale } from '@/lib/i18n';
 
@@ -14,6 +14,10 @@ export function I18nProvider({ children }: I18nProviderProps): React.ReactElemen
   const setLocale = useCallback((newLocale: Locale): void => {
     setLocaleState(newLocale);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   const value = useMemo(() => ({
     locale,

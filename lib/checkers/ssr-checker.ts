@@ -40,7 +40,6 @@ const JS_HEAVY_INDICATORS = [
 const SSR_POSITIVE_INDICATORS = [
   { name: 'pre-rendered content', pattern: /<main[^>]*>[\s\S]{100,}/i },
   { name: 'article content', pattern: /<article[^>]*>[\s\S]{100,}/i },
-  { name: 'rendered paragraphs', pattern: /(<p[^>]*>[^<]{20,}<\/p>[\s\S]*?){3,}/i },
   { name: 'meta description', pattern: /<meta[^>]*name=["']description["'][^>]*content=["'][^"']{10,}["']/i },
   { name: 'Next.js SSR', pattern: /__NEXT_DATA__|__next/i },
   { name: 'Nuxt SSR', pattern: /__NUXT__|nuxt/i },
@@ -108,6 +107,11 @@ export function checkSSR(html: string): CheckResult {
     if (indicator.pattern.test(html)) {
       ssrIndicators.push(indicator.name);
     }
+  }
+  // Count rendered paragraphs without nested quantifier (avoids ReDoS)
+  const renderedParagraphCount = (html.match(/<p[^>]*>[^<]{20,}<\/p>/gi) ?? []).length;
+  if (renderedParagraphCount >= 3) {
+    ssrIndicators.push('rendered paragraphs');
   }
 
   // Check 5: Text-to-HTML ratio

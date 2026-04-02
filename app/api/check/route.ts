@@ -93,7 +93,14 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const html = await pageResponse.text();
+    let htmlReadTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    const html = await Promise.race([
+      pageResponse.text(),
+      new Promise<never>((_, reject) => {
+        htmlReadTimeoutId = setTimeout(() => reject(new Error('HTML body read timeout')), 30000);
+      }),
+    ]);
+    clearTimeout(htmlReadTimeoutId);
     if (html.length > MAX_HTML_SIZE) {
       return NextResponse.json(
         { error: 'Website content too large to analyze' },

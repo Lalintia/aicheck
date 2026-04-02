@@ -34,7 +34,8 @@ export function ChecklistItem({ index, check, checkType }: ChecklistItemProps): 
 
   return (
     <div
-      className={`animate-fade-up stagger-${index + 1} p-4 rounded-xl transition-all duration-200 hover:scale-[1.005] ${
+      style={{ animationDelay: `${index * 50}ms` }}
+      className={`animate-fade-up p-4 rounded-xl transition-all duration-200 hover:scale-[1.005] ${
         isAIVisibility
           ? 'ai-badge'
           : 'bg-frost-50/50 hover:bg-frost-100/80 border border-frost-200/50 hover:border-frost-300/50'

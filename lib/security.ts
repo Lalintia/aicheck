@@ -124,16 +124,19 @@ export function sanitizeContent(content: string, maxLength: number = 1000): stri
  * Performs an actual DNS lookup to prevent DNS rebinding attacks.
  */
 export async function validateDnsResolution(hostname: string): Promise<boolean> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
     const dnsPromise = lookup(hostname, { family: 4 });
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('DNS timeout')), 5000)
-    );
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error('DNS timeout')), 5000);
+    });
     const { address } = await Promise.race([dnsPromise, timeoutPromise]);
     return !isPrivateIPv4(address);
   } catch {
     // DNS lookup failed (NXDOMAIN, timeout, network error) — block the request
     return false;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
