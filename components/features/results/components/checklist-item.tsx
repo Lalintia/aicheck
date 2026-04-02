@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle, AlertTriangle, XCircle, Sparkles } from 'lucide-react';
+import { CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import type { CheckResult, CheckType } from '@/lib/types/checker';
 import { useI18n } from '@/lib/i18n';
 import { checkLabels } from '@/lib/utils/check-helpers';
@@ -19,7 +19,6 @@ export function ChecklistItem({ index, check, checkType }: ChecklistItemProps): 
   const { t } = useI18n();
   const status = getStatusInfo(check.score, check.found, t);
   const isSchema = checkType === 'schema';
-  const isAIVisibility = checkType === 'aiVisibility';
 
   const label = t.checks[checkType] || checkLabels[checkType];
   const weight = checkLabels[checkType]?.weight;
@@ -27,11 +26,7 @@ export function ChecklistItem({ index, check, checkType }: ChecklistItemProps): 
   return (
     <div
       style={{ animationDelay: `${index * 50}ms` }}
-      className={`animate-fade-up p-4 rounded-xl transition-all duration-200 hover:scale-[1.005] ${
-        isAIVisibility
-          ? 'ai-badge'
-          : 'bg-frost-50/50 hover:bg-frost-100/80 border border-frost-200/50 hover:border-frost-300/50'
-      }`}
+      className="animate-fade-up p-4 rounded-xl transition-all duration-200 hover:scale-[1.005] bg-frost-50/50 hover:bg-frost-100/80 border border-frost-200/50 hover:border-frost-300/50"
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3 min-w-0">
@@ -41,12 +36,6 @@ export function ChecklistItem({ index, check, checkType }: ChecklistItemProps): 
           <div className="min-w-0">
             <h3 className="font-semibold text-frost-900 text-sm sm:text-base truncate flex items-center gap-2">
               {label.title}
-              {isAIVisibility && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-frost-500/10 text-frost-600 text-xs font-medium">
-                  <Sparkles className="w-3 h-3" aria-hidden="true" />
-                  AI
-                </span>
-              )}
               {weight !== undefined && (
                 <span className="text-frost-400 text-xs font-normal hidden sm:inline">
                   {weight}%

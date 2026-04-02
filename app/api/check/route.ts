@@ -18,7 +18,6 @@ import {
   checkFAQBlocks,
   checkAuthorAuthority,
   checkPageSpeed,
-  checkAIVisibility,
   weights,
   getGrade,
   calculateOverallScore,
@@ -146,7 +145,6 @@ export async function POST(request: NextRequest) {
       faqResult,
       authorResult,
       speedResult,
-      aiVisibilityResult,
     ] = await Promise.all([
       safeCheck('schema', () => checkSchema(normalizedUrl, html), defaultFail),
       safeCheck('ssrCsr', () => checkSSR(html), defaultFail),
@@ -159,7 +157,6 @@ export async function POST(request: NextRequest) {
       safeCheck('faqBlocks', () => checkFAQBlocks(html), defaultFail),
       safeCheck('authorAuthority', () => checkAuthorAuthority(html), defaultFail),
       safeCheck('pageSpeed', () => checkPageSpeed(pageTtfb), defaultFail),
-      safeCheck('aiVisibility', () => checkAIVisibility(normalizedUrl, html), defaultFail),
     ]);
 
     // Remove internal-only rawContent before including in API response
@@ -180,7 +177,6 @@ export async function POST(request: NextRequest) {
       faqBlocks: faqResult,
       authorAuthority: authorResult,
       pageSpeed: speedResult,
-      aiVisibility: aiVisibilityResult,
     };
 
     const overallScore = calculateOverallScore(checks, weights);
@@ -204,7 +200,7 @@ export async function POST(request: NextRequest) {
         passed,
         warning,
         failed,
-        total: 13,
+        total: 12,
       },
     };
 

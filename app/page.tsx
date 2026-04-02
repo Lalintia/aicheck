@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { HeroSection } from '@/components/features/checker/hero-section';
 import { ResultsView } from '@/components/features/results/results-view';
+import { SiteNav } from '@/components/site-nav';
 import { useI18n } from '@/lib/i18n';
 import type { CheckResponse } from '@/lib/types/checker';
 
@@ -28,6 +29,7 @@ export default function HomePage(): React.ReactElement {
 
   return (
     <main className="min-h-screen relative">
+      <SiteNav active="checks" />
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-frost-500 text-white px-4 py-2 rounded-lg z-50 font-medium"

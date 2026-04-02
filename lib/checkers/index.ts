@@ -29,4 +29,3 @@ export { checkLlmsTxt } from './llms-checker';
 export { checkFAQBlocks } from './faq-checker';
 export { checkAuthorAuthority } from './author-checker';
 export { checkPageSpeed } from './pagespeed-checker';
-export { checkAIVisibility } from './ai-visibility-checker';

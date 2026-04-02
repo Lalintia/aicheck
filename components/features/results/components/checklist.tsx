@@ -11,7 +11,7 @@ interface ChecklistProps {
 const CHECK_ORDER: CheckType[] = [
   'schema', 'ssrCsr', 'robotsTxt', 'headingHierarchy', 'imageAI',
   'semanticHTML', 'sitemap', 'openGraph', 'llmsTxt', 'faqBlocks',
-  'authorAuthority', 'pageSpeed', 'aiVisibility',
+  'authorAuthority', 'pageSpeed',
 ];
 
 export function Checklist({ checks }: ChecklistProps): React.ReactElement {

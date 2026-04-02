@@ -6,17 +6,17 @@ export const checkLabels: Record<CheckType, CheckLabel> = {
   schema: {
     title: 'Schema.org (JSON-LD)',
     description: 'Structured data for AI to understand content',
-    weight: 18,
+    weight: 20,
   },
   ssrCsr: {
     title: 'Server-Side Rendering',
     description: 'Content visible without JavaScript',
-    weight: 14,
+    weight: 15,
   },
   robotsTxt: {
     title: 'robots.txt',
     description: 'Tells AI which pages to access',
-    weight: 11,
+    weight: 12,
   },
   headingHierarchy: {
     title: 'Heading Hierarchy',
@@ -61,11 +61,6 @@ export const checkLabels: Record<CheckType, CheckLabel> = {
   pageSpeed: {
     title: 'Page Speed',
     description: 'Page loading performance for crawlers',
-    weight: 4,
-  },
-  aiVisibility: {
-    title: 'AI Visibility',
-    description: 'Does AI recognize this website?',
     weight: 5,
   },
 };

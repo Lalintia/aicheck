@@ -2,12 +2,12 @@ import type { Translations } from './types';
 
 export const en: Translations = {
   hero: {
-    badge: '13 AI Search Factors',
+    badge: '12 AI Search Factors',
     title: 'Is your website',
     titleHighlight: 'visible to AI?',
-    subtitle: 'Scan your website across 13 critical factors that determine how AI search engines discover, understand, and cite your content.',
+    subtitle: 'Scan your website across 12 critical factors that determine how AI search engines discover, understand, and cite your content.',
     trustFree: 'Free Analysis',
-    trustChecks: '13 Checks',
+    trustChecks: '12 Checks',
     trustAI: 'AI-Powered',
   },
   form: {
@@ -20,7 +20,7 @@ export const en: Translations = {
   results: {
     title: 'Analysis Result',
     checklist: 'Analysis Checklist',
-    checksCount: '13 checks',
+    checksCount: '12 checks',
     recommendations: 'Recommendations',
     itemsToImprove: 'items to improve',
     allClear: 'All Clear',
@@ -91,10 +91,6 @@ export const en: Translations = {
       title: 'Page Speed',
       description: 'Page loading performance for crawlers',
     },
-    aiVisibility: {
-      title: 'AI Visibility',
-      description: 'Does AI recognize this website?',
-    },
   },
   error: {
     title: 'Analysis Failed',
@@ -102,4 +98,29 @@ export const en: Translations = {
     tryAgain: 'Try Again',
   },
   loading: 'Loading...',
+  aiCheck: {
+    badge: 'AI Visibility',
+    title: 'Does AI',
+    titleHighlight: 'know your brand?',
+    subtitle: 'Ask GPT directly whether it recognizes your website, knows your URL, and has accurate information about your business.',
+    submit: 'Ask AI',
+    scanning: 'Asking AI...',
+    resultTitle: 'AI Visibility Result',
+    knows: 'AI Knows',
+    doesNotKnow: 'AI Does Not Know',
+    accuracy: 'Accuracy',
+    accuracyLevels: {
+      accurate: 'Accurate',
+      partial: 'Partial',
+      inaccurate: 'Inaccurate',
+      unknown: 'Unknown',
+    },
+    urlKnown: 'URL Known',
+    urlNotKnown: 'URL Not Known',
+    summary: 'Summary',
+    details: 'Details',
+    model: 'Model',
+    analyzeAnother: 'Check Another Website',
+    skipped: 'Check was skipped',
+  },
 };

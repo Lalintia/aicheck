@@ -13,12 +13,12 @@ export interface Checker {
 }
 
 // Updated weights for AI Search readiness (2026)
-// 13 checks ordered by importance for AI Search visibility
+// 12 checks ordered by importance for AI Search visibility
 // Total: 100%
 export const weights: Record<CheckType, number> = {
-  schema: 18,           // Most important for AI understanding
-  ssrCsr: 14,           // Critical: if CSR, AI sees blank page
-  robotsTxt: 11,        // Controls AI bot access
+  schema: 20,           // Most important for AI understanding
+  ssrCsr: 15,           // Critical: if CSR, AI sees blank page
+  robotsTxt: 12,        // Controls AI bot access
   headingHierarchy: 9,  // Clear document structure
   imageAI: 8,           // Image alt text for AI understanding
   semanticHTML: 7,      // Better structure helps AI parse content
@@ -27,8 +27,7 @@ export const weights: Record<CheckType, number> = {
   llmsTxt: 5,           // LLM-specific guidance file
   faqBlocks: 4,         // FAQ content for zero-click results
   authorAuthority: 3,   // E-E-A-T signals
-  pageSpeed: 4,         // Core Web Vitals for crawling
-  aiVisibility: 5,      // Real AI recognition check
+  pageSpeed: 5,         // Core Web Vitals for crawling
 };
 
 export function getGrade(score: number): CheckGrade {
@@ -183,15 +182,6 @@ export function generateRecommendations(
       category: 'Performance',
       message: 'Website loads slowly',
       action: 'Improve Core Web Vitals, optimize images',
-    });
-  }
-
-  if (checks.aiVisibility.score < 50 && !checks.aiVisibility.data?.skipped) {
-    recommendations.push({
-      priority: 'high',
-      category: 'AI Visibility',
-      message: 'AI does not recognize this website or organization',
-      action: 'Increase online presence — create quality content, get mentions on authoritative sites',
     });
   }
 

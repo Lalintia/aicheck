@@ -181,6 +181,37 @@ body::before {
   background: var(--accent);
 }
 
+/* AI Visibility page — neural glow effects */
+.neural-glow {
+  background: radial-gradient(ellipse, rgba(139, 92, 246, 0.12) 0%, rgba(74, 111, 165, 0.06) 40%, transparent 70%);
+  filter: blur(40px);
+  animation: neuralPulse 6s ease-in-out infinite alternate;
+}
+
+.neural-glow-secondary {
+  background: radial-gradient(ellipse, rgba(74, 111, 165, 0.1) 0%, rgba(139, 92, 246, 0.04) 50%, transparent 70%);
+  filter: blur(30px);
+  animation: neuralPulse 8s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes neuralPulse {
+  from { opacity: 0.6; transform: scale(1); }
+  to { opacity: 1; transform: scale(1.08); }
+}
+
+.ai-badge-glow {
+  background: rgba(139, 92, 246, 0.06);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+.ai-form-glow {
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    0 8px 32px rgba(139, 92, 246, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

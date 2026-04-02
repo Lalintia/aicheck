@@ -7,7 +7,7 @@ export const th: Translations = {
     titleHighlight: 'AI ค้นเจอไหม?',
     subtitle: 'ตรวจสอบ 13 ปัจจัยสำคัญที่กำหนดว่า AI Search อย่าง ChatGPT, Perplexity และ Google AI Overview จะค้นพบ เข้าใจ และอ้างอิงเว็บไซต์ของคุณได้ดีแค่ไหน',
     trustFree: 'วิเคราะห์ฟรี',
-    trustChecks: '13 รายการ',
+    trustChecks: '12 รายการ',
     trustAI: 'ขับเคลื่อนด้วย AI',
   },
   form: {
@@ -20,7 +20,7 @@ export const th: Translations = {
   results: {
     title: 'ผลการวิเคราะห์',
     checklist: 'รายการตรวจสอบ',
-    checksCount: '13 รายการ',
+    checksCount: '12 รายการ',
     recommendations: 'สิ่งที่ควรปรับปรุง',
     itemsToImprove: 'รายการที่ควรแก้ไข',
     allClear: 'ผ่านทั้งหมด',
@@ -91,10 +91,6 @@ export const th: Translations = {
       title: 'ความเร็วเว็บ',
       description: 'ประสิทธิภาพการโหลดหน้าเว็บสำหรับ Crawler',
     },
-    aiVisibility: {
-      title: 'AI รู้จักเว็บนี้ไหม',
-      description: 'ทดสอบว่า AI รู้จักเว็บไซต์หรือองค์กรนี้หรือไม่',
-    },
   },
   error: {
     title: 'วิเคราะห์ไม่สำเร็จ',
@@ -102,4 +98,29 @@ export const th: Translations = {
     tryAgain: 'ลองอีกครั้ง',
   },
   loading: 'กำลังโหลด...',
+  aiCheck: {
+    badge: 'AI รู้จักไหม',
+    title: 'AI',
+    titleHighlight: 'รู้จักแบรนด์คุณไหม?',
+    subtitle: 'ถาม GPT โดยตรงว่ารู้จักเว็บไซต์คุณไหม รู้ URL ถูกไหม และมีข้อมูลที่ถูกต้องเกี่ยวกับธุรกิจของคุณไหม',
+    submit: 'ถาม AI',
+    scanning: 'กำลังถาม AI...',
+    resultTitle: 'ผลการตรวจ AI Visibility',
+    knows: 'AI รู้จัก',
+    doesNotKnow: 'AI ไม่รู้จัก',
+    accuracy: 'ความถูกต้อง',
+    accuracyLevels: {
+      accurate: 'ถูกต้อง',
+      partial: 'บางส่วน',
+      inaccurate: 'ไม่ถูกต้อง',
+      unknown: 'ไม่ทราบ',
+    },
+    urlKnown: 'รู้ URL',
+    urlNotKnown: 'ไม่รู้ URL',
+    summary: 'สรุป',
+    details: 'รายละเอียด',
+    model: 'โมเดล',
+    analyzeAnother: 'ตรวจเว็บอื่น',
+    skipped: 'ข้ามการตรวจ',
+  },
 };

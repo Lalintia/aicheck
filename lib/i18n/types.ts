@@ -52,4 +52,29 @@ export interface Translations {
     readonly tryAgain: string;
   };
   readonly loading: string;
+  readonly aiCheck?: {
+    readonly badge: string;
+    readonly title: string;
+    readonly titleHighlight: string;
+    readonly subtitle: string;
+    readonly submit: string;
+    readonly scanning: string;
+    readonly resultTitle: string;
+    readonly knows: string;
+    readonly doesNotKnow: string;
+    readonly accuracy: string;
+    readonly accuracyLevels: {
+      readonly accurate: string;
+      readonly partial: string;
+      readonly inaccurate: string;
+      readonly unknown: string;
+    };
+    readonly urlKnown: string;
+    readonly urlNotKnown: string;
+    readonly summary: string;
+    readonly details: string;
+    readonly model: string;
+    readonly analyzeAnother: string;
+    readonly skipped: string;
+  };
 }

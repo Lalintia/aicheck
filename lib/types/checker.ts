@@ -19,8 +19,7 @@ export type CheckType =
   | 'llmsTxt'
   | 'faqBlocks'
   | 'authorAuthority'
-  | 'pageSpeed'
-  | 'aiVisibility';
+  | 'pageSpeed';
 
 export interface CheckResult {
   readonly found: boolean;
