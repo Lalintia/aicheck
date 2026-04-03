@@ -181,9 +181,16 @@
 ### 2. เพิ่ม Google Custom Search API
 
 - เปิด Custom Search API บน Google Cloud project "ohmai"
-- สร้าง API Key + Search Engine ID (cx)
+- สร้าง API Key 2 ตัว:
+  - `Custom Search` (เดิม): `AIzaSyDXutiUCs74N13k1Vozjo3bhcUNe14wzno`
+  - `CSE Unrestricted` (ใหม่): `AIzaSyAVVETa2igp-dwbIdcSJHFo_hAK8NxfdGw`
+- Search Engine ID (cx): `6337f6f65d32541d7` (restrict www.google.com) + `768a9d311842e4066` (ตัวใหม่)
 - ฟรี 100 req/วัน, หลังจากนั้น 0.16 บาท/ครั้ง
 - ตั้ง `GOOGLE_CSE_API_KEY` + `GOOGLE_CSE_CX` บน EC2
+- **Billing activated** — free trial upgrade เป็น full account แล้ว (3 เม.ย. 2569)
+- **ปัญหาที่ยังเหลือ:** Google CSE API ยัง 403 — อาจเป็น propagation delay หลัง re-enable + billing activate
+  - ทดสอบซ้ำด้วย: `curl "https://www.googleapis.com/customsearch/v1?key=AIzaSyAVVETa2igp-dwbIdcSJHFo_hAK8NxfdGw&cx=6337f6f65d32541d7&q=test&num=1"`
+  - CSE ยัง restrict site เป็น www.google.com — ต้องเปิด "Search the entire web" (toggle disabled ใน UI)
 
 ### 3. ปรับ UI ผลลัพธ์
 
@@ -220,8 +227,11 @@
 - **Local = GitHub = AWS:** ทั้ง 3 ตรงกัน ✅
 - **Code review:** 22 issues แก้ครบ ✅
 - **AI Rate Limit:** 3 req/min per IP ✅
-- **Google CSE:** ฟรี 100 req/วัน ✅
+- **Google CSE:** Billing activated, API enabled — ❌ ยัง 403 (ทดสอบ 15:50 ยังไม่ผ่าน)
 
 ## TODO
 
+- [ ] Google CSE: ทดสอบ API อีกทีหลัง propagation (5-15 นาที) — ถ้ายังไม่ได้ลอง key ใหม่ `AIzaSyAVVETa2igp-dwbIdcSJHFo_hAK8NxfdGw`
+- [ ] Google CSE: เปิด "Search the entire web" ใน Programmable Search Engine (toggle disabled ใน UI ตอนนี้)
+- [ ] อัปเดต GOOGLE_CSE_API_KEY บน EC2 เป็น key ใหม่ถ้าจำเป็น
 - [ ] พิจารณาเปลี่ยนรูป project cards ที่ ohmai.me เป็น screenshot จริงแทน stock photos
