@@ -161,15 +161,66 @@
 - `lib/rate-limiter.ts` — เพิ่ม `AIRateLimiter` class + export `aiRateLimiter`
 - `middleware.ts` — เพิ่ม AI rate limit check สำหรับ `/api/ai-check`
 
+## อัปเดต — 3 เมษายน 2569 (ช่วงบ่าย)
+
+### 1. อัปเกรด AI Visibility Scoring: 3 มิติ → 6 มิติ
+
+**ปัญหาเดิม:** ทุกเว็บดังได้ 85/100 เหมือนกันหมด (knows 50 + partial 15 + URL 20 = 85)
+
+**Scoring ใหม่ (6 มิติ รวม 100 คะแนน):**
+
+| # | มิติ | คะแนนเต็ม | วิธีวัด |
+|---|---|---|---|
+| 1 | AI Recognition | 25 | AI รู้จักเว็บ/องค์กรไหม |
+| 2 | Accuracy | 20 | ข้อมูลถูกต้องแค่ไหน (accurate/partial/inaccurate) |
+| 3 | URL Known | 10 | AI บอก URL ได้ถูกไหม |
+| 4 | Knowledge Depth | 15 | รู้ลึกแค่ไหน (deep/moderate/shallow/none) |
+| 5 | Products/Services | 15 | บอกชื่อสินค้า/บริการเฉพาะได้ไหม |
+| 6 | Google Presence | 15 | ติดอันดับ Google Search ไหม (ใหม่!) |
+
+### 2. เพิ่ม Google Custom Search API
+
+- เปิด Custom Search API บน Google Cloud project "ohmai"
+- สร้าง API Key + Search Engine ID (cx)
+- ฟรี 100 req/วัน, หลังจากนั้น 0.16 บาท/ครั้ง
+- ตั้ง `GOOGLE_CSE_API_KEY` + `GOOGLE_CSE_CX` บน EC2
+
+### 3. ปรับ UI ผลลัพธ์
+
+- เปลี่ยน 3 การ์ดเดิม → **6 การ์ดมิติ** (grid 2x3)
+- เพิ่ม **Score Breakdown bar** แสดงคะแนนแต่ละมิติ
+- เพิ่ม **Scoring Criteria** อธิบายเกณฑ์ให้คะแนน (EN + TH)
+
+### 4. Deploy ขึ้น AWS
+
+- [x] Build production
+- [x] Package standalone + upload to EC2
+- [x] เพิ่ม env vars (GOOGLE_CSE_API_KEY, GOOGLE_CSE_CX)
+- [x] PM2 restart `ai-checker` port 3001
+- [x] ยืนยัน HTTP 200
+
+**ไฟล์ที่แก้ไข:**
+- `lib/checkers/ai-visibility-checker.ts` — rewrite scoring 6 มิติ + Google Search
+- `app/ai-check/page.tsx` — UI 6 การ์ด + breakdown + criteria
+- `lib/i18n/types.ts` — เพิ่ม type definitions
+- `lib/i18n/en.ts` — เพิ่ม EN translations
+- `lib/i18n/th.ts` — เพิ่ม TH translations
+
+**Git Commit:**
+- `68b7cc3` — feat: upgrade AI Visibility scoring from 3 to 6 dimensions + Google Search
+
+**SSH Key ที่ใช้ได้:** `~/Desktop/Keypair/n8n-singapore-key-ed25519.pem`
+
 ---
 
 ## สถานะปัจจุบัน
 
 - **เว็บ live:** https://aicheck.ohmai.me ✅
-- **AI Visibility:** https://aicheck.ohmai.me/ai-check ✅ (OPENAI_API_KEY ตั้งแล้ว)
+- **AI Visibility:** https://aicheck.ohmai.me/ai-check ✅ (6 มิติ + Google Search)
 - **Local = GitHub = AWS:** ทั้ง 3 ตรงกัน ✅
 - **Code review:** 22 issues แก้ครบ ✅
 - **AI Rate Limit:** 3 req/min per IP ✅
+- **Google CSE:** ฟรี 100 req/วัน ✅
 
 ## TODO
 
