@@ -2,10 +2,10 @@ import type { Translations } from './types';
 
 export const th: Translations = {
   hero: {
-    badge: '13 ปัจจัยสำหรับ AI Search',
+    badge: '12 ปัจจัยสำหรับ AI Search',
     title: 'เว็บไซต์ของคุณ',
     titleHighlight: 'AI ค้นเจอไหม?',
-    subtitle: 'ตรวจสอบ 13 ปัจจัยสำคัญที่กำหนดว่า AI Search อย่าง ChatGPT, Perplexity และ Google AI Overview จะค้นพบ เข้าใจ และอ้างอิงเว็บไซต์ของคุณได้ดีแค่ไหน',
+    subtitle: 'ตรวจสอบ 12 ปัจจัยสำคัญที่กำหนดว่า AI Search อย่าง ChatGPT, Perplexity และ Google AI Overview จะค้นพบ เข้าใจ และอ้างอิงเว็บไซต์ของคุณได้ดีแค่ไหน',
     trustFree: 'วิเคราะห์ฟรี',
     trustChecks: '12 รายการ',
     trustAI: 'ขับเคลื่อนด้วย AI',

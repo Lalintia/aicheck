@@ -44,7 +44,7 @@ export function HeroSection({ onSuccess, onError }: HeroSectionProps): React.Rea
 
         {/* Title */}
         <h1 className="animate-fade-up stagger-1 text-4xl sm:text-5xl md:text-6xl font-black text-frost-900 mb-6 tracking-tight leading-[1.1]">
-          {t.hero.title}{' '}
+          {t.hero.title}<br />
           <span className="bg-gradient-to-r from-frost-500 to-frost-400 bg-clip-text text-transparent">
             {t.hero.titleHighlight}
           </span>
