@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { AlertCircle, ArrowRight, Loader2, Globe, Brain, CheckCircle, XCircle, AlertTriangle, Eye, Link2, Sparkles } from 'lucide-react';
+import { AlertCircle, ArrowRight, Loader2, Globe, Brain, CheckCircle, XCircle, AlertTriangle, Eye, Link2, Sparkles, Search, Package, Layers } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { SiteNav } from '@/components/site-nav';
 import type { CheckResult } from '@/lib/types/checker';
@@ -117,6 +117,31 @@ const defaultAiCheck = {
   },
   urlKnown: 'URL Known',
   urlNotKnown: 'URL Not Known',
+  knowledgeDepth: 'Knowledge Depth',
+  depthLevels: {
+    deep: 'Deep',
+    moderate: 'Moderate',
+    shallow: 'Shallow',
+    none: 'None',
+  },
+  productsKnown: 'Products Known',
+  productsNotKnown: 'Products Unknown',
+  googlePresence: 'Google Presence',
+  googleTop3: 'Top 3',
+  googleTop5: 'Top 5',
+  googleTop10: 'Top 10',
+  googleLow: 'Low',
+  googleNone: 'Not Found',
+  scoreBreakdown: 'Score Breakdown',
+  scoringCriteria: 'Scoring Criteria',
+  criteriaItems: [
+    { label: 'AI Recognition', max: '25', desc: 'Does the AI recognize this website or organization?' },
+    { label: 'Accuracy', max: '20', desc: 'Is the AI\'s knowledge correct and up-to-date?' },
+    { label: 'URL Known', max: '10', desc: 'Can the AI provide the correct website URL?' },
+    { label: 'Knowledge Depth', max: '15', desc: 'How detailed is the AI\'s knowledge? (history, leadership, competitors)' },
+    { label: 'Products/Services', max: '15', desc: 'Can the AI name specific products or services offered?' },
+    { label: 'Google Presence', max: '15', desc: 'Does the brand appear in Google search top results?' },
+  ] as { label: string; max: string; desc: string }[],
   summary: 'Summary',
   details: 'Details',
   model: 'Model',
@@ -253,6 +278,10 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
   const knows = d.knows === true;
   const accuracy = (d.accuracy as string) ?? 'unknown';
   const hasUrl = d.hasUrl === true;
+  const knowledgeDepth = (d.knowledgeDepth as string) ?? 'none';
+  const productsKnown = d.productsKnown === true;
+  const googlePresence = d.googlePresence as { totalResults: number; topPosition: number | null } | undefined;
+  const breakdown = d.breakdown as Record<string, number> | undefined;
   const summary = (d.summary as string) ?? '';
   const details = (d.details as string) ?? '';
   const model = (d.model as string) ?? 'gpt-4.1-nano';
@@ -272,6 +301,16 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
     return 'stroke-rose-500';
   }, [score]);
 
+  const googleLabel = useMemo(() => {
+    if (!googlePresence) { return ai.googleNone; }
+    const pos = googlePresence.topPosition;
+    if (pos !== null && pos <= 3) { return ai.googleTop3; }
+    if (pos !== null && pos <= 5) { return ai.googleTop5; }
+    if (pos !== null && pos <= 10) { return ai.googleTop10; }
+    if (googlePresence.totalResults > 0) { return ai.googleLow; }
+    return ai.googleNone;
+  }, [googlePresence, ai]);
+
   const circumference = 2 * Math.PI * 54;
   const offset = circumference - (score / 100) * circumference;
 
@@ -289,6 +328,15 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
       </div>
     );
   }
+
+  const breakdownItems = [
+    { label: ai.knows, score: breakdown?.recognition ?? 0, max: 25 },
+    { label: ai.accuracy, score: breakdown?.accuracy ?? 0, max: 20 },
+    { label: ai.urlKnown, score: breakdown?.urlKnown ?? 0, max: 10 },
+    { label: ai.knowledgeDepth, score: breakdown?.depth ?? 0, max: 15 },
+    { label: ai.productsKnown, score: breakdown?.products ?? 0, max: 15 },
+    { label: ai.googlePresence, score: breakdown?.googlePresence ?? 0, max: 15 },
+  ];
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
@@ -318,53 +366,80 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
         </div>
       </div>
 
-      {/* Status Cards */}
-      <div className="animate-fade-up stagger-2 grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        {/* Knows */}
-        <div className={`glass-card rounded-2xl p-5 text-center ${knows ? 'ring-2 ring-emerald-200' : 'ring-2 ring-rose-200'}`}>
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3 ${knows ? 'bg-emerald-50' : 'bg-rose-50'}`}>
-            {knows ? <CheckCircle className="w-5 h-5 text-emerald-500" /> : <XCircle className="w-5 h-5 text-rose-500" />}
-          </div>
-          <p className={`text-sm font-bold ${knows ? 'text-emerald-600' : 'text-rose-600'}`}>
-            {knows ? ai.knows : ai.doesNotKnow}
-          </p>
-        </div>
+      {/* 6 Dimension Cards — 2x3 grid */}
+      <div className="animate-fade-up stagger-2 grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+        {/* 1. Knows */}
+        <DimensionCard
+          icon={knows ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+          label={knows ? ai.knows : ai.doesNotKnow}
+          value={`${breakdown?.recognition ?? 0}/25`}
+          positive={knows}
+        />
+        {/* 2. Accuracy */}
+        <DimensionCard
+          icon={<Eye className="w-4 h-4" />}
+          label={ai.accuracy}
+          value={ai.accuracyLevels[accuracy as keyof typeof ai.accuracyLevels] ?? accuracy}
+          positive={accuracy === 'accurate'}
+          neutral={accuracy === 'partial'}
+        />
+        {/* 3. URL */}
+        <DimensionCard
+          icon={<Link2 className="w-4 h-4" />}
+          label={hasUrl ? ai.urlKnown : ai.urlNotKnown}
+          value={`${breakdown?.urlKnown ?? 0}/10`}
+          positive={hasUrl}
+        />
+        {/* 4. Depth */}
+        <DimensionCard
+          icon={<Layers className="w-4 h-4" />}
+          label={ai.knowledgeDepth}
+          value={ai.depthLevels[knowledgeDepth as keyof typeof ai.depthLevels] ?? knowledgeDepth}
+          positive={knowledgeDepth === 'deep'}
+          neutral={knowledgeDepth === 'moderate'}
+        />
+        {/* 5. Products */}
+        <DimensionCard
+          icon={<Package className="w-4 h-4" />}
+          label={productsKnown ? ai.productsKnown : ai.productsNotKnown}
+          value={`${breakdown?.products ?? 0}/15`}
+          positive={productsKnown}
+        />
+        {/* 6. Google */}
+        <DimensionCard
+          icon={<Search className="w-4 h-4" />}
+          label={ai.googlePresence}
+          value={googleLabel}
+          positive={googlePresence?.topPosition !== null && (googlePresence?.topPosition ?? 99) <= 5}
+          neutral={googlePresence?.topPosition !== null && (googlePresence?.topPosition ?? 99) <= 10}
+        />
+      </div>
 
-        {/* Accuracy */}
-        <div className="glass-card rounded-2xl p-5 text-center">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3 ${
-            accuracy === 'accurate' ? 'bg-emerald-50' :
-            accuracy === 'partial' ? 'bg-amber-50' : 'bg-frost-50'
-          }`}>
-            <Eye className={`w-5 h-5 ${
-              accuracy === 'accurate' ? 'text-emerald-500' :
-              accuracy === 'partial' ? 'text-amber-500' : 'text-frost-400'
-            }`} />
-          </div>
-          <p className="text-xs text-frost-500 mb-1">{ai.accuracy}</p>
-          <p className={`text-sm font-bold ${
-            accuracy === 'accurate' ? 'text-emerald-600' :
-            accuracy === 'partial' ? 'text-amber-600' :
-            accuracy === 'inaccurate' ? 'text-rose-600' : 'text-frost-500'
-          }`}>
-            {ai.accuracyLevels[accuracy as keyof typeof ai.accuracyLevels] ?? accuracy}
-          </p>
-        </div>
-
-        {/* URL Known */}
-        <div className={`glass-card rounded-2xl p-5 text-center ${hasUrl ? 'ring-2 ring-emerald-200' : 'ring-2 ring-amber-200'}`}>
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-3 ${hasUrl ? 'bg-emerald-50' : 'bg-amber-50'}`}>
-            <Link2 className={`w-5 h-5 ${hasUrl ? 'text-emerald-500' : 'text-amber-500'}`} />
-          </div>
-          <p className={`text-sm font-bold ${hasUrl ? 'text-emerald-600' : 'text-amber-600'}`}>
-            {hasUrl ? ai.urlKnown : ai.urlNotKnown}
-          </p>
+      {/* Score Breakdown Bar */}
+      <div className="animate-fade-up stagger-3 glass-card rounded-2xl p-6 mb-4">
+        <h3 className="text-sm font-semibold text-frost-700 mb-4">{ai.scoreBreakdown}</h3>
+        <div className="space-y-3">
+          {breakdownItems.map((item) => (
+            <div key={item.label} className="flex items-center gap-3">
+              <span className="text-xs text-frost-600 w-28 shrink-0 truncate">{item.label}</span>
+              <div className="flex-1 h-2 bg-frost-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${
+                    item.score >= item.max * 0.8 ? 'bg-emerald-500' :
+                    item.score >= item.max * 0.4 ? 'bg-amber-500' : 'bg-rose-400'
+                  }`}
+                  style={{ width: `${(item.score / item.max) * 100}%` }}
+                />
+              </div>
+              <span className="text-xs font-mono text-frost-500 w-10 text-right">{item.score}/{item.max}</span>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Summary & Details */}
       {summary && (
-        <div className="animate-fade-up stagger-3 glass-card rounded-2xl p-6 mb-4">
+        <div className="animate-fade-up stagger-4 glass-card rounded-2xl p-6 mb-4">
           <h3 className="text-sm font-semibold text-frost-700 mb-2 flex items-center gap-2">
             <Brain className="w-4 h-4 text-violet-500" aria-hidden="true" />
             {ai.summary}
@@ -380,8 +455,26 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
         </div>
       )}
 
+      {/* Scoring Criteria */}
+      <div className="animate-fade-up stagger-5 glass-card rounded-2xl p-6 mb-4">
+        <h3 className="text-sm font-semibold text-frost-700 mb-3">{ai.scoringCriteria}</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {ai.criteriaItems.map((item) => (
+            <div key={item.label} className="flex gap-3 p-3 bg-frost-50/50 rounded-xl">
+              <div className="shrink-0 w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
+                <span className="text-xs font-bold text-violet-600">{item.max}</span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-frost-700">{item.label}</p>
+                <p className="text-[11px] text-frost-500 leading-snug">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Model badge */}
-      <div className="animate-fade-up stagger-5 text-center mb-8">
+      <div className="animate-fade-up stagger-6 text-center mb-8">
         <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-frost-100 text-frost-500 text-xs font-mono">
           <Sparkles className="w-3 h-3" aria-hidden="true" />
           {ai.model}: {model}
@@ -397,6 +490,31 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
           {ai.analyzeAnother}
         </button>
       </div>
+    </div>
+  );
+}
+
+// ─── Dimension Card ──────────────────────────────────────────
+interface DimensionCardProps {
+  readonly icon: React.ReactNode;
+  readonly label: string;
+  readonly value: string;
+  readonly positive?: boolean;
+  readonly neutral?: boolean;
+}
+
+function DimensionCard({ icon, label, value, positive, neutral }: DimensionCardProps): React.ReactElement {
+  const borderColor = positive ? 'ring-emerald-200' : neutral ? 'ring-amber-200' : 'ring-frost-200';
+  const iconBg = positive ? 'bg-emerald-50 text-emerald-500' : neutral ? 'bg-amber-50 text-amber-500' : 'bg-frost-50 text-frost-400';
+  const valueColor = positive ? 'text-emerald-600' : neutral ? 'text-amber-600' : 'text-frost-500';
+
+  return (
+    <div className={`glass-card rounded-xl p-4 text-center ring-1 ${borderColor}`}>
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center mx-auto mb-2 ${iconBg}`}>
+        {icon}
+      </div>
+      <p className="text-[11px] text-frost-500 mb-0.5 truncate">{label}</p>
+      <p className={`text-sm font-bold ${valueColor}`}>{value}</p>
     </div>
   );
 }

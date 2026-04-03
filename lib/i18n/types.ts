@@ -71,6 +71,28 @@ export interface Translations {
     };
     readonly urlKnown: string;
     readonly urlNotKnown: string;
+    readonly knowledgeDepth: string;
+    readonly depthLevels: {
+      readonly deep: string;
+      readonly moderate: string;
+      readonly shallow: string;
+      readonly none: string;
+    };
+    readonly productsKnown: string;
+    readonly productsNotKnown: string;
+    readonly googlePresence: string;
+    readonly googleTop3: string;
+    readonly googleTop5: string;
+    readonly googleTop10: string;
+    readonly googleLow: string;
+    readonly googleNone: string;
+    readonly scoreBreakdown: string;
+    readonly scoringCriteria: string;
+    readonly criteriaItems: {
+      label: string;
+      max: string;
+      desc: string;
+    }[];
     readonly summary: string;
     readonly details: string;
     readonly model: string;
