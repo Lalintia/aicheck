@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { rateLimiter, RATE_LIMIT } from './lib/rate-limiter';
+import { rateLimiter, aiRateLimiter, RATE_LIMIT } from './lib/rate-limiter';
 
 export function middleware(request: NextRequest) {
   const response = NextResponse.next();
@@ -24,10 +24,31 @@ export function middleware(request: NextRequest) {
       return response;
     }
 
+    // Stricter rate limit for AI-powered endpoint (3 req/min — uses OpenAI API)
+    if (request.nextUrl.pathname === '/api/ai-check') {
+      const aiResult = aiRateLimiter.check(ip);
+      if (!aiResult.allowed) {
+        return NextResponse.json(
+          {
+            error: 'AI check rate limit exceeded. Please wait before trying again.',
+            retryAfter: aiResult.retryAfter,
+          },
+          {
+            status: 429,
+            headers: {
+              'Retry-After': String(aiResult.retryAfter),
+            },
+          }
+        );
+      }
+      response.headers.set('X-RateLimit-Limit', '3');
+      response.headers.set('X-RateLimit-Remaining', String(aiResult.remaining));
+      return response;
+    }
+
     const result = rateLimiter.check(ip);
 
     if (!result.allowed) {
-      // Rate limit exceeded
       return NextResponse.json(
         {
           error: 'Too many requests. Please try again later.',
