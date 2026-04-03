@@ -136,16 +136,41 @@
 
 ---
 
+## อัปเดต — 3 เมษายน 2569
+
+### 1. อัปเดต VALIDATION_CRITERIA.md ให้ครอบคลุม 12 ข้อ
+- เพิ่ม 4 checkers ใหม่: SSR/CSR Detection, Image AI Readiness, FAQ/QA Blocks, Author Authority (E-E-A-T)
+- ลบ Canonical URLs และ Mobile Responsiveness (ไม่มีใน current checks)
+- อัปเดตน้ำหนักทั้งหมดให้ตรงกับ `lib/checkers/base.ts`
+
+### 2. ตั้ง OPENAI_API_KEY บน EC2
+- สร้าง `.env` ที่ `/var/www/ai-search-checker/.env` (permissions 600)
+- PM2 restart แล้วใช้งานได้
+
+### 3. ทดสอบ AI Visibility page
+- ทดสอบกับ ohmai.me — GPT-4.1 nano ตอบกลับปกติ (score 0/100 เพราะเว็บใหม่)
+- API key ทำงานถูกต้อง ไม่มี error
+
+### 4. เพิ่ม AI Rate Limiter (3 req/min)
+- สร้าง `aiRateLimiter` แยกจาก rate limiter ทั่วไป
+- `/api/ai-check` จำกัด 3 req/min per IP (ป้องกันค่าใช้จ่าย OpenAI)
+- `/api/check` ยังคง 10 req/min per IP เหมือนเดิม
+
+**ไฟล์ที่แก้ไข:**
+- `docs/VALIDATION_CRITERIA.md` — rewrite ทั้งหมดสำหรับ 12 checks
+- `lib/rate-limiter.ts` — เพิ่ม `AIRateLimiter` class + export `aiRateLimiter`
+- `middleware.ts` — เพิ่ม AI rate limit check สำหรับ `/api/ai-check`
+
+---
+
 ## สถานะปัจจุบัน
 
 - **เว็บ live:** https://aicheck.ohmai.me ✅
-- **AI Visibility:** https://aicheck.ohmai.me/ai-check ✅
+- **AI Visibility:** https://aicheck.ohmai.me/ai-check ✅ (OPENAI_API_KEY ตั้งแล้ว)
 - **Local = GitHub = AWS:** ทั้ง 3 ตรงกัน ✅
 - **Code review:** 22 issues แก้ครบ ✅
+- **AI Rate Limit:** 3 req/min per IP ✅
 
 ## TODO
 
-- [ ] อัปเดต docs/validation-criteria ให้ครอบคลุม 12 ข้อ (ลบ AI Visibility)
-- [ ] ตั้ง `OPENAI_API_KEY` ใน `.env` บน server (สำหรับ /ai-check)
-- [ ] ทดสอบ AI Visibility page กับเว็บจริง
-- [ ] พิจารณา global rate limit สำหรับ OpenAI calls
+- [ ] พิจารณาเปลี่ยนรูป project cards ที่ ohmai.me เป็น screenshot จริงแทน stock photos
