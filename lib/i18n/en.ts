@@ -2,12 +2,12 @@ import type { Translations } from './types';
 
 export const en: Translations = {
   hero: {
-    badge: '12 AI Search Factors',
+    badge: '10 AI Search Factors',
     title: 'Is your website',
     titleHighlight: 'visible to AI?',
-    subtitle: 'Scan your website across 12 critical factors that determine how AI search engines discover, understand, and cite your content.',
+    subtitle: 'Scan your website across 10 critical factors that determine how AI search engines discover, understand, and cite your content.',
     trustFree: 'Free Analysis',
-    trustChecks: '12 Checks',
+    trustChecks: '10 Checks',
     trustAI: 'AI-Powered',
   },
   form: {
@@ -20,7 +20,7 @@ export const en: Translations = {
   results: {
     title: 'Analysis Result',
     checklist: 'Analysis Checklist',
-    checksCount: '12 checks',
+    checksCount: '10 checks',
     recommendations: 'Recommendations',
     itemsToImprove: 'items to improve',
     allClear: 'All Clear',
@@ -78,14 +78,6 @@ export const en: Translations = {
     llmsTxt: {
       title: 'llms.txt',
       description: 'LLM-specific guidance file',
-    },
-    faqBlocks: {
-      title: 'FAQ/QA Blocks',
-      description: 'Question-answer format for zero-click results',
-    },
-    authorAuthority: {
-      title: 'Author Authority (E-E-A-T)',
-      description: 'Author info and credibility signals',
     },
     pageSpeed: {
       title: 'Page Speed',

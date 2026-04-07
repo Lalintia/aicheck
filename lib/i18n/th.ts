@@ -2,12 +2,12 @@ import type { Translations } from './types';
 
 export const th: Translations = {
   hero: {
-    badge: '12 ปัจจัยสำหรับ AI Search',
+    badge: '10 ปัจจัยสำหรับ AI Search',
     title: 'เว็บไซต์ของคุณ',
     titleHighlight: 'AI ค้นเจอไหม?',
-    subtitle: 'ตรวจสอบ 12 ปัจจัยสำคัญที่กำหนดว่า AI Search อย่าง ChatGPT, Perplexity และ Google AI Overview จะค้นพบ เข้าใจ และอ้างอิงเว็บไซต์ของคุณได้ดีแค่ไหน',
+    subtitle: 'ตรวจสอบ 10 ปัจจัยสำคัญที่กำหนดว่า AI Search อย่าง ChatGPT, Perplexity และ Google AI Overview จะค้นพบ เข้าใจ และอ้างอิงเว็บไซต์ของคุณได้ดีแค่ไหน',
     trustFree: 'วิเคราะห์ฟรี',
-    trustChecks: '12 รายการ',
+    trustChecks: '10 รายการ',
     trustAI: 'ขับเคลื่อนด้วย AI',
   },
   form: {
@@ -20,7 +20,7 @@ export const th: Translations = {
   results: {
     title: 'ผลการวิเคราะห์',
     checklist: 'รายการตรวจสอบ',
-    checksCount: '12 รายการ',
+    checksCount: '10 รายการ',
     recommendations: 'สิ่งที่ควรปรับปรุง',
     itemsToImprove: 'รายการที่ควรแก้ไข',
     allClear: 'ผ่านทั้งหมด',
@@ -78,14 +78,6 @@ export const th: Translations = {
     llmsTxt: {
       title: 'llms.txt',
       description: 'ไฟล์คำแนะนำสำหรับ AI โดยเฉพาะ',
-    },
-    faqBlocks: {
-      title: 'FAQ/คำถามที่พบบ่อย',
-      description: 'รูปแบบถาม-ตอบสำหรับผลลัพธ์ Zero-Click',
-    },
-    authorAuthority: {
-      title: 'ข้อมูลผู้เขียน (E-E-A-T)',
-      description: 'ข้อมูลผู้เขียนและสัญญาณความน่าเชื่อถือ',
     },
     pageSpeed: {
       title: 'ความเร็วเว็บ',

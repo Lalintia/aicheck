@@ -15,8 +15,6 @@ import {
   checkSitemap,
   checkOpenGraph,
   checkLlmsTxt,
-  checkFAQBlocks,
-  checkAuthorAuthority,
   checkPageSpeed,
   weights,
   getGrade,
@@ -144,8 +142,6 @@ export async function POST(request: NextRequest) {
       sitemapResult,
       ogResult,
       llmsResult,
-      faqResult,
-      authorResult,
       speedResult,
     ] = await Promise.all([
       safeCheck('schema', () => checkSchema(normalizedUrl, html), defaultFail),
@@ -156,8 +152,6 @@ export async function POST(request: NextRequest) {
       safeCheck('sitemap', () => checkSitemap(normalizedUrl, robotsContent), defaultFail),
       safeCheck('openGraph', () => checkOpenGraph(html), defaultFail),
       safeCheck('llmsTxt', () => checkLlmsTxt(normalizedUrl), defaultFail),
-      safeCheck('faqBlocks', () => checkFAQBlocks(html), defaultFail),
-      safeCheck('authorAuthority', () => checkAuthorAuthority(html), defaultFail),
       safeCheck('pageSpeed', () => checkPageSpeed(pageTtfb), defaultFail),
     ]);
 
@@ -176,8 +170,6 @@ export async function POST(request: NextRequest) {
       sitemap: sitemapResult,
       openGraph: ogResult,
       llmsTxt: llmsResult,
-      faqBlocks: faqResult,
-      authorAuthority: authorResult,
       pageSpeed: speedResult,
     };
 
@@ -202,7 +194,7 @@ export async function POST(request: NextRequest) {
         passed,
         warning,
         failed,
-        total: 12,
+        total: 10,
       },
     };
 

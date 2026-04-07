@@ -26,7 +26,7 @@
 body {
   color: var(--text-primary);
   background: var(--bg-base);
-  font-family: 'Satoshi', system-ui, -apple-system, sans-serif;
+  font-family: 'Satoshi', 'Anuphan', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

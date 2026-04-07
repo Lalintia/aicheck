@@ -6,12 +6,12 @@ export const checkLabels: Record<CheckType, CheckLabel> = {
   schema: {
     title: 'Schema.org (JSON-LD)',
     description: 'Structured data for AI to understand content',
-    weight: 20,
+    weight: 22,
   },
   ssrCsr: {
     title: 'Server-Side Rendering',
     description: 'Content visible without JavaScript',
-    weight: 15,
+    weight: 17,
   },
   robotsTxt: {
     title: 'robots.txt',
@@ -26,7 +26,7 @@ export const checkLabels: Record<CheckType, CheckLabel> = {
   imageAI: {
     title: 'Image AI Readiness',
     description: 'Alt text and context for AI to understand images',
-    weight: 8,
+    weight: 10,
   },
   semanticHTML: {
     title: 'Semantic HTML',
@@ -46,17 +46,7 @@ export const checkLabels: Record<CheckType, CheckLabel> = {
   llmsTxt: {
     title: 'llms.txt',
     description: 'LLM-specific guidance file',
-    weight: 5,
-  },
-  faqBlocks: {
-    title: 'FAQ/QA Blocks',
-    description: 'Question-answer format for zero-click results',
-    weight: 4,
-  },
-  authorAuthority: {
-    title: 'Author Authority (E-E-A-T)',
-    description: 'Author info and credibility signals',
-    weight: 3,
+    weight: 6,
   },
   pageSpeed: {
     title: 'Page Speed',

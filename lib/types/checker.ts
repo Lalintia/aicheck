@@ -17,8 +17,6 @@ export type CheckType =
   | 'sitemap'
   | 'openGraph'
   | 'llmsTxt'
-  | 'faqBlocks'
-  | 'authorAuthority'
   | 'pageSpeed';
 
 export interface CheckResult {

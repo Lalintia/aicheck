@@ -26,6 +26,4 @@ export { checkSemanticHTML } from './semantic-html-checker';
 export { checkSitemap } from './sitemap-checker';
 export { checkOpenGraph } from './opengraph-checker';
 export { checkLlmsTxt } from './llms-checker';
-export { checkFAQBlocks } from './faq-checker';
-export { checkAuthorAuthority } from './author-checker';
 export { checkPageSpeed } from './pagespeed-checker';

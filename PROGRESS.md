@@ -504,10 +504,77 @@
 ## สถานะปัจจุบัน (7 เมษายน 2569)
 
 - **เว็บ live:** https://aicheck.ohmai.me ✅
-- **AI Visibility:** 7 มิติ (เพิ่ม AI Overview) ✅
+- **AI Visibility:** 7 มิติ (เพิ่ม AI Overview) ✅ (SERPER_API_KEY หาย — Google Presence/AI Overview ใช้ไม่ได้จนกว่าจะใส่ key ใหม่)
 - **Transparency:** Scoring Criteria มี "How we detect this" ทุกมิติ ✅
 - **Local = GitHub = AWS:** ทั้ง 3 ตรงกัน ✅
 - **Code review:** 31/48 issues แก้ครบ (Critical + High ครบ 100%) ✅
 - **AI Rate Limit:** 3 req/min per IP ✅
 - **Serper quota:** 2,500 ฟรี (ใช้ไปยังไม่ถึง 100) ✅
 - **Documentation:** PROJECT_OVERVIEW.html (EN/TH) พร้อมแจก DEV/CEO/COO ✅
+
+---
+
+## อัปเดต — 7 เมษายน 2569 (กลางคืน) — Production Recovery + Directory Cleanup
+
+### ปัญหาที่แก้แล้ว: ai-checker vs ai-search-checker
+
+**Root cause:** Nginx config ที่ `/etc/nginx/sites-enabled/aicheck.ohmai.me` เป็นไฟล์แยก (ไม่ใช่ symlink) มี path เก่า `/var/www/ai-search-checker/` ขณะที่ไฟล์ใหม่ที่แก้ถูกแก้ที่ `sites-available` (Nginx ใช้ `sites-enabled`)
+
+**สิ่งที่แก้:**
+1. `sed` แทน path ใน `/etc/nginx/sites-enabled/aicheck.ohmai.me` จาก `/var/www/ai-search-checker/` → `/var/www/ai-checker/`
+2. Sync `sites-available/aicheck.ohmai.me` ให้ตรงกับ `sites-enabled` (cp)
+3. `sudo systemctl reload nginx`
+4. Deploy `public/` directory (ไม่มีบน server)
+5. Restart PM2 ด้วย `PORT=3001` + `OPENAI_API_KEY`
+
+### โครงสร้าง Server ที่ถูกต้อง (canonical)
+
+```
+/var/www/ai-checker/          ← real directory (ไม่ใช่ symlink)
+├── .next/
+│   ├── standalone/           ← PM2 รัน server.js จากที่นี่
+│   │   └── server.js
+│   └── static/               ← Nginx serve จากที่นี่ (/_next/static)
+└── public/                   ← Nginx serve robots.txt, sitemap.xml, llms.txt, favicon.svg
+```
+
+**Nginx config:** `/etc/nginx/sites-enabled/aicheck.ohmai.me` (ไม่ใช่ sites-available!)
+
+### Deploy Commands (ทำตามลำดับทุกครั้ง)
+
+```bash
+# 1. Build
+cd "/Users/alienmacbook/Desktop/OhmProject/AI Search Project/aicheck"
+npm run build
+
+# 2. Upload standalone
+rsync -avz --no-owner --no-group --no-perms \
+  -e "ssh -i ~/Desktop/Keypair/n8n-singapore-key-ed25519.pem" \
+  .next/standalone/ ubuntu@54.169.168.58:/var/www/ai-checker/.next/standalone/
+
+# 3. Upload static (ต้องทำด้วยทุกครั้ง! standalone ไม่รวม static)
+rsync -avz --no-owner --no-group --no-perms \
+  -e "ssh -i ~/Desktop/Keypair/n8n-singapore-key-ed25519.pem" \
+  .next/static/ ubuntu@54.169.168.58:/var/www/ai-checker/.next/static/
+
+# 4. Upload public
+rsync -avz --no-owner --no-group --no-perms \
+  -e "ssh -i ~/Desktop/Keypair/n8n-singapore-key-ed25519.pem" \
+  public/ ubuntu@54.169.168.58:/var/www/ai-checker/public/
+
+# 5. Restart PM2 (อ่าน keys จาก /var/www/ai-checker/.env ก่อน)
+ssh -i ~/Desktop/Keypair/n8n-singapore-key-ed25519.pem ubuntu@54.169.168.58 \
+  "source /var/www/ai-checker/.env && pm2 restart ai-checker && pm2 save"
+```
+
+### Env vars บน Server
+
+ไฟล์: `/var/www/ai-checker/.env` (permissions 600)
+
+```
+OPENAI_API_KEY=sk-proj-tKQitv...  ✅
+SERPER_API_KEY=__MISSING__         ← ต้องใส่จาก serper.dev account
+PORT=3001                          ✅
+```
+
+**หมายเหตุ:** SERPER_API_KEY หายระหว่าง recovery — ต้องเข้า serper.dev → API Keys แล้ว copy key ใส่ใน `.env` แล้ว restart PM2

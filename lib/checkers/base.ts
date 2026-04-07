@@ -13,20 +13,18 @@ export interface Checker {
 }
 
 // Updated weights for AI Search readiness (2026)
-// 12 checks ordered by importance for AI Search visibility
+// 10 checks ordered by importance for AI Search visibility
 // Total: 100%
 export const weights: Record<CheckType, number> = {
-  schema: 20,           // Most important for AI understanding
-  ssrCsr: 15,           // Critical: if CSR, AI sees blank page
+  schema: 22,           // Most important for AI understanding
+  ssrCsr: 17,           // Critical: if CSR, AI sees blank page
   robotsTxt: 12,        // Controls AI bot access
   headingHierarchy: 9,  // Clear document structure
-  imageAI: 8,           // Image alt text for AI understanding
+  imageAI: 10,          // Image alt text for AI understanding
   semanticHTML: 7,      // Better structure helps AI parse content
   sitemap: 7,           // Helps AI discover content
   openGraph: 5,         // Social/AI preview cards
-  llmsTxt: 5,           // LLM-specific guidance file
-  faqBlocks: 4,         // FAQ content for zero-click results
-  authorAuthority: 3,   // E-E-A-T signals
+  llmsTxt: 6,           // LLM-specific guidance file
   pageSpeed: 5,         // Core Web Vitals for crawling
 };
 
@@ -155,24 +153,6 @@ export function generateRecommendations(
       category: 'llms.txt',
       message: checks.llmsTxt.found ? 'llms.txt needs improvement' : 'llms.txt file not found',
       action: 'Create llms.txt following Answer.AI standard',
-    });
-  }
-
-  if (!checks.faqBlocks.found) {
-    recommendations.push({
-      priority: 'low',
-      category: 'FAQ',
-      message: 'No FAQ/QA blocks found',
-      action: 'Add FAQ Schema and Q&A format',
-    });
-  }
-
-  if (!checks.authorAuthority.found) {
-    recommendations.push({
-      priority: 'low',
-      category: 'EEAT',
-      message: 'No author information found',
-      action: 'Add Author meta, Publisher info per EEAT guidelines',
     });
   }
 
