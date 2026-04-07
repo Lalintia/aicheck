@@ -220,18 +220,108 @@
 
 ---
 
+## อัปเดต — 7 เมษายน 2569
+
+### 1. แก้ Google Presence: เปลี่ยนจาก Google CSE → Serper API
+
+**ปัญหา:** Google Custom Search JSON API **ปิดรับลูกค้าใหม่แล้ว** (ลูกค้าเดิมใช้ได้ถึง 1 ม.ค. 2570)
+- ลองสร้าง project ใหม่ 2 ตัว + enable API + ผูก billing → ยัง 403 ทุกครั้ง
+- Error: "This project does not have the access to Custom Search JSON API"
+
+**วิธีแก้:** เปลี่ยนไปใช้ **Serper.dev API** (ฟรี 2,500 queries, ไม่ต้องบัตรเครดิต)
+- สมัคร serper.dev → ได้ API key ทันที
+- แก้โค้ด `searchGoogle()` ใน `ai-visibility-checker.ts` ให้เรียก Serper แทน Google CSE
+- ทดสอบ google.com → **100/100** (Google Presence 15/15) ✅
+
+**ไฟล์ที่แก้:**
+- `lib/checkers/ai-visibility-checker.ts` — เปลี่ยน API endpoint เป็น Serper
+- `.env.example` — เพิ่ม `SERPER_API_KEY`
+
+**Env vars บน EC2:**
+- `SERPER_API_KEY` — ตั้งผ่าน PM2 inline env
+- `GOOGLE_CSE_API_KEY` / `GOOGLE_CSE_CX` — ยังอยู่ใน `.env` แต่โค้ดไม่ใช้แล้ว
+
+### 2. Full Code Review — 3 Agents (Security + Performance + React/TS)
+
+รัน `/review-all` พบ **33 issues** → แก้ **25 ตัว**
+
+#### แก้ไขแล้ว — Critical (3 ตัว)
+| # | Issue | ไฟล์ |
+|---|---|---|
+| 1 | `safeCheck` กลืน error ไม่ log | `api/check/route.ts` |
+| 2 | Top-level catch ไม่ log error | `api/check/route.ts` + `api/ai-check/route.ts` |
+| 3 | `as` casts ปิด TypeScript safety | `ai-check/page.tsx` |
+
+#### แก้ไขแล้ว — High (8 ตัว)
+| # | Issue | ไฟล์ |
+|---|---|---|
+| 1 | Content-Length: -1 bypass | ทั้ง 2 route.ts |
+| 2 | ai-check HTML body ไม่มี size limit | `api/ai-check/route.ts` |
+| 3 | SSR checker ReDoS regex `[\s\S]*` | `ssr-checker.ts` |
+| 4 | Missing `aria-describedby` (WCAG) | `ai-check/page.tsx` |
+| 5 | Score ring SVG ไม่มี accessible label | `ai-check/page.tsx` |
+| 6 | Buttons ไม่มี `type="button"` | `ai-check/page.tsx` |
+| 7 | Over-memoization `useMemo` | `ai-check/page.tsx` |
+| 8 | ไฟล์ `check-references.tsx` เกิน 300 บรรทัด | แยก data → `lib/data/checkReferences.ts` |
+
+#### แก้ไขแล้ว — Medium (10 ตัว)
+| # | Issue | ไฟล์ |
+|---|---|---|
+| 1 | IPv6 Teredo/6to4 ไม่ถูก block | `lib/security.ts` |
+| 2 | IPv6 format validation ไม่เข้มงวด | `middleware.ts` |
+| 3 | Serper API response ไม่มี size limit | `ai-visibility-checker.ts` |
+| 4 | Sitemap concurrency ไม่จำกัด | `sitemap-checker.ts` |
+| 5 | Decorative icons ไม่มี `aria-hidden` | `recommendation-group.tsx` |
+| 6 | `criteriaItems` type ไม่ readonly | `lib/i18n/types.ts` |
+| 7 | `callOpenAI` error body read ไม่มี timeout | `ai-visibility-checker.ts` |
+| 8 | TrustIndicator re-render ทุกครั้ง | `hero-section.tsx` |
+| 9 | Skip link อยู่หลัง nav | `page.tsx` + `ai-check/page.tsx` |
+| 10 | `getStatusInfo` duplicate | ลบจาก `check-helpers.ts` |
+
+#### แก้ไขแล้ว — Low (4 ตัว)
+| # | Issue | ไฟล์ |
+|---|---|---|
+| 1 | i18n context default ไม่มี warning | `lib/i18n/index.ts` |
+| 2 | Unused `StatusInfo` import | `check-helpers.ts` |
+| 3 | `ReadonlyArray` type consistency | `ai-check/page.tsx` |
+| 4 | checkReferences data ปนอยู่ใน component | `check-references.tsx` → `lib/data/` |
+
+### 3. Global Agents Setup
+
+ย้าย 6 custom agents จาก project-level → global (`~/.claude/agents/`):
+- `lead`, `backend`, `frontend`, `qa`, `reviewer`, `doc-writer`
+- รวมกับ global เดิม: `security-auditor`, `performance-error-reviewer`, `react-typescript-reviewer`
+- **รวม 9 agents** ใช้ได้ทุก project
+
+### 4. Deploy ขึ้น AWS (3 ครั้ง)
+
+- [x] Build production × 3
+- [x] Package standalone + upload to EC2
+- [x] PM2 restart with inline env vars (SERPER_API_KEY + OPENAI_API_KEY + PORT)
+- [x] PM2 save
+- [x] ยืนยัน HTTP 200 ผ่าน Cloudflare
+
+**Git Commits:**
+- `7cc6221` — feat: replace Google CSE with Serper API for Google Presence scoring
+- `a5e2998` — fix: resolve 11 critical/high issues from full code review
+- `8437b04` — fix: resolve medium/low issues from code review
+- `a08ba2d` — refactor: resolve remaining low issues from code review
+
+---
+
 ## สถานะปัจจุบัน
 
 - **เว็บ live:** https://aicheck.ohmai.me ✅
-- **AI Visibility:** https://aicheck.ohmai.me/ai-check ✅ (6 มิติ + Google Search)
+- **AI Visibility:** https://aicheck.ohmai.me/ai-check ✅ (6 มิติ + Serper Google Search)
+- **Google Presence:** ทำงานแล้ว ✅ (Serper API, ฟรี 2,500 queries)
 - **Local = GitHub = AWS:** ทั้ง 3 ตรงกัน ✅
-- **Code review:** 22 issues แก้ครบ ✅
+- **Code review:** 25/33 issues แก้ครบ (Critical/High ครบ 100%) ✅
 - **AI Rate Limit:** 3 req/min per IP ✅
-- **Google CSE:** Billing activated, API enabled — ❌ ยัง 403 (ทดสอบ 15:50 ยังไม่ผ่าน)
 
 ## TODO
 
-- [ ] Google CSE: ทดสอบ API อีกทีหลัง propagation (5-15 นาที) — ถ้ายังไม่ได้ลอง key ใหม่ `AIzaSyAVVETa2igp-dwbIdcSJHFo_hAK8NxfdGw`
-- [ ] Google CSE: เปิด "Search the entire web" ใน Programmable Search Engine (toggle disabled ใน UI ตอนนี้)
-- [ ] อัปเดต GOOGLE_CSE_API_KEY บน EC2 เป็น key ใหม่ถ้าจำเป็น
 - [ ] พิจารณาเปลี่ยนรูป project cards ที่ ohmai.me เป็น screenshot จริงแทน stock photos
+- [ ] Refactor `ai-check/page.tsx` (520 บรรทัด) แยก AICheckResult เป็นไฟล์แยก
+- [ ] เพิ่ม i18n สำหรับ `schema-details.tsx` (hardcoded English)
+- [ ] Restrict EC2 security group ให้รับ traffic จาก Cloudflare IPs เท่านั้น
+- [ ] ลบ GOOGLE_CSE_API_KEY / GOOGLE_CSE_CX ออกจาก `.env` บน EC2 (ไม่ใช้แล้ว)
