@@ -1,4 +1,4 @@
-import type { CheckResponse, CheckType, GradeInfo, StatusInfo, CheckLabel } from '@/lib/types/checker';
+import type { CheckResponse, CheckType, GradeInfo, CheckLabel } from '@/lib/types/checker';
 
 export type { CheckType, CheckLabel } from '@/lib/types/checker';
 
@@ -75,16 +75,6 @@ export function getGradeLabel(grade: CheckResponse['grade']): GradeInfo {
       return { label: 'Fair', color: 'text-amber-600', bgColor: 'bg-amber-50' };
     case 'poor':
       return { label: 'Needs Work', color: 'text-rose-600', bgColor: 'bg-rose-50' };
-  }
-}
-
-export function getStatusInfo(score: number, found: boolean): StatusInfo {
-  if (score >= 80) {
-    return { status: 'good', label: 'Present', icon: '✓' };
-  } else if (score >= 50 || found) {
-    return { status: 'partial', label: 'Partial', icon: '~' };
-  } else {
-    return { status: 'missing', label: 'Missing', icon: '×' };
   }
 }
 

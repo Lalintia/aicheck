@@ -22,7 +22,7 @@ interface I18nContextValue {
 export const I18nContext = createContext<I18nContextValue>({
   locale: 'en',
   t: en,
-  setLocale: () => {},
+  setLocale: () => { console.error('useI18n must be used within I18nProvider'); },
 });
 
 export function useI18n(): I18nContextValue {

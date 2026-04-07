@@ -62,14 +62,18 @@ export function HeroSection({ onSuccess, onError }: HeroSectionProps): React.Rea
 
         {/* Trust indicators */}
         <div className="animate-fade-up stagger-4 mt-10 flex flex-wrap items-center justify-center gap-8 text-frost-500">
-          <TrustIndicator icon={<Shield className="w-4 h-4" />} label={t.hero.trustFree} />
-          <TrustIndicator icon={<Radar className="w-4 h-4" />} label={t.hero.trustChecks} />
-          <TrustIndicator icon={<Sparkles className="w-4 h-4" />} label={t.hero.trustAI} />
+          <TrustIndicator icon={SHIELD_ICON} label={t.hero.trustFree} />
+          <TrustIndicator icon={RADAR_ICON} label={t.hero.trustChecks} />
+          <TrustIndicator icon={SPARKLES_ICON} label={t.hero.trustAI} />
         </div>
       </div>
     </section>
   );
 }
+
+const SHIELD_ICON = <Shield className="w-4 h-4" />;
+const RADAR_ICON = <Radar className="w-4 h-4" />;
+const SPARKLES_ICON = <Sparkles className="w-4 h-4" />;
 
 interface TrustIndicatorProps {
   readonly icon: React.ReactNode;

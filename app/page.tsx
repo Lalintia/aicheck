@@ -29,13 +29,13 @@ export default function HomePage(): React.ReactElement {
 
   return (
     <main className="min-h-screen relative">
-      <SiteNav active="checks" />
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-frost-500 text-white px-4 py-2 rounded-lg z-50 font-medium"
       >
         Skip to main content
       </a>
+      <SiteNav active="checks" />
 
       <div id="main-content">
         <div role="alert" aria-live="assertive" aria-atomic="true">
