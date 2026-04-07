@@ -42,6 +42,26 @@ interface KnowledgeGraphResult {
   readonly title: string | null;
 }
 
+/**
+ * Extract the Second-Level Domain from a hostname.
+ * Handles common 2-level TLDs like .co.th, .co.uk, .com.au, .co.jp.
+ * Examples:
+ *   "shop.apple.co.th" → "apple"
+ *   "apple.com"        → "apple"
+ *   "www.amazon.co.uk" → "amazon"
+ */
+function extractSecondLevelDomain(hostname: string): string {
+  const parts = hostname.replace(/^www\./, '').split('.');
+  if (parts.length < 2) { return parts[0] ?? ''; }
+  // Handle 2-level TLDs (e.g. .co.th, .co.uk)
+  const twoLevelTlds = new Set(['co.th', 'co.uk', 'com.au', 'co.jp', 'co.nz', 'com.br', 'com.mx', 'co.kr']);
+  const lastTwo = parts.slice(-2).join('.');
+  if (twoLevelTlds.has(lastTwo) && parts.length >= 3) {
+    return parts[parts.length - 3];
+  }
+  return parts[parts.length - 2];
+}
+
 function sanitizeMeta(value: string, maxLength: number): string {
   return value
     .replace(/[\x00-\x1f\x7f]/g, ' ')
@@ -157,15 +177,19 @@ async function serperSearch(query: string): Promise<Record<string, unknown> | nu
     if (cl && parseInt(cl, 10) > 512 * 1024) { return null; }
 
     let jsonTimeout: ReturnType<typeof setTimeout> | undefined;
-    const data = await Promise.race([
-      response.json(),
-      new Promise<never>((_, reject) => {
-        jsonTimeout = setTimeout(() => reject(new Error('Serper read timeout')), 5000);
-      }),
-    ]);
-    clearTimeout(jsonTimeout);
-    return data as Record<string, unknown>;
-  } catch {
+    try {
+      const data = await Promise.race([
+        response.json(),
+        new Promise<never>((_, reject) => {
+          jsonTimeout = setTimeout(() => reject(new Error('Serper read timeout')), 5000);
+        }),
+      ]);
+      return data as Record<string, unknown>;
+    } finally {
+      if (jsonTimeout !== undefined) { clearTimeout(jsonTimeout); }
+    }
+  } catch (err) {
+    console.error('[serperSearch] failed:', err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -323,16 +347,25 @@ export async function checkAIVisibility(url: string, html: string): Promise<Chec
     const prompt = buildPrompt(url, title, description);
 
     // Knowledge Graph lookup: use "{brand} company" to disambiguate
-    // e.g. "apple" alone returns the fruit, but "apple company" returns Apple Inc.
-    const brandName = domain.split('.')[0];
-    const kgQuery = `${brandName} company`;
+    // Extract SLD (e.g. "shop.apple.co.th" → "apple", "apple.com" → "apple")
+    // then sanitize to prevent query injection via malicious subdomain labels
+    const rawBrand = extractSecondLevelDomain(domain);
+    const brandName = rawBrand.replace(/[^\w\s-]/g, '').slice(0, 50).trim();
+    const kgQuery = brandName ? `${brandName} company` : domain;
 
-    // Run 3 requests in parallel: GPT + SEO search + Knowledge Graph search
-    const [aiResult, seoSearchData, kgSearchData] = await Promise.all([
+    // Run 3 requests in parallel with allSettled to avoid wasting quota
+    // when one call fails — all three must be independently tolerant
+    const [aiSettled, seoSettled, kgSettled] = await Promise.allSettled([
       callOpenAI(apiKey, prompt),
       serperSearch(domain),
       serperSearch(kgQuery),
     ]);
+
+    const aiResult = aiSettled.status === 'fulfilled'
+      ? aiSettled.value
+      : { error: 'OpenAI request failed', reason: 'network_error' };
+    const seoSearchData = seoSettled.status === 'fulfilled' ? seoSettled.value : null;
+    const kgSearchData = kgSettled.status === 'fulfilled' ? kgSettled.value : null;
 
     const googleResult = extractGoogleSearchResult(seoSearchData, domain);
     const knowledgeGraph = extractKnowledgeGraph(kgSearchData);

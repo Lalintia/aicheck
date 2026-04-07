@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useId, memo } from 'react';
 import { AlertCircle, ArrowRight, Loader2, Globe, Brain, CheckCircle, XCircle, AlertTriangle, Eye, Link2, Sparkles, Search, Package, Layers, Network, ChevronDown, ChevronUp } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { SiteNav } from '@/components/site-nav';
@@ -9,6 +9,40 @@ import type { CheckResult } from '@/lib/types/checker';
 interface AICheckResponse {
   readonly url: string;
   readonly result: CheckResult;
+}
+
+interface GooglePresenceData {
+  readonly totalResults: number;
+  readonly topPosition: number | null;
+}
+
+interface KnowledgeGraphData {
+  readonly hasKnowledgeGraph: boolean;
+  readonly hasAnswerBox: boolean;
+  readonly descriptionSource: string | null;
+  readonly title: string | null;
+}
+
+function parseGooglePresence(value: unknown): GooglePresenceData | undefined {
+  if (!value || typeof value !== 'object') { return undefined; }
+  const v = value as Record<string, unknown>;
+  if (typeof v.totalResults !== 'number') { return undefined; }
+  const pos = v.topPosition;
+  if (pos !== null && typeof pos !== 'number') { return undefined; }
+  return { totalResults: v.totalResults, topPosition: pos };
+}
+
+function parseKnowledgeGraph(value: unknown): KnowledgeGraphData | undefined {
+  if (!value || typeof value !== 'object') { return undefined; }
+  const v = value as Record<string, unknown>;
+  if (typeof v.hasKnowledgeGraph !== 'boolean') { return undefined; }
+  if (typeof v.hasAnswerBox !== 'boolean') { return undefined; }
+  return {
+    hasKnowledgeGraph: v.hasKnowledgeGraph,
+    hasAnswerBox: v.hasAnswerBox,
+    descriptionSource: typeof v.descriptionSource === 'string' ? v.descriptionSource : null,
+    title: typeof v.title === 'string' ? v.title : null,
+  };
 }
 
 export default function AICheckPage(): React.ReactElement {
@@ -286,12 +320,8 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
   const hasUrl = d.hasUrl === true;
   const knowledgeDepth = typeof d.knowledgeDepth === 'string' ? d.knowledgeDepth : 'none';
   const productsKnown = d.productsKnown === true;
-  const googlePresence = (d.googlePresence && typeof d.googlePresence === 'object')
-    ? d.googlePresence as { totalResults: number; topPosition: number | null }
-    : undefined;
-  const knowledgeGraphData = (d.knowledgeGraph && typeof d.knowledgeGraph === 'object')
-    ? d.knowledgeGraph as { hasKnowledgeGraph: boolean; hasAnswerBox: boolean; descriptionSource: string | null; title: string | null }
-    : undefined;
+  const googlePresence = parseGooglePresence(d.googlePresence);
+  const knowledgeGraphData = parseKnowledgeGraph(d.knowledgeGraph);
   const breakdown = (d.breakdown && typeof d.breakdown === 'object' && !Array.isArray(d.breakdown))
     ? d.breakdown as Record<string, number>
     : undefined;
@@ -313,7 +343,7 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
     if (pos !== null && pos <= 10) { return ai.googleTop10; }
     if (googlePresence.totalResults > 0) { return ai.googleLow; }
     return ai.googleNone;
-  }, [googlePresence, ai]);
+  }, [googlePresence, ai.googleTop3, ai.googleTop5, ai.googleTop10, ai.googleLow, ai.googleNone]);
 
   const kgLabel = useMemo(() => {
     if (!knowledgeGraphData) { return ai.knowledgeGraphNone; }
@@ -321,7 +351,7 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
     if (knowledgeGraphData.hasKnowledgeGraph) { return ai.knowledgeGraphPartial; }
     if (knowledgeGraphData.hasAnswerBox) { return ai.knowledgeGraphAnswerOnly; }
     return ai.knowledgeGraphNone;
-  }, [knowledgeGraphData, ai]);
+  }, [knowledgeGraphData, ai.knowledgeGraphFull, ai.knowledgeGraphPartial, ai.knowledgeGraphAnswerOnly, ai.knowledgeGraphNone]);
 
   const circumference = 2 * Math.PI * 54;
   const offset = circumference - (score / 100) * circumference;
@@ -530,34 +560,53 @@ interface CriteriaCardProps {
   readonly item: CriteriaItem;
 }
 
-function CriteriaCard({ item }: CriteriaCardProps): React.ReactElement {
+function CriteriaCardImpl({ item }: CriteriaCardProps): React.ReactElement {
   const [expanded, setExpanded] = useState(false);
+  const panelId = useId();
   const hasDetails = item.why.length > 0 || item.howToImprove.length > 0;
+
+  const cardContent = (
+    <>
+      <div className="shrink-0 w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
+        <span className="text-xs font-bold text-violet-600">{item.max}</span>
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs font-semibold text-frost-700">{item.label}</p>
+        <p className="text-[11px] text-frost-500 leading-snug">{item.desc}</p>
+      </div>
+    </>
+  );
+
+  // Static card for items without details — stays in tab flow as a div
+  if (!hasDetails) {
+    return (
+      <div className="bg-frost-50/50 rounded-xl w-full flex items-center gap-3 p-3">
+        {cardContent}
+      </div>
+    );
+  }
 
   return (
     <div className="bg-frost-50/50 rounded-xl overflow-hidden">
       <button
         type="button"
         onClick={() => setExpanded(!expanded)}
-        disabled={!hasDetails}
         aria-expanded={expanded}
-        className="w-full flex items-center gap-3 p-3 text-left hover:bg-frost-50 transition-colors disabled:cursor-default"
+        aria-controls={panelId}
+        className="w-full flex items-center gap-3 p-3 text-left hover:bg-frost-50 transition-colors"
       >
-        <div className="shrink-0 w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
-          <span className="text-xs font-bold text-violet-600">{item.max}</span>
+        {cardContent}
+        <div className="shrink-0 text-frost-400" aria-hidden="true">
+          {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs font-semibold text-frost-700">{item.label}</p>
-          <p className="text-[11px] text-frost-500 leading-snug">{item.desc}</p>
-        </div>
-        {hasDetails && (
-          <div className="shrink-0 text-frost-400" aria-hidden="true">
-            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </div>
-        )}
       </button>
-      {expanded && hasDetails && (
-        <div className="px-3 pb-3 pt-0 space-y-3 border-t border-frost-100/50">
+      {expanded && (
+        <div
+          id={panelId}
+          role="region"
+          aria-label={item.label}
+          className="px-3 pb-3 pt-0 space-y-3 border-t border-frost-100/50"
+        >
           {item.why && (
             <div className="pt-3">
               <p className="text-[10px] font-semibold text-violet-600 uppercase tracking-wide mb-1">Why it matters</p>
@@ -575,6 +624,8 @@ function CriteriaCard({ item }: CriteriaCardProps): React.ReactElement {
     </div>
   );
 }
+
+const CriteriaCard = memo(CriteriaCardImpl);
 
 function DimensionCard({ icon, label, value, positive, neutral }: DimensionCardProps): React.ReactElement {
   const borderColor = positive ? 'ring-emerald-200' : neutral ? 'ring-amber-200' : 'ring-frost-200';
