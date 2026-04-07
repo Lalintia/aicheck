@@ -1,6 +1,6 @@
 /**
  * AI Visibility Checker — 6-Dimension Scoring
- * Asks GPT-4.1 nano + Google Custom Search to evaluate AI visibility
+ * Asks GPT-4.1 nano + Serper Google Search API to evaluate AI visibility
  *
  * Scoring (100 points total):
  *   1. AI Recognition     (25) — Does AI know this brand?
@@ -10,7 +10,7 @@
  *   5. Products Known     (15) — Can AI name specific products/services?
  *   6. Google Presence    (15) — Does the brand appear in Google search?
  *
- * Cost: ~$0.001 per check (GPT-4.1 nano) + Google CSE free tier
+ * Cost: ~$0.001 per check (GPT-4.1 nano) + Serper API (free 2,500 queries)
  */
 
 import type { CheckResult } from './base';
@@ -121,24 +121,27 @@ function parseAIResponse(text: string): AIVisibilityResponse | null {
 }
 
 async function searchGoogle(domain: string): Promise<GoogleSearchResult> {
-  const apiKey = process.env.GOOGLE_CSE_API_KEY;
-  const cx = process.env.GOOGLE_CSE_CX;
+  const apiKey = process.env.SERPER_API_KEY;
 
-  if (!apiKey || !cx) {
+  if (!apiKey) {
     return { totalResults: 0, topPosition: null };
   }
 
   try {
-    const query = encodeURIComponent(domain);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), GOOGLE_SEARCH_TIMEOUT);
 
     let response: Response;
     try {
-      response = await fetch(
-        `https://www.googleapis.com/customsearch/v1?key=${apiKey}&cx=${cx}&q=${query}&num=10`,
-        { signal: controller.signal }
-      );
+      response = await fetch('https://google.serper.dev/search', {
+        method: 'POST',
+        headers: {
+          'X-API-KEY': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ q: domain, num: 10 }),
+        signal: controller.signal,
+      });
     } finally {
       clearTimeout(timeoutId);
     }
@@ -148,12 +151,14 @@ async function searchGoogle(domain: string): Promise<GoogleSearchResult> {
     }
 
     const data = await response.json();
-    const totalResults = parseInt(data.searchInformation?.totalResults ?? '0', 10);
+    const organic: Array<{ link?: string }> = data.organic ?? [];
+    const totalResults = organic.length > 0
+      ? Math.max(organic.length * 100, 1000)
+      : 0;
 
     let topPosition: number | null = null;
-    const items = data.items ?? [];
-    for (let i = 0; i < items.length; i++) {
-      const link: string = items[i].link ?? '';
+    for (let i = 0; i < organic.length; i++) {
+      const link: string = organic[i].link ?? '';
       if (link.includes(domain)) {
         topPosition = i + 1;
         break;
