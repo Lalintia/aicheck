@@ -13,21 +13,41 @@ interface AuthorityCheck {
   readonly weight: number;
 }
 
+// Modern sites put authorship in JSON-LD, not legacy <meta> tags.
+// We accept either source — score is capped at 100 in the caller.
 const AUTHORITY_CHECKS: readonly AuthorityCheck[] = [
   {
-    name: 'author',
+    name: 'meta-author',
     pattern: /<meta[^>]*name=["']author["'][^>]*>/i,
     weight: 25,
   },
   {
-    name: 'publisher',
+    // Matches JSON-LD author as object, array of objects, or string.
+    // Using a broad "open bracket or string" heuristic because regex cannot
+    // reliably parse nested JSON — score is capped at 100 so overmatch is OK.
+    name: 'jsonld-author',
+    pattern: /"author"\s*:\s*[{["]/i,
+    weight: 25,
+  },
+  {
+    name: 'meta-publisher',
     pattern: /<meta[^>]*name=["']publisher["'][^>]*>/i,
+    weight: 25,
+  },
+  {
+    name: 'jsonld-publisher',
+    pattern: /"publisher"\s*:\s*\{/i,
     weight: 25,
   },
   {
     name: 'organization',
     pattern: /"@type":\s*"Organization"/i,
-    weight: 25,
+    weight: 20,
+  },
+  {
+    name: 'datePublished',
+    pattern: /"datePublished"\s*:/i,
+    weight: 10,
   },
   {
     name: 'byline',
@@ -56,22 +76,29 @@ export function checkAuthorAuthority(html: string): CheckResult {
     }
   }
 
+  const hasAuthor = found.includes('meta-author') || found.includes('jsonld-author');
+  const hasPublisher =
+    found.includes('meta-publisher') ||
+    found.includes('jsonld-publisher') ||
+    found.includes('organization');
+
   const warnings: string[] = [];
-  if (!found.includes('author')) {
-    warnings.push('Add author name');
+  if (!hasAuthor) {
+    warnings.push('Add author name (meta tag or JSON-LD)');
   }
-  if (!found.includes('publisher') && !found.includes('organization')) {
-    warnings.push('Add Publisher/Organization');
+  if (!hasPublisher) {
+    warnings.push('Add Publisher/Organization (meta tag or JSON-LD)');
   }
 
   const finalScore = Math.min(100, weightedScore);
 
   const data: Record<string, unknown> = {
     checks: {
-      hasAuthor: found.includes('author'),
-      hasPublisher: found.includes('publisher') || found.includes('organization'),
+      hasAuthor,
+      hasPublisher,
       hasByline: found.includes('byline'),
       hasAuthorBio: found.includes('authorBio'),
+      hasDatePublished: found.includes('datePublished'),
     },
     found,
     missing,

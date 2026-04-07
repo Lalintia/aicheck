@@ -22,6 +22,13 @@ const SEMANTIC_ELEMENTS: readonly SemanticElement[] = [
   { tag: '<footer', weight: 15 },
 ];
 
+// Div-ratio penalty thresholds. Tuned for modern SPA frameworks (React/Next.js)
+// which legitimately use many divs for layout scaffolding.
+const DIV_RATIO_SEVERE = 50;
+const DIV_RATIO_HIGH = 20;
+const DIV_PENALTY_SEVERE = 15;
+const DIV_PENALTY_HIGH = 8;
+
 export function checkSemanticHTML(html: string): CheckResult {
   const found: string[] = [];
   const missing: string[] = [];
@@ -44,14 +51,13 @@ export function checkSemanticHTML(html: string): CheckResult {
     }
   }
 
-  // Penalize excessive div usage
   const structuralElements = sectionCount + articleCount;
   const divRatio = structuralElements > 0 ? divCount / structuralElements : divCount;
 
-  if (divRatio > 10) {
-    weightedScore -= 20;
-  } else if (divRatio > 5) {
-    weightedScore -= 10;
+  if (divRatio > DIV_RATIO_SEVERE) {
+    weightedScore -= DIV_PENALTY_SEVERE;
+  } else if (divRatio > DIV_RATIO_HIGH) {
+    weightedScore -= DIV_PENALTY_HIGH;
   }
 
   // Check for role attributes (ARIA landmarks as fallback)
