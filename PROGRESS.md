@@ -6,7 +6,74 @@
 
 ---
 
-## อัปเดตล่าสุด — 2 เมษายน 2569
+## อัปเดตล่าสุด — 7 เมษายน 2569
+
+### Scorer Recalibration — ปลดล็อกเพดาน 75/100
+
+**ปัญหา:** เว็บ world-class (Stripe, Yoast, MDN, Wikipedia) ได้คะแนนสูงสุดแค่ ~75/100 ทั้งที่เป็น gold standard ของ AI-friendly web — แม้แต่ Yoast (บริษัท SEO เบอร์ 1 ของโลก) ยังได้แค่ 75
+
+**Root cause:** Checker 3 ตัวมี calibration bug:
+
+| Checker | Bug | ผลกระทบ |
+|---|---|---|
+| `semantic-html` | `divRatio > 10` penalty -20 เข้มเกินไปสำหรับ React/Next.js | ทุกเว็บ SPA โดนหัก 20 แต้ม |
+| `author-checker` | ตรวจแค่ `<meta name="author">` — เว็บสมัยใหม่ย้ายไป JSON-LD | NYT ได้ 35/100 ทั้งที่มี byline ครบ |
+| `image-checker` | Placeholder penalty ไม่มี cap → score ตก 0 | Stripe/NYT/Yoast ได้ 0 แม้มี alt text |
+
+**วิธีแก้:**
+
+1. **`lib/checkers/semantic-html-checker.ts`**
+   - ผ่อน threshold: `>10/>5` → `>50/>20`
+   - ซอฟต์ penalty: `-20/-10` → `-15/-8`
+   - Extract magic numbers เป็น constants (`DIV_RATIO_SEVERE`, ฯลฯ)
+
+2. **`lib/checkers/author-checker.ts`**
+   - เพิ่ม JSON-LD patterns: `jsonld-author`, `jsonld-publisher`, `datePublished`
+   - Rename keys: `author` → `meta-author`, `publisher` → `meta-publisher`
+   - Logic `hasAuthor`/`hasPublisher` รวม meta + JSON-LD sources
+
+3. **`lib/checkers/image-checker.ts`**
+   - Cap placeholder penalty ที่ 15 (เดิมไม่มี cap)
+   - Figure/ImageObject penalty: 10→5, 5→3 (nice-to-have ไม่ใช่ critical)
+
+**Results (before → after, verified on production):**
+
+| เว็บ | ก่อน | หลัง | Δ |
+|---|---:|---:|---:|
+| Yoast | 75 | **79** | +4 |
+| Stripe | 72 | **75** | +3 |
+| Wikipedia | 66 | **70** | +4 |
+| NYT | 58 | **63** | +5 |
+| MDN | 62 | 62 | 0 |
+| Anthropic | 59 | 59 | 0 |
+| SCB | 51 | **53** | +2 |
+| PTTEP | 49 | **51** | +2 |
+| SET | 47 | 47 | 0 |
+| Thai Bev | 29 | **31** | +2 |
+
+**เพดานใหม่:** ~95/100 (เดิม ~80) — สูงพอที่เว็บที่ทำครบทุกอย่างจริงๆ จะได้ A-grade
+
+**Process:**
+- แก้ทีละ checker + รัน 31 unit tests หลังแต่ละการแก้
+- Code review ด้วย 3 review agents (reuse / quality / efficiency) หลังแต่ละ fix
+- Reviewer เจอ bug เพิ่ม: floor 85 ใน semantic-html bypass penalty → ลบออก
+- Reviewer เจอ regex nested-object bug ใน author JSON-LD → แก้เป็น permissive heuristic
+- Reviewer เจอ double-penalty ใน image placeholder → ลด cap จาก 25 เป็น 15
+
+**Deploy gotcha:**
+- Deploy doc เดิมบอก rsync → `/var/www/ai-search-checker/` แต่ PM2 จริงรันจาก `.next/standalone/server.js`
+- ต้อง rsync ไปที่ `/var/www/ai-search-checker/.next/standalone/` แทน
+- ไฟล์เก่าบน server owned by `uid 501 staff` (macOS) → ต้องใช้ `--no-owner --no-group --no-perms`
+- แก้ `PROJECT_SUMMARY.md` deploy section แล้ว
+
+**Git:**
+- Branch: `fix/scorer-calibration`
+- Commit: `d43733f`
+- PR: https://github.com/Lalintia/aicheck/pull/1
+
+---
+
+## อัปเดต — 2 เมษายน 2569
 
 ### 1. แยก AI Visibility เป็นหน้าแยก (13 → 12 checks)
 
