@@ -524,21 +524,23 @@ Uses Node.js native test runner (`--test`) via `tsx`. No Jest or Vitest required
 
 ```bash
 # 1. Build — from local machine
-cd "/Users/alienmacbook/Desktop/ohm website/AI Search Project/ai-search-checker"
+cd "/Users/alienmacbook/Desktop/OhmProject/AI Search Project/aicheck"
 npm run build
 
 # 2. Copy static assets into standalone output
 cp -r .next/static .next/standalone/.next/
 cp -r public .next/standalone/
 
-# 3. Upload to EC2 (rsync — only changed files)
-rsync -avz --delete \
-  -e "ssh -i '/Users/alienmacbook/Desktop/ohm website/n8n-singapore-key.pem'" \
+# 3. Upload to EC2 (rsync — target MUST be .next/standalone/ to match PM2 cwd)
+# Use --no-owner --no-group --no-perms to avoid permission errors when
+# existing server files are owned by a different uid.
+rsync -avz --no-owner --no-group --no-perms \
+  -e "ssh -i '/Users/alienmacbook/Desktop/Keypair/n8n-singapore-key.pem'" \
   .next/standalone/ \
-  ubuntu@54.169.168.58:/var/www/ai-search-checker/
+  ubuntu@54.169.168.58:/var/www/ai-search-checker/.next/standalone/
 
 # 4. Restart app
-ssh -i "/Users/alienmacbook/Desktop/ohm website/n8n-singapore-key.pem" \
+ssh -i "/Users/alienmacbook/Desktop/Keypair/n8n-singapore-key.pem" \
   ubuntu@54.169.168.58 \
   "pm2 restart ai-checker"
 ```
@@ -546,7 +548,7 @@ ssh -i "/Users/alienmacbook/Desktop/ohm website/n8n-singapore-key.pem" \
 ### SSH Key Location
 
 ```
-/Users/alienmacbook/Desktop/ohm website/n8n-singapore-key.pem
+/Users/alienmacbook/Desktop/Keypair/n8n-singapore-key.pem
 ```
 
 ### GitHub

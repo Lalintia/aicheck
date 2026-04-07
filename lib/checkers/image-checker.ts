@@ -150,7 +150,11 @@ export function checkImageAI(html: string): CheckResult {
   }
 
   if (withPlaceholderAlt > 0) {
-    score -= withPlaceholderAlt * 5;
+    // Capped at 15. Placeholder alts are already counted as "no alt" in
+    // withAlt, which drags down altRate and triggers the altPenalty above —
+    // this is a secondary signal, so the cap prevents double-punishing.
+    const placeholderPenalty = Math.min(withPlaceholderAlt * 5, 15);
+    score -= placeholderPenalty;
     warnings.push(`${withPlaceholderAlt} image${withPlaceholderAlt > 1 ? 's have' : ' has'} placeholder alt text (e.g., "image1.jpg") — use descriptive text instead`);
   }
 
@@ -163,15 +167,15 @@ export function checkImageAI(html: string): CheckResult {
     score -= 7;
   }
 
-  // Figure/figcaption bonus (10 points)
+  // Figure/figcaption is a nice-to-have, not critical
   if (!hasFigures && contentImages.length >= 3) {
-    score -= 10;
+    score -= 5;
     warnings.push('No <figure> + <figcaption> used — adding captions helps AI understand image context');
   }
 
-  // ImageObject schema bonus (5 points)
+  // ImageObject schema is a nice-to-have, not critical
   if (!hasImageSchema && contentImages.length >= 3) {
-    score -= 5;
+    score -= 3;
     warnings.push('No ImageObject schema found — structured data helps AI index images');
   }
 
