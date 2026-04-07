@@ -45,6 +45,15 @@ function parseKnowledgeGraph(value: unknown): KnowledgeGraphData | undefined {
   };
 }
 
+function parseBreakdown(value: unknown): Record<string, number> | undefined {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) { return undefined; }
+  const result: Record<string, number> = {};
+  for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof v === 'number') { result[k] = v; }
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
 export default function AICheckPage(): React.ReactElement {
   const { t } = useI18n();
   const [result, setResult] = useState<AICheckResponse | null>(null);
@@ -325,9 +334,7 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
   const productsKnown = d.productsKnown === true;
   const googlePresence = parseGooglePresence(d.googlePresence);
   const knowledgeGraphData = parseKnowledgeGraph(d.knowledgeGraph);
-  const breakdown = (d.breakdown && typeof d.breakdown === 'object' && !Array.isArray(d.breakdown))
-    ? d.breakdown as Record<string, number>
-    : undefined;
+  const breakdown = parseBreakdown(d.breakdown);
   const summary = typeof d.summary === 'string' ? d.summary : '';
   const details = typeof d.details === 'string' ? d.details : '';
   const model = typeof d.model === 'string' ? d.model : 'gpt-4.1-nano';

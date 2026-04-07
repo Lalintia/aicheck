@@ -28,13 +28,17 @@ import { isSafeUrlWithDns, safeFetch } from '@/lib/security';
 // API Route Handler
 export async function POST(request: NextRequest) {
   try {
-    // Reject oversized request bodies before buffering (max ~4KB covers any valid URL)
-    const contentLength = request.headers.get('content-length');
-    const cl = contentLength ? parseInt(contentLength, 10) : NaN;
-    if (!isNaN(cl) && (cl < 0 || cl > 4096)) {
+    // Hard body size cap — reads actual bytes, not the Content-Length header (which can be omitted)
+    const rawBody = await request.text();
+    if (rawBody.length > 4096) {
       return NextResponse.json({ error: 'Request body too large' }, { status: 413 });
     }
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    }
     const parsed = checkRequestSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(

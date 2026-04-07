@@ -88,9 +88,13 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
 
       {open && (
         <div
+          role="presentation"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
           onClick={(e) => {
             if (e.target === e.currentTarget) setOpen(false);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') { setOpen(false); }
           }}
         >
           <div

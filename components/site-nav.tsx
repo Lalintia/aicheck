@@ -13,6 +13,7 @@ export function SiteNav({ active }: SiteNavProps): React.ReactElement {
       <div className="pointer-events-auto flex items-center gap-1 p-1 rounded-full bg-white/80 backdrop-blur-md border border-frost-200/50 shadow-lg shadow-frost-500/5">
         <Link
           href="/"
+          aria-current={active === 'checks' ? 'page' : undefined}
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
             active === 'checks'
               ? 'bg-frost-500 text-white shadow-md shadow-frost-500/20'
@@ -20,11 +21,12 @@ export function SiteNav({ active }: SiteNavProps): React.ReactElement {
           }`}
         >
           <Radar className="w-4 h-4" aria-hidden="true" />
-          <span className="hidden sm:inline">12 Checks</span>
+          <span className="hidden sm:inline">10 Checks</span>
           <span className="sm:hidden">Checks</span>
         </Link>
         <Link
           href="/ai-check"
+          aria-current={active === 'ai-check' ? 'page' : undefined}
           className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
             active === 'ai-check'
               ? 'bg-gradient-to-r from-violet-500 to-frost-500 text-white shadow-md shadow-violet-500/20'

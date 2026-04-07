@@ -58,7 +58,6 @@ export function ChecklistItem({ index, check, checkType }: ChecklistItemProps): 
           <CheckReferenceButton checkType={checkType} />
 
           <span
-            aria-label={status.label}
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors duration-200 ${
               status.status === 'good'
                 ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
@@ -68,7 +67,7 @@ export function ChecklistItem({ index, check, checkType }: ChecklistItemProps): 
             }`}
           >
             <span aria-hidden="true">{status.icon}</span>
-            <span className="hidden sm:inline">{status.label}</span>
+            <span className="sr-only sm:not-sr-only">{status.label}</span>
           </span>
         </div>
       </div>

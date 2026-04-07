@@ -1,7 +1,7 @@
 'use client';
 
 import { CheckCircle, AlertCircle, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useId } from 'react';
 
 export interface SchemaDetail {
   readonly score: number;
@@ -33,6 +33,7 @@ export function SchemaDetails({
   localBusinesses,
 }: SchemaDetailsProps): React.ReactElement | null {
   const [expanded, setExpanded] = useState(true);
+  const panelId = useId();
 
   const hasAnyData = 
     (organizations && organizations.length > 0) ||
@@ -54,9 +55,10 @@ export function SchemaDetails({
   return (
     <div className="mt-4 border-t border-gray-200 pt-4">
       <button
+        type="button"
         onClick={() => setExpanded(!expanded)}
         aria-expanded={expanded}
-        aria-controls="schema-details-panel"
+        aria-controls={panelId}
         className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
       >
         {expanded ? <ChevronUp className="w-4 h-4" aria-hidden="true" /> : <ChevronDown className="w-4 h-4" aria-hidden="true" />}
@@ -64,7 +66,7 @@ export function SchemaDetails({
       </button>
 
       {expanded && (
-        <div id="schema-details-panel" className="mt-3 space-y-3">
+        <div id={panelId} className="mt-3 space-y-3">
           {organizations && organizations.map((org, i) => (
             <SchemaTypeDetail
               key={`org-${i}`}
@@ -162,6 +164,7 @@ function SchemaTypeDetail({ type, detail, description }: SchemaTypeDetailProps):
             {detail.score}%
           </span>
           <button
+            type="button"
             onClick={() => setShowDetails(!showDetails)}
             aria-expanded={showDetails}
             aria-label={`${showDetails ? 'Hide' : 'Show'} details for ${type} schema`}
@@ -230,8 +233,8 @@ function SchemaTypeDetail({ type, detail, description }: SchemaTypeDetailProps):
             <div className="mt-2 p-2 bg-rose-100 rounded-lg">
               <p className="text-rose-800 font-medium">Errors:</p>
               <ul className="list-disc list-inside text-rose-700 text-xs mt-1">
-                {errors.map((error, i) => (
-                  <li key={i}>{error}</li>
+                {errors.map((error) => (
+                  <li key={error}>{error}</li>
                 ))}
               </ul>
             </div>
@@ -242,8 +245,8 @@ function SchemaTypeDetail({ type, detail, description }: SchemaTypeDetailProps):
             <div className="mt-2 p-2 bg-amber-100 rounded-lg">
               <p className="text-amber-800 font-medium">Warnings:</p>
               <ul className="list-disc list-inside text-amber-700 text-xs mt-1">
-                {warnings.map((warning, i) => (
-                  <li key={i}>{warning}</li>
+                {warnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
                 ))}
               </ul>
             </div>

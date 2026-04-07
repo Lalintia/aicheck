@@ -16,6 +16,13 @@ const MAX_ENTRIES = 100_000; // Hard cap to prevent memory exhaustion from IP fl
 class RateLimiter {
   private map = new Map<string, RateLimitRecord>();
   private lastCleanup = Date.now();
+  private readonly limit: number;
+  private readonly window: number;
+
+  constructor(limit: number = RATE_LIMIT, window: number = RATE_WINDOW) {
+    this.limit = limit;
+    this.window = window;
+  }
 
   /**
    * Check if a request should be rate limited
@@ -35,21 +42,21 @@ class RateLimiter {
       // First request or window expired
       this.map.set(ip, {
         count: 1,
-        resetTime: now + RATE_WINDOW,
+        resetTime: now + this.window,
       });
-      return { allowed: true, remaining: RATE_LIMIT - 1 };
+      return { allowed: true, remaining: this.limit - 1 };
     }
 
     // Increment counter
     record.count++;
 
-    if (record.count > RATE_LIMIT) {
+    if (record.count > this.limit) {
       // Rate limit exceeded
       const retryAfter = Math.ceil((record.resetTime - now) / 1000);
       return { allowed: false, retryAfter, remaining: 0 };
     }
 
-    return { allowed: true, remaining: Math.max(0, RATE_LIMIT - record.count) };
+    return { allowed: true, remaining: Math.max(0, this.limit - record.count) };
   }
 
   /**
@@ -60,13 +67,13 @@ class RateLimiter {
     const record = this.map.get(ip);
 
     if (!record || now > record.resetTime) {
-      return { count: 0, resetTime: now + RATE_WINDOW, remaining: RATE_LIMIT };
+      return { count: 0, resetTime: now + this.window, remaining: this.limit };
     }
 
     return {
       count: record.count,
       resetTime: record.resetTime,
-      remaining: Math.max(0, RATE_LIMIT - record.count),
+      remaining: Math.max(0, this.limit - record.count),
     };
   }
 
@@ -75,7 +82,7 @@ class RateLimiter {
    */
   private maybeCleanup(): void {
     const now = Date.now();
-    
+
     // Only cleanup every 5 minutes
     if (now - this.lastCleanup < CLEANUP_INTERVAL) {
       return;
@@ -88,7 +95,6 @@ class RateLimiter {
         this.map.delete(ip);
       }
     }
-
   }
 
   /**
@@ -112,49 +118,10 @@ class RateLimiter {
   }
 }
 
-// Export singleton instance for general API (10 req/min)
+// General API rate limiter (10 req/min per IP)
 export const rateLimiter = new RateLimiter();
 
-// Stricter rate limiter for OpenAI-powered endpoints (3 req/min)
-const AI_RATE_LIMIT = 3;
-const AI_RATE_WINDOW = 60 * 1000;
+// Stricter rate limiter for OpenAI-powered endpoints (3 req/min per IP)
+export const aiRateLimiter = new RateLimiter(3, 60 * 1000);
 
-class AIRateLimiter {
-  private map = new Map<string, RateLimitRecord>();
-  private lastCleanup = Date.now();
-
-  check(ip: string): { allowed: boolean; retryAfter?: number; remaining: number } {
-    const now = Date.now();
-
-    if (now - this.lastCleanup > CLEANUP_INTERVAL) {
-      this.lastCleanup = now;
-      for (const [key, record] of this.map.entries()) {
-        if (now > record.resetTime) {
-          this.map.delete(key);
-        }
-      }
-    }
-
-    const record = this.map.get(ip);
-
-    if (!record || now > record.resetTime) {
-      if (!record && this.map.size >= MAX_ENTRIES) {
-        return { allowed: false, retryAfter: 60, remaining: 0 };
-      }
-      this.map.set(ip, { count: 1, resetTime: now + AI_RATE_WINDOW });
-      return { allowed: true, remaining: AI_RATE_LIMIT - 1 };
-    }
-
-    record.count++;
-
-    if (record.count > AI_RATE_LIMIT) {
-      const retryAfter = Math.ceil((record.resetTime - now) / 1000);
-      return { allowed: false, retryAfter, remaining: 0 };
-    }
-
-    return { allowed: true, remaining: Math.max(0, AI_RATE_LIMIT - record.count) };
-  }
-}
-
-export const aiRateLimiter = new AIRateLimiter();
 export { RATE_LIMIT, RATE_WINDOW };

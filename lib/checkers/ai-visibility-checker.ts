@@ -65,7 +65,8 @@ function extractSecondLevelDomain(hostname: string): string {
 function sanitizeMeta(value: string, maxLength: number): string {
   return value
     .replace(/[\x00-\x1f\x7f]/g, ' ')
-    .replace(/[^\w\s.,!?:()\-]/g, ' ')
+    .replace(/[{}[\]"':]/g, ' ')      // strip JSON structure chars to prevent prompt injection
+    .replace(/[^\w\s.,!?()\-]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, maxLength);
@@ -84,8 +85,8 @@ function buildPrompt(url: string, title: string, description: string): string {
 
 Website URL: ${url}
 Domain: ${domain}
-${safeTitle ? `Page Title: ${safeTitle}` : ''}
-${safeDescription ? `Description: ${safeDescription}` : ''}
+${safeTitle ? `Page Title: """${safeTitle}"""` : ''}
+${safeDescription ? `Description: """${safeDescription}"""` : ''}
 
 Answer based on your training data only:
 1. Do you recognize this website or the organization behind it?
@@ -351,7 +352,8 @@ export async function checkAIVisibility(url: string, html: string): Promise<Chec
     // then sanitize to prevent query injection via malicious subdomain labels
     const rawBrand = extractSecondLevelDomain(domain);
     const brandName = rawBrand.replace(/[^\w\s-]/g, '').slice(0, 50).trim();
-    const kgQuery = brandName ? `${brandName} company` : domain;
+    const safeDomain = domain.replace(/[^\w.-]/g, '').slice(0, 100);
+    const kgQuery = brandName ? `${brandName} company` : safeDomain;
 
     // Run 3 requests in parallel with allSettled to avoid wasting quota
     // when one call fails — all three must be independently tolerant
@@ -499,15 +501,19 @@ async function callOpenAI(
   }
 
   let bodyTimeoutId: ReturnType<typeof setTimeout> | undefined;
-  const data = await Promise.race([
-    response.json(),
-    new Promise<never>((_, reject) => {
-      bodyTimeoutId = setTimeout(() => reject(new Error('Response read timeout')), 10000);
-    }),
-  ]);
-  clearTimeout(bodyTimeoutId);
+  let data: unknown;
+  try {
+    data = await Promise.race([
+      response.json(),
+      new Promise<never>((_, reject) => {
+        bodyTimeoutId = setTimeout(() => reject(new Error('Response read timeout')), 10000);
+      }),
+    ]);
+  } finally {
+    clearTimeout(bodyTimeoutId);
+  }
 
-  const messageContent = data?.choices?.[0]?.message?.content;
+  const messageContent = (data as { choices?: Array<{ message?: { content?: string } }> } | null)?.choices?.[0]?.message?.content;
   if (!messageContent) {
     return { error: 'empty response', reason: 'empty_response' };
   }

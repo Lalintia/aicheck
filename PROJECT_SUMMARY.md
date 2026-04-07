@@ -534,10 +534,23 @@ cp -r public .next/standalone/
 # 3. Upload to EC2 (rsync — target MUST be .next/standalone/ to match PM2 cwd)
 # Use --no-owner --no-group --no-perms to avoid permission errors when
 # existing server files are owned by a different uid.
+# 3a. Upload standalone app
 rsync -avz --no-owner --no-group --no-perms \
   -e "ssh -i '/Users/alienmacbook/Desktop/Keypair/n8n-singapore-key.pem'" \
   .next/standalone/ \
-  ubuntu@54.169.168.58:/var/www/ai-search-checker/.next/standalone/
+  ubuntu@54.169.168.58:/var/www/ai-checker/
+
+# 3b. Upload static assets (required — standalone does NOT include these)
+rsync -avz --no-owner --no-group --no-perms \
+  -e "ssh -i '/Users/alienmacbook/Desktop/Keypair/n8n-singapore-key.pem'" \
+  .next/static/ \
+  ubuntu@54.169.168.58:/var/www/ai-checker/.next/static/
+
+# 3c. Upload public files
+rsync -avz --no-owner --no-group --no-perms \
+  -e "ssh -i '/Users/alienmacbook/Desktop/Keypair/n8n-singapore-key.pem'" \
+  public/ \
+  ubuntu@54.169.168.58:/var/www/ai-checker/public/
 
 # 4. Restart app
 ssh -i "/Users/alienmacbook/Desktop/Keypair/n8n-singapore-key.pem" \
@@ -574,7 +587,7 @@ GIT_SSH_COMMAND="ssh -i /Users/alienmacbook/.ssh/id_aichecker_new" git push orig
 │              AWS EC2 — Singapore                    │
 │  IP: 54.169.168.58                                  │
 │  OS: Ubuntu                                         │
-│  App Path: /var/www/ai-search-checker/              │
+│  App Path: /var/www/ai-checker/              │
 │                                                     │
 │  ┌─────────────────────────────────────────────┐    │
 │  │  Nginx (Reverse Proxy)                      │    │
@@ -585,7 +598,7 @@ GIT_SSH_COMMAND="ssh -i /Users/alienmacbook/.ssh/id_aichecker_new" git push orig
 │  ┌──────────────────────▼──────────────────────┐    │
 │  │  PM2 Process Manager                        │    │
 │  │  Name: ai-checker  (ID: 2)   Port: 3001     │    │
-│  │  Script: /var/www/ai-search-checker/server.js│   │
+│  │  Script: /var/www/ai-checker/server.js│   │
 │  └─────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────┘
 ```
@@ -594,7 +607,7 @@ GIT_SSH_COMMAND="ssh -i /Users/alienmacbook/.ssh/id_aichecker_new" git push orig
 
 | Item | Path |
 |------|------|
-| App files | `/var/www/ai-search-checker/` |
+| App files | `/var/www/ai-checker/` |
 | Nginx config | `/etc/nginx/sites-enabled/` |
 | SSL certs | `/etc/letsencrypt/live/aicheck.ohmai.me/` |
 
