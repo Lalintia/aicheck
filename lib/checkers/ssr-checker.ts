@@ -94,8 +94,13 @@ export function checkSSR(html: string): CheckResult {
   let score = 100;
 
   // Check 1: Empty body detection (critical)
-  const bodyMatch = html.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-  const bodyContent = bodyMatch ? bodyMatch[1] : html;
+  // Use indexOf instead of regex to avoid ReDoS on large HTML
+  const bodyStartIdx = html.toLowerCase().indexOf('<body');
+  const bodyTagEnd = bodyStartIdx !== -1 ? html.indexOf('>', bodyStartIdx) : -1;
+  const bodyCloseIdx = html.toLowerCase().lastIndexOf('</body>');
+  const bodyContent = (bodyTagEnd !== -1 && bodyCloseIdx > bodyTagEnd)
+    ? html.slice(bodyTagEnd + 1, bodyCloseIdx)
+    : html;
   const textContent = stripHtmlTags(bodyContent);
 
   if (textContent.length < MIN_CONTENT_LENGTH) {

@@ -213,10 +213,11 @@ function AICheckHero({ onSubmit, isLoading, error, ai, formT }: AICheckHeroProps
                   }`}
                   aria-required="true"
                   aria-invalid={error ? 'true' : 'false'}
+                  aria-describedby={error ? 'ai-check-url-error' : undefined}
                 />
               </div>
               {error && (
-                <div className="flex items-center gap-2 mt-2 text-red-600 text-sm" role="alert">
+                <div id="ai-check-url-error" className="flex items-center gap-2 mt-2 text-red-600 text-sm" role="alert">
                   <AlertCircle className="w-4 h-4 flex-shrink-0" aria-hidden="true" />
                   <span>{error}</span>
                 </div>
@@ -276,30 +277,25 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
   const d = result.data;
 
   const knows = d.knows === true;
-  const accuracy = (d.accuracy as string) ?? 'unknown';
+  const accuracy = typeof d.accuracy === 'string' ? d.accuracy : 'unknown';
   const hasUrl = d.hasUrl === true;
-  const knowledgeDepth = (d.knowledgeDepth as string) ?? 'none';
+  const knowledgeDepth = typeof d.knowledgeDepth === 'string' ? d.knowledgeDepth : 'none';
   const productsKnown = d.productsKnown === true;
-  const googlePresence = d.googlePresence as { totalResults: number; topPosition: number | null } | undefined;
-  const breakdown = d.breakdown as Record<string, number> | undefined;
-  const summary = (d.summary as string) ?? '';
-  const details = (d.details as string) ?? '';
-  const model = (d.model as string) ?? 'gpt-4.1-nano';
+  const googlePresence = (d.googlePresence && typeof d.googlePresence === 'object')
+    ? d.googlePresence as { totalResults: number; topPosition: number | null }
+    : undefined;
+  const breakdown = (d.breakdown && typeof d.breakdown === 'object' && !Array.isArray(d.breakdown))
+    ? d.breakdown as Record<string, number>
+    : undefined;
+  const summary = typeof d.summary === 'string' ? d.summary : '';
+  const details = typeof d.details === 'string' ? d.details : '';
+  const model = typeof d.model === 'string' ? d.model : 'gpt-4.1-nano';
   const skipped = d.skipped === true;
 
   const score = result.score;
 
-  const scoreColor = useMemo(() => {
-    if (score >= 80) { return 'text-emerald-500'; }
-    if (score >= 50) { return 'text-amber-500'; }
-    return 'text-rose-500';
-  }, [score]);
-
-  const ringColor = useMemo(() => {
-    if (score >= 80) { return 'stroke-emerald-500'; }
-    if (score >= 50) { return 'stroke-amber-500'; }
-    return 'stroke-rose-500';
-  }, [score]);
+  const scoreColor = score >= 80 ? 'text-emerald-500' : score >= 50 ? 'text-amber-500' : 'text-rose-500';
+  const ringColor = score >= 80 ? 'stroke-emerald-500' : score >= 50 ? 'stroke-amber-500' : 'stroke-rose-500';
 
   const googleLabel = useMemo(() => {
     if (!googlePresence) { return ai.googleNone; }
@@ -321,7 +317,7 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
           <AlertTriangle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
           <h2 className="text-lg font-bold text-frost-900 mb-2">{ai.skipped}</h2>
           <p className="text-frost-600 mb-6">{result.details}</p>
-          <button onClick={onReset} className="bg-frost-500 hover:bg-frost-600 text-white px-6 py-3 rounded-xl font-medium transition-all">
+          <button type="button" onClick={onReset} className="bg-frost-500 hover:bg-frost-600 text-white px-6 py-3 rounded-xl font-medium transition-all">
             {ai.analyzeAnother}
           </button>
         </div>
@@ -348,8 +344,8 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
 
       {/* Score Ring */}
       <div className="animate-fade-up stagger-1 flex justify-center mb-10">
-        <div className="relative w-40 h-40">
-          <svg viewBox="0 0 120 120" className="w-full h-full">
+        <div className="relative w-40 h-40" role="img" aria-label={`AI Visibility score: ${score} out of 100`}>
+          <svg viewBox="0 0 120 120" className="w-full h-full" aria-hidden="true">
             <circle cx="60" cy="60" r="54" fill="none" stroke="currentColor" strokeWidth="6" className="text-frost-200/50" />
             <circle
               cx="60" cy="60" r="54" fill="none" strokeWidth="6"
@@ -484,6 +480,7 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
       {/* Reset */}
       <div className="animate-fade-up stagger-6 text-center">
         <button
+          type="button"
           onClick={onReset}
           className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-frost-500 hover:bg-frost-600 text-white font-medium transition-all hover:scale-[1.01] active:scale-[0.99]"
         >

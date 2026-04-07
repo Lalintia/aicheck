@@ -32,7 +32,8 @@ export async function POST(request: NextRequest) {
   try {
     // Reject oversized request bodies before buffering (max ~4KB covers any valid URL)
     const contentLength = request.headers.get('content-length');
-    if (contentLength && parseInt(contentLength, 10) > 4096) {
+    const cl = contentLength ? parseInt(contentLength, 10) : NaN;
+    if (!isNaN(cl) && (cl < 0 || cl > 4096)) {
       return NextResponse.json({ error: 'Request body too large' }, { status: 413 });
     }
     const body = await request.json();
@@ -109,10 +110,11 @@ export async function POST(request: NextRequest) {
 
     // Run all checks with individual error handling
     // Each check is wrapped to prevent one failure from killing all checks
-    const safeCheck = async <T,>(_name: string, checkFn: () => Promise<T> | T, defaultValue: T): Promise<T> => {
+    const safeCheck = async <T,>(name: string, checkFn: () => Promise<T> | T, defaultValue: T): Promise<T> => {
       try {
         return await checkFn();
-      } catch {
+      } catch (error) {
+        console.error(`[safeCheck] ${name} failed:`, error instanceof Error ? error.message : error);
         return defaultValue;
       }
     };
@@ -206,7 +208,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    // Top-level error — return generic message to client
+    console.error('[/api/check] Unhandled error:', error instanceof Error ? error.stack : error);
     return NextResponse.json(
       { error: 'Analysis failed. Please try again.' },
       { status: 500 }

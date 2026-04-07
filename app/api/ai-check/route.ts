@@ -11,7 +11,8 @@ import { isSafeUrlWithDns, safeFetch } from '@/lib/security';
 export async function POST(request: NextRequest) {
   try {
     const contentLength = request.headers.get('content-length');
-    if (contentLength && parseInt(contentLength, 10) > 4096) {
+    const cl = contentLength ? parseInt(contentLength, 10) : NaN;
+    if (!isNaN(cl) && (cl < 0 || cl > 4096)) {
       return NextResponse.json({ error: 'Request body too large' }, { status: 413 });
     }
 
@@ -49,8 +50,20 @@ export async function POST(request: NextRequest) {
       });
 
       if (pageResponse.ok) {
-        const text = await pageResponse.text();
-        html = text.slice(0, 100000);
+        const htmlCl = pageResponse.headers.get('content-length');
+        if (htmlCl && parseInt(htmlCl, 10) > 5 * 1024 * 1024) {
+          html = '';
+        } else {
+          let htmlReadTimeout: ReturnType<typeof setTimeout> | undefined;
+          const text = await Promise.race([
+            pageResponse.text(),
+            new Promise<never>((_, reject) => {
+              htmlReadTimeout = setTimeout(() => reject(new Error('HTML read timeout')), 10000);
+            }),
+          ]);
+          clearTimeout(htmlReadTimeout);
+          html = text.slice(0, 100000);
+        }
       }
     } catch {
       // Continue with empty HTML — AI check can still work with URL alone
@@ -64,7 +77,8 @@ export async function POST(request: NextRequest) {
       url: normalizedUrl,
       result,
     });
-  } catch {
+  } catch (error) {
+    console.error('[/api/ai-check] Unhandled error:', error instanceof Error ? error.stack : error);
     return NextResponse.json(
       { error: 'AI Visibility check failed. Please try again.' },
       { status: 500 }
