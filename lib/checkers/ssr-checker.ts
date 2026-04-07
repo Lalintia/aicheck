@@ -37,8 +37,14 @@ const JS_HEAVY_INDICATORS = [
   { name: 'webpack runtime', pattern: /webpackJsonp|__webpack_require__/i },
 ] as const;
 
+// Match meta description in both attribute orders (name-first or content-first)
+// since HTML allows attributes in any order.
+const META_DESCRIPTION_NAME_FIRST = /<meta[^>]*name=["']description["'][^>]*content=["'][^"']{10,}["']/i;
+const META_DESCRIPTION_CONTENT_FIRST = /<meta[^>]*content=["'][^"']{10,}["'][^>]*name=["']description["']/i;
+
 const SSR_POSITIVE_INDICATORS = [
-  { name: 'meta description', pattern: /<meta[^>]*name=["']description["'][^>]*content=["'][^"']{10,}["']/i },
+  { name: 'meta description', pattern: META_DESCRIPTION_NAME_FIRST },
+  { name: 'meta description (alt order)', pattern: META_DESCRIPTION_CONTENT_FIRST },
   { name: 'Next.js SSR', pattern: /__NEXT_DATA__|__next/i },
   { name: 'Nuxt SSR', pattern: /__NUXT__|nuxt/i },
 ] as const;
@@ -166,7 +172,7 @@ export function checkSSR(html: string): CheckResult {
 
   // Check 6: Title and meta in initial HTML
   const hasTitle = /<title[^>]*>[^<]{2,}<\/title>/i.test(html);
-  const hasMetaDescription = /<meta[^>]*name=["']description["'][^>]*content=["'][^"']{10,}["']/i.test(html);
+  const hasMetaDescription = META_DESCRIPTION_NAME_FIRST.test(html) || META_DESCRIPTION_CONTENT_FIRST.test(html);
 
   // Scoring
   if (detectedSPA.length > 0 && ssrIndicators.length === 0) {

@@ -3,7 +3,8 @@
  * Validates JSON-LD Organization structured data
  */
 
-import { extractJsonLdScripts as _extractJsonLdScripts, isValidUrl } from './jsonld-utils';
+import { extractJsonLdScripts as _extractJsonLdScripts, isValidUrl, findSchemasByType } from './jsonld-utils';
+export { findSchemasByType };
 
 // ============================================================================
 // Type Definitions
@@ -393,61 +394,8 @@ export function extractJsonLdScripts(html: string): readonly unknown[] {
   return _extractJsonLdScripts(html);
 }
 
-/**
- * Finds all schemas of a specific type from parsed JSON-LD scripts
- */
-export function findSchemasByType(
-  scripts: readonly unknown[],
-  typeName: string
-): readonly unknown[] {
-  const results: unknown[] = [];
-
-  for (const script of scripts) {
-    if (typeof script !== 'object' || script === null) {
-      continue;
-    }
-
-    const scriptObj = script as { readonly '@type'?: string | string[]; readonly '@graph'?: readonly unknown[] };
-
-    // Handle @graph array
-    if (scriptObj['@graph'] && Array.isArray(scriptObj['@graph'])) {
-      for (const item of scriptObj['@graph']) {
-        if (isSchemaOfType(item, typeName)) {
-          results.push(item);
-        }
-      }
-    }
-
-    // Handle direct schema
-    if (isSchemaOfType(script, typeName)) {
-      results.push(script);
-    }
-  }
-
-  return results;
-}
-
-/**
- * Checks if a schema object is of a specific type
- */
-function isSchemaOfType(schema: unknown, typeName: string): boolean {
-  if (typeof schema !== 'object' || schema === null) {
-    return false;
-  }
-
-  const schemaObj = schema as { readonly '@type'?: string | string[] };
-  const types = schemaObj['@type'];
-
-  if (typeof types === 'string') {
-    return types === typeName;
-  }
-
-  if (Array.isArray(types)) {
-    return types.includes(typeName);
-  }
-
-  return false;
-}
+// findSchemasByType + isSchemaOfType moved to jsonld-utils.ts to avoid
+// duplicated logic. findSchemasByType is re-exported at top of this file.
 
 // ============================================================================
 // Main Validation Functions

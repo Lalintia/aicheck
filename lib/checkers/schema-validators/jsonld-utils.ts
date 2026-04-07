@@ -147,8 +147,51 @@ export function findSchemasByType(
   return results;
 }
 
+// Schema.org subtype mapping — match parent type when a subtype is found.
+// LocalBusiness is intentionally excluded from ORGANIZATION_SUBTYPES because it
+// is validated separately with its own stricter requirements (address, geo, etc.)
+const ORGANIZATION_SUBTYPES: ReadonlySet<string> = new Set([
+  'Corporation',
+  'NGO',
+  'EducationalOrganization',
+  'CollegeOrUniversity',
+  'ElementarySchool',
+  'HighSchool',
+  'MiddleSchool',
+  'Preschool',
+  'School',
+  'GovernmentOrganization',
+  'MedicalOrganization',
+  'Hospital',
+  'NewsMediaOrganization',
+  'PerformingGroup',
+  'DanceGroup',
+  'MusicGroup',
+  'TheaterGroup',
+  'ResearchOrganization',
+  'SportsOrganization',
+  'SportsTeam',
+  'WorkersUnion',
+  'Airline',
+  'Consortium',
+  'FundingScheme',
+  'LibrarySystem',
+  'OnlineBusiness',
+  'OnlineStore',
+  'Project',
+  'ResearchProject',
+  'FundingAgency',
+  'PoliticalParty',
+]);
+
+function matchesTypeWithSubtypes(type: string, typeName: string): boolean {
+  if (type === typeName) { return true; }
+  if (typeName === 'Organization' && ORGANIZATION_SUBTYPES.has(type)) { return true; }
+  return false;
+}
+
 /**
- * Checks if a schema object is of a specific type
+ * Checks if a schema object is of a specific type (including Schema.org subtypes)
  */
 export function isSchemaOfType(schema: unknown, typeName: string): boolean {
   if (typeof schema !== 'object' || schema === null) {
@@ -159,11 +202,11 @@ export function isSchemaOfType(schema: unknown, typeName: string): boolean {
   const types = schemaObj['@type'];
 
   if (typeof types === 'string') {
-    return types === typeName;
+    return matchesTypeWithSubtypes(types, typeName);
   }
 
   if (Array.isArray(types)) {
-    return types.includes(typeName);
+    return types.some((t) => typeof t === 'string' && matchesTypeWithSubtypes(t, typeName));
   }
 
   return false;
