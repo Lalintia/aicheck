@@ -141,7 +141,7 @@ const defaultAiCheck = {
     { label: 'Knowledge Depth', max: '15', desc: 'How detailed is the AI\'s knowledge? (history, leadership, competitors)' },
     { label: 'Products/Services', max: '15', desc: 'Can the AI name specific products or services offered?' },
     { label: 'Google Presence', max: '15', desc: 'Does the brand appear in Google search top results?' },
-  ] as { label: string; max: string; desc: string }[],
+  ] as ReadonlyArray<{ readonly label: string; readonly max: string; readonly desc: string }>,
   summary: 'Summary',
   details: 'Details',
   model: 'Model',

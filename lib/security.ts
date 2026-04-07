@@ -33,6 +33,8 @@ export function isSafeUrl(url: string): boolean {
       }
       if (/^f[cd][0-9a-f]{2}:/i.test(ipv6Literal)) return false; // fc00::/7 ULA (fc and fd)
       if (/^fe[89ab][0-9a-f]:/i.test(ipv6Literal)) return false; // fe80::/10 link-local
+      if (/^2001:/i.test(ipv6Literal)) return false; // Teredo tunnelling
+      if (/^2002:(?:7f|0a|c0a8|ac1)/i.test(ipv6Literal)) return false; // 6to4 mapping private IPv4
       if (ipv6Literal === '::') return false; // unspecified address
     }
     

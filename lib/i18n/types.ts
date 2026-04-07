@@ -88,11 +88,11 @@ export interface Translations {
     readonly googleNone: string;
     readonly scoreBreakdown: string;
     readonly scoringCriteria: string;
-    readonly criteriaItems: {
-      label: string;
-      max: string;
-      desc: string;
-    }[];
+    readonly criteriaItems: ReadonlyArray<{
+      readonly label: string;
+      readonly max: string;
+      readonly desc: string;
+    }>;
     readonly summary: string;
     readonly details: string;
     readonly model: string;

@@ -150,7 +150,19 @@ async function searchGoogle(domain: string): Promise<GoogleSearchResult> {
       return { totalResults: 0, topPosition: null };
     }
 
-    const data = await response.json();
+    const cl = response.headers.get('content-length');
+    if (cl && parseInt(cl, 10) > 512 * 1024) {
+      return { totalResults: 0, topPosition: null };
+    }
+
+    let jsonTimeout: ReturnType<typeof setTimeout> | undefined;
+    const data = await Promise.race([
+      response.json(),
+      new Promise<never>((_, reject) => {
+        jsonTimeout = setTimeout(() => reject(new Error('Serper read timeout')), 5000);
+      }),
+    ]);
+    clearTimeout(jsonTimeout);
     const organic: Array<{ link?: string }> = data.organic ?? [];
     const totalResults = organic.length > 0
       ? Math.max(organic.length * 100, 1000)
@@ -397,7 +409,6 @@ async function callOpenAI(
   }
 
   if (!response.ok) {
-    await response.text().catch(() => '');
     return { error: 'API error', reason: 'api_error' };
   }
 

@@ -119,8 +119,8 @@ export async function checkSitemap(
 
     let foundSitemap: FoundSitemap;
     try {
-      // Race all URLs in parallel — first valid sitemap wins
-      foundSitemap = await Promise.any(sitemapUrls.map(trySitemapUrl));
+      // Race URLs in parallel (cap at 5 to limit outbound connections)
+      foundSitemap = await Promise.any(sitemapUrls.slice(0, 5).map(trySitemapUrl));
     } catch (err) {
       const errors =
         err instanceof AggregateError

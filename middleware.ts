@@ -113,8 +113,12 @@ function isValidIpFormat(ip: string): boolean {
   // Strict IPv4 validation (0-255 per octet) and basic IPv6 format check
   const ipv4Pattern = /^(25[0-5]|2[0-4]\d|[01]?\d\d?)(\.(25[0-5]|2[0-4]\d|[01]?\d\d?)){3}$/;
   const ipv6Pattern = /^[0-9a-fA-F:]+$/;
+  if (ipv6Pattern.test(ip)) {
+    const colonCount = (ip.match(/:/g) ?? []).length;
+    return colonCount >= 2 && colonCount <= 8;
+  }
 
-  return ipv4Pattern.test(ip) || ipv6Pattern.test(ip);
+  return ipv4Pattern.test(ip);
 }
 
 export const config = {

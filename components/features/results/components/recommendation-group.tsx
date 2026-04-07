@@ -57,7 +57,7 @@ export function RecommendationGroup({
   return (
     <div className={`${c.bg} rounded-2xl border ${c.border} p-4`}>
       <div className="flex items-center gap-2 mb-3">
-        <span className={`${c.headerBg} ${c.headerText} p-1.5 rounded-lg`}>{icon}</span>
+        <span className={`${c.headerBg} ${c.headerText} p-1.5 rounded-lg`} aria-hidden="true">{icon}</span>
         <h3 className={`font-semibold ${c.headerText}`}>{title}</h3>
         <span className={`ml-auto text-xs font-mono ${c.headerText} opacity-70`}>{count}</span>
       </div>
