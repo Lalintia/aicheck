@@ -132,13 +132,16 @@ export const en: Translations = {
     googleTop10: 'Top 10',
     googleLow: 'Low',
     googleNone: 'Not Found',
-    knowledgeGraph: 'Knowledge Graph',
-    knowledgeGraphFull: 'Full Entity',
-    knowledgeGraphPartial: 'Knowledge Panel',
-    knowledgeGraphAnswerOnly: 'Answer Only',
-    knowledgeGraphNone: 'Not Indexed',
+    aiOverview: 'AI Overview',
+    aiOverviewFull: 'Full Entity',
+    aiOverviewPartial: 'Knowledge Panel',
+    aiOverviewAnswerOnly: 'Answer Only',
+    aiOverviewNone: 'Not Indexed',
     scoreBreakdown: 'Score Breakdown',
     scoringCriteria: 'Scoring Criteria',
+    labelWhyMatters: 'Why it matters',
+    labelHowImprove: 'How to improve',
+    labelHowDetect: 'How we detect this',
     criteriaItems: [
       {
         label: 'AI Recognition',
@@ -146,6 +149,7 @@ export const en: Translations = {
         desc: 'Does the AI recognize this website or organization?',
         why: 'If AI does not know your brand, it cannot recommend you to users asking for solutions. This is the foundation of AI visibility — without recognition, no other signals matter.',
         howToImprove: 'Build brand awareness through English-language content, press releases, and mentions on authoritative sites. Create or improve your Wikipedia page. The more AI sees your brand during training, the better it knows you.',
+        howDetected: 'We send the URL + page title + meta description to GPT-4.1 nano with a strict JSON-only prompt, then parse the `knows: true/false` field. The model answers based only on its training data — no live web access — so this measures pure pre-trained knowledge.',
       },
       {
         label: 'Accuracy',
@@ -153,6 +157,7 @@ export const en: Translations = {
         desc: 'Is the AI\'s knowledge correct and up-to-date?',
         why: 'Inaccurate information can mislead potential customers and damage your reputation. AI may tell users wrong facts about your business, products, or pricing.',
         howToImprove: 'Maintain consistent information across your website, Wikipedia, Google Business Profile, and social media. Update key facts regularly. Use Schema.org structured data to give AI reliable, machine-readable facts.',
+        howDetected: 'GPT-4.1 nano compares its own training data against the live page title and meta description we fetch from your site, then classifies the match as `accurate` / `partial` / `inaccurate` / `unknown`. Scoring: accurate=15, partial=8, inaccurate=2.',
       },
       {
         label: 'URL Known',
@@ -160,6 +165,7 @@ export const en: Translations = {
         desc: 'Can the AI provide the correct website URL?',
         why: 'When users ask AI "where can I find X?", AI needs to give the right URL. If AI doesn\'t know your URL, users will never visit your site through AI conversations.',
         howToImprove: 'Ensure your website is clearly linked from Wikipedia, Wikidata, and your Google Business Profile. Use canonical URLs consistently across all platforms. Include your full URL in press releases and partner sites.',
+        howDetected: 'GPT-4.1 nano returns a `hasUrl: true/false` field after evaluating whether it can produce the correct URL for this organization from memory. Full score (10) if true, 0 if false.',
       },
       {
         label: 'Knowledge Depth',
@@ -167,6 +173,7 @@ export const en: Translations = {
         desc: 'How detailed is the AI\'s knowledge? (history, leadership, competitors)',
         why: 'Deep knowledge means AI can answer detailed questions about your company — history, leadership, competitive positioning, unique value. Shallow knowledge means AI only knows your name.',
         howToImprove: 'Publish detailed "About Us" content including company history, founders, milestones, and industry context. Create long-form articles about your domain expertise. Encourage press coverage that goes beyond product launches.',
+        howDetected: 'GPT-4.1 nano returns a `knowledgeDepth` enum: deep (knows industry position, history, leadership, competitors), moderate (knows what they do + some details), shallow (only name/category), or none. Scoring: deep=15, moderate=9, shallow=4.',
       },
       {
         label: 'Products/Services',
@@ -174,6 +181,7 @@ export const en: Translations = {
         desc: 'Can the AI name specific products or services offered?',
         why: 'When users ask AI to recommend a specific product or service, AI must know what you offer. If AI only knows your brand name but not what you sell, you lose every specific recommendation.',
         howToImprove: 'Create dedicated pages for each product/service with clear names, descriptions, and use cases. Use Product schema markup. List your offerings on industry directories and review sites. Publish case studies featuring specific products.',
+        howDetected: 'GPT-4.1 nano returns a `productsKnown: true/false` field indicating whether it can name specific products, services, or offerings from this organization. Full score (15) if true, 0 if false.',
       },
       {
         label: 'Google Presence',
@@ -181,13 +189,15 @@ export const en: Translations = {
         desc: 'Does the brand appear in Google search top results? (Traditional SEO)',
         why: 'Traditional SEO still matters — if users search your brand and find you in top results, it confirms Google sees you as authoritative. AI search engines also consider Google rankings as a trust signal.',
         howToImprove: 'Optimize for your brand name first — make sure searching your company name shows your website in top 3. Improve on-page SEO, build quality backlinks, and ensure your site is technically sound (speed, mobile, crawlability).',
+        howDetected: 'We query Serper.dev (Google Search API) with the full domain name and scan the top 10 organic results for a matching link. Scoring: Top 3 = 10, Top 5 = 8, Top 10 = 5, any result = 1-3.',
       },
       {
-        label: 'Knowledge Graph',
+        label: 'AI Overview',
         max: '15',
         desc: 'Is your brand in Google Knowledge Graph? (What AI Overview uses)',
         why: 'Google Knowledge Graph is the structured data that Google AI Overview, ChatGPT, and other AI assistants use to understand brands. If you\'re not in Knowledge Graph, AI Overview will never cite you as a source.',
         howToImprove: 'Create a Wikipedia page (most important), add entries to Wikidata, use Schema.org Organization markup on your site, get listed in authoritative databases (Crunchbase, LinkedIn Company Pages), and maintain a Google Business Profile.',
+        howDetected: 'We query Serper.dev with "{brand} company" and check for a `knowledgeGraph` object (with title/description) and an `answerBox` in the response. These are the exact signals Google AI Overview uses to decide which brands to cite. Full entity (both) = 15, Knowledge panel only = 12, Answer only = 6, None = 0.',
       },
     ],
     summary: 'Summary',

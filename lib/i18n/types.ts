@@ -86,19 +86,23 @@ export interface Translations {
     readonly googleTop10: string;
     readonly googleLow: string;
     readonly googleNone: string;
-    readonly knowledgeGraph: string;
-    readonly knowledgeGraphFull: string;
-    readonly knowledgeGraphPartial: string;
-    readonly knowledgeGraphAnswerOnly: string;
-    readonly knowledgeGraphNone: string;
+    readonly aiOverview: string;
+    readonly aiOverviewFull: string;
+    readonly aiOverviewPartial: string;
+    readonly aiOverviewAnswerOnly: string;
+    readonly aiOverviewNone: string;
     readonly scoreBreakdown: string;
     readonly scoringCriteria: string;
+    readonly labelWhyMatters: string;
+    readonly labelHowImprove: string;
+    readonly labelHowDetect: string;
     readonly criteriaItems: ReadonlyArray<{
       readonly label: string;
       readonly max: string;
       readonly desc: string;
       readonly why: string;
       readonly howToImprove: string;
+      readonly howDetected: string;
     }>;
     readonly summary: string;
     readonly details: string;

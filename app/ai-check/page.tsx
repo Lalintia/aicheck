@@ -165,22 +165,25 @@ const defaultAiCheck = {
   googleTop10: 'Top 10',
   googleLow: 'Low',
   googleNone: 'Not Found',
-  knowledgeGraph: 'Knowledge Graph',
-  knowledgeGraphFull: 'Full Entity',
-  knowledgeGraphPartial: 'Knowledge Panel',
-  knowledgeGraphAnswerOnly: 'Answer Only',
-  knowledgeGraphNone: 'Not Indexed',
+  aiOverview: 'AI Overview',
+  aiOverviewFull: 'Full Entity',
+  aiOverviewPartial: 'Knowledge Panel',
+  aiOverviewAnswerOnly: 'Answer Only',
+  aiOverviewNone: 'Not Indexed',
   scoreBreakdown: 'Score Breakdown',
   scoringCriteria: 'Scoring Criteria',
+  labelWhyMatters: 'Why it matters',
+  labelHowImprove: 'How to improve',
+  labelHowDetect: 'How we detect this',
   criteriaItems: [
-    { label: 'AI Recognition', max: '20', desc: 'Does the AI recognize this website?', why: '', howToImprove: '' },
-    { label: 'Accuracy', max: '15', desc: 'Is the AI\'s knowledge correct?', why: '', howToImprove: '' },
-    { label: 'URL Known', max: '10', desc: 'Can the AI provide the correct URL?', why: '', howToImprove: '' },
-    { label: 'Knowledge Depth', max: '15', desc: 'How deep is the AI\'s knowledge?', why: '', howToImprove: '' },
-    { label: 'Products/Services', max: '15', desc: 'Can AI name specific products?', why: '', howToImprove: '' },
-    { label: 'Google Presence', max: '10', desc: 'SEO ranking in Google search', why: '', howToImprove: '' },
-    { label: 'Knowledge Graph', max: '15', desc: 'Is the brand in Google Knowledge Graph?', why: '', howToImprove: '' },
-  ] as ReadonlyArray<{ readonly label: string; readonly max: string; readonly desc: string; readonly why: string; readonly howToImprove: string }>,
+    { label: 'AI Recognition', max: '20', desc: 'Does the AI recognize this website?', why: '', howToImprove: '', howDetected: '' },
+    { label: 'Accuracy', max: '15', desc: 'Is the AI\'s knowledge correct?', why: '', howToImprove: '', howDetected: '' },
+    { label: 'URL Known', max: '10', desc: 'Can the AI provide the correct URL?', why: '', howToImprove: '', howDetected: '' },
+    { label: 'Knowledge Depth', max: '15', desc: 'How deep is the AI\'s knowledge?', why: '', howToImprove: '', howDetected: '' },
+    { label: 'Products/Services', max: '15', desc: 'Can AI name specific products?', why: '', howToImprove: '', howDetected: '' },
+    { label: 'Google Presence', max: '10', desc: 'SEO ranking in Google search', why: '', howToImprove: '', howDetected: '' },
+    { label: 'AI Overview', max: '15', desc: 'Is the brand in Google AI Overview?', why: '', howToImprove: '', howDetected: '' },
+  ] as ReadonlyArray<{ readonly label: string; readonly max: string; readonly desc: string; readonly why: string; readonly howToImprove: string; readonly howDetected: string }>,
   summary: 'Summary',
   details: 'Details',
   model: 'Model',
@@ -346,12 +349,12 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
   }, [googlePresence, ai.googleTop3, ai.googleTop5, ai.googleTop10, ai.googleLow, ai.googleNone]);
 
   const kgLabel = useMemo(() => {
-    if (!knowledgeGraphData) { return ai.knowledgeGraphNone; }
-    if (knowledgeGraphData.hasKnowledgeGraph && knowledgeGraphData.hasAnswerBox) { return ai.knowledgeGraphFull; }
-    if (knowledgeGraphData.hasKnowledgeGraph) { return ai.knowledgeGraphPartial; }
-    if (knowledgeGraphData.hasAnswerBox) { return ai.knowledgeGraphAnswerOnly; }
-    return ai.knowledgeGraphNone;
-  }, [knowledgeGraphData, ai.knowledgeGraphFull, ai.knowledgeGraphPartial, ai.knowledgeGraphAnswerOnly, ai.knowledgeGraphNone]);
+    if (!knowledgeGraphData) { return ai.aiOverviewNone; }
+    if (knowledgeGraphData.hasKnowledgeGraph && knowledgeGraphData.hasAnswerBox) { return ai.aiOverviewFull; }
+    if (knowledgeGraphData.hasKnowledgeGraph) { return ai.aiOverviewPartial; }
+    if (knowledgeGraphData.hasAnswerBox) { return ai.aiOverviewAnswerOnly; }
+    return ai.aiOverviewNone;
+  }, [knowledgeGraphData, ai.aiOverviewFull, ai.aiOverviewPartial, ai.aiOverviewAnswerOnly, ai.aiOverviewNone]);
 
   const circumference = 2 * Math.PI * 54;
   const offset = circumference - (score / 100) * circumference;
@@ -378,7 +381,7 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
     { label: ai.knowledgeDepth, score: breakdown?.depth ?? 0, max: 15 },
     { label: ai.productsKnown, score: breakdown?.products ?? 0, max: 15 },
     { label: ai.googlePresence, score: breakdown?.googlePresence ?? 0, max: 10 },
-    { label: ai.knowledgeGraph, score: breakdown?.knowledgeGraph ?? 0, max: 15 },
+    { label: ai.aiOverview, score: breakdown?.knowledgeGraph ?? 0, max: 15 },
   ];
 
   return (
@@ -456,10 +459,10 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
           positive={googlePresence?.topPosition !== null && (googlePresence?.topPosition ?? 99) <= 5}
           neutral={googlePresence?.topPosition !== null && (googlePresence?.topPosition ?? 99) <= 10}
         />
-        {/* 7. Knowledge Graph */}
+        {/* 7. AI Overview */}
         <DimensionCard
           icon={<Network className="w-4 h-4" />}
-          label={ai.knowledgeGraph}
+          label={ai.aiOverview}
           value={kgLabel}
           positive={knowledgeGraphData?.hasKnowledgeGraph === true}
           neutral={knowledgeGraphData?.hasAnswerBox === true && !knowledgeGraphData?.hasKnowledgeGraph}
@@ -506,12 +509,20 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
         </div>
       )}
 
-      {/* Scoring Criteria — expandable cards with Why + How to improve */}
+      {/* Scoring Criteria — expandable cards with Why + How to improve + How detected */}
       <div className="animate-fade-up stagger-5 glass-card rounded-2xl p-6 mb-4">
         <h3 className="text-sm font-semibold text-frost-700 mb-3">{ai.scoringCriteria}</h3>
         <div className="space-y-2">
           {ai.criteriaItems.map((item) => (
-            <CriteriaCard key={item.label} item={item} />
+            <CriteriaCard
+              key={item.label}
+              item={item}
+              labels={{
+                whyMatters: ai.labelWhyMatters,
+                howImprove: ai.labelHowImprove,
+                howDetect: ai.labelHowDetect,
+              }}
+            />
           ))}
         </div>
       </div>
@@ -554,16 +565,24 @@ interface CriteriaItem {
   readonly desc: string;
   readonly why: string;
   readonly howToImprove: string;
+  readonly howDetected: string;
+}
+
+interface CriteriaLabels {
+  readonly whyMatters: string;
+  readonly howImprove: string;
+  readonly howDetect: string;
 }
 
 interface CriteriaCardProps {
   readonly item: CriteriaItem;
+  readonly labels: CriteriaLabels;
 }
 
-function CriteriaCardImpl({ item }: CriteriaCardProps): React.ReactElement {
+function CriteriaCardImpl({ item, labels }: CriteriaCardProps): React.ReactElement {
   const [expanded, setExpanded] = useState(false);
   const panelId = useId();
-  const hasDetails = item.why.length > 0 || item.howToImprove.length > 0;
+  const hasDetails = item.why.length > 0 || item.howToImprove.length > 0 || item.howDetected.length > 0;
 
   const cardContent = (
     <>
@@ -609,14 +628,20 @@ function CriteriaCardImpl({ item }: CriteriaCardProps): React.ReactElement {
         >
           {item.why && (
             <div className="pt-3">
-              <p className="text-[10px] font-semibold text-violet-600 uppercase tracking-wide mb-1">Why it matters</p>
+              <p className="text-[10px] font-semibold text-violet-600 uppercase tracking-wide mb-1">{labels.whyMatters}</p>
               <p className="text-[11px] text-frost-600 leading-relaxed">{item.why}</p>
             </div>
           )}
           {item.howToImprove && (
             <div>
-              <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wide mb-1">How to improve</p>
+              <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wide mb-1">{labels.howImprove}</p>
               <p className="text-[11px] text-frost-600 leading-relaxed">{item.howToImprove}</p>
+            </div>
+          )}
+          {item.howDetected && (
+            <div>
+              <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wide mb-1">{labels.howDetect}</p>
+              <p className="text-[11px] text-frost-600 leading-relaxed font-mono">{item.howDetected}</p>
             </div>
           )}
         </div>
