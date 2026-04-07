@@ -321,7 +321,126 @@
 ## TODO
 
 - [ ] พิจารณาเปลี่ยนรูป project cards ที่ ohmai.me เป็น screenshot จริงแทน stock photos
-- [ ] Refactor `ai-check/page.tsx` (520 บรรทัด) แยก AICheckResult เป็นไฟล์แยก
+- [ ] Refactor `ai-check/page.tsx` (620+ บรรทัด) แยก AICheckResult/CriteriaCard เป็นไฟล์แยก
 - [ ] เพิ่ม i18n สำหรับ `schema-details.tsx` (hardcoded English)
 - [ ] Restrict EC2 security group ให้รับ traffic จาก Cloudflare IPs เท่านั้น
 - [ ] ลบ GOOGLE_CSE_API_KEY / GOOGLE_CSE_CX ออกจาก `.env` บน EC2 (ไม่ใช้แล้ว)
+
+---
+
+## อัปเดต — 7 เมษายน 2569 (ช่วงเย็น)
+
+### 1. เพิ่มมิติที่ 7: AI Overview (Knowledge Graph Detection)
+
+**ปัญหาเดิม:** Google Presence (มิติที่ 6) ตรวจแค่ SEO ranking แบบเดิม ไม่เกี่ยวกับ AI เลย — ไม่เข้ากับ concept ของ AI Visibility ที่ควรวัดว่า "AI รู้จักแบรนด์แค่ไหน"
+
+**แก้ไข:** เพิ่มมิติที่ 7 **AI Overview** ที่เช็ค Google Knowledge Graph + Answer Box (สิ่งที่ Google AI Overview, ChatGPT, Gemini ใช้อ้างอิงแบรนด์)
+
+**Scoring ใหม่ (7 มิติ รวม 100 คะแนน):**
+
+| # | มิติ | คะแนนเดิม | คะแนนใหม่ |
+|---|---|---|---|
+| 1 | AI Recognition | 25 | **20** |
+| 2 | Accuracy | 20 | **15** |
+| 3 | URL Known | 10 | 10 |
+| 4 | Knowledge Depth | 15 | 15 |
+| 5 | Products Known | 15 | 15 |
+| 6 | Google Presence | 15 | **10** |
+| 7 | **AI Overview (NEW)** | - | **15** |
+
+**Implementation:**
+- เพิ่ม `searchKnowledgeGraph()` ใน `ai-visibility-checker.ts`
+- ใช้ Serper query `"{brand} company"` เพื่อ disambiguate (apple → Apple Inc. แทนผลไม้)
+- Parse `data.knowledgeGraph` และ `data.answerBox` จาก Serper response
+- Run 3 parallel calls ด้วย `Promise.allSettled` (GPT + 2 Serper)
+- สร้าง `extractSecondLevelDomain()` helper สำหรับ subdomain + 2-level TLDs (.co.th, .co.uk)
+
+**Scoring formula:**
+- Knowledge Graph + Answer Box → 15 points (Full Entity)
+- Knowledge Graph only → 12 points (Knowledge Panel)
+- Answer Box only → 6 points (Answer Only)
+- None → 0 points (Not Indexed)
+
+### 2. เพิ่ม "How we detect this" explanation
+
+ทุก criterion ในหน้า `/ai-check` มี **expandable card** อธิบาย 3 ส่วน:
+- **Why it matters** (ทำไมถึงสำคัญ)
+- **How to improve** (วิธีปรับปรุง)
+- **How we detect this** (อธิบาย algorithm/API ที่ใช้ตรวจ)
+
+**Example — AI Overview:**
+> เรียก Serper.dev ด้วย query "{brand} company" แล้วเช็คว่า response มี `knowledgeGraph` และ `answerBox` หรือไม่ สัญญาณทั้งสองนี้คือสิ่งที่ Google AI Overview ใช้ตัดสินใจว่าจะอ้างอิงแบรนด์ไหน
+
+เพิ่มเพื่อให้ product **transparent 100%** ลูกค้าถามว่า "ข้อนี้ตรวจยังไง?" → คลิกขยายดูได้เอง
+
+### 3. ทดสอบกับเว็บจริง 5 ตัว
+
+| เว็บ | คะแนน | Insight |
+|---|---|---|
+| **apple.com** | **97/100** | Full entity, ทุกมิติเกือบเต็ม (KG 12/15) |
+| **amazon.com** | **97/100** | Full entity, AI รู้จักดีมาก |
+| **ptt.com** | **22/100** | KG 12/15 แต่ AI Recognition 0/20 — GPT ไม่ train แบรนด์ไทย |
+| **ptgenergy.co.th** | **20/100** | SEO 10/10 แต่ไม่มี Knowledge Graph |
+| **sorkon.co.th** | **16/100** | SEO ดีแต่ AI ไม่รู้จักเลย — case study หลัก |
+
+**Key insight สำหรับ Sale:** แบรนด์ไทยใหญ่ๆ มี pattern เหมือนกัน — **SEO ดี (10/10) แต่ AI มองไม่เห็น** ใช้เป็น selling point GEO audit ได้ทันที
+
+### 4. Full Code Review รอบ 2 — แก้ 6 Critical/High Issues
+
+รัน `/review-all` หลังเพิ่ม Knowledge Graph feature พบ **15 issues ใหม่** → แก้ **Critical + High ทั้ง 6 ตัว**
+
+**Critical (2):**
+- ✅ `Promise.all` fail-fast → เสีย Serper quota — เปลี่ยนเป็น `Promise.allSettled`
+- ✅ `as` cast ปิด TypeScript safety — เพิ่ม `parseGooglePresence()` + `parseKnowledgeGraph()` type guards
+
+**High (4):**
+- ✅ `brandName` ไม่ sanitize → query injection — `.replace(/[^\w\s-]/g, '')` + `.slice(0, 50)`
+- ✅ `jsonTimeout` race condition — refactor ใช้ try/finally
+- ✅ `CriteriaCard` ไม่มี `aria-controls` + panel role — WCAG compliant
+- ✅ Disabled button ลบ keyboard access — render เป็น `<div>` เมื่อไม่มี details
+
+**Medium (4):**
+- ✅ `extractSecondLevelDomain` — handle subdomain + 2-level TLDs (.co.th)
+- ✅ Error logging ใน `serperSearch`
+- ✅ `React.memo` wrap CriteriaCard
+- ✅ Narrow `useMemo` dependencies
+
+### 5. Rename: Knowledge Graph → AI Overview
+
+เปลี่ยนชื่อ dimension "Knowledge Graph" เป็น **"AI Overview"** เพื่อให้สื่อสารง่ายขึ้น — ลูกค้าเข้าใจทันทีว่าเกี่ยวกับ Google AI Overview ที่เจออยู่ใน Google Search (logic ยังเหมือนเดิม)
+
+### 6. Legacy Docs Cleanup + Project Documentation
+
+**ลบเอกสารเก่า 7 ไฟล์** ที่ parent folder (AI Search Project/):
+- AI_SEARCH_PROJECT_STRUCTURE.md, ai-search-readiness-summary.html/.pdf
+- EXECUTIVE_SUMMARY_GEO.html/.pdf, docs/UI_DESIGN.md, docs/VALIDATION_CRITERIA.md
+
+**สร้างเอกสารใหม่:**
+- `AI Search Project/PROJECT_OVERVIEW.md` — technical reference (markdown)
+- `AI Search Project/docs/PROJECT_OVERVIEW.html` — interactive HTML doc พร้อม:
+  - Language Toggle EN/TH (localStorage persistent)
+  - 14 sections ครอบคลุม DEV/CEO/COO ในไฟล์เดียว
+  - Reader Hint Cards ด้านบนบอกแต่ละ role ควรเริ่มอ่าน section ไหน
+  - Section tags (ALL/DEV/CEO/COO) ใน TOC
+  - Responsive + print-friendly
+
+### 7. Git Commits (7 เม.ย. 2569 รอบที่ 2)
+
+| Hash | Message |
+|---|---|
+| `047791a` | feat: add Knowledge Graph dimension + expandable criteria cards |
+| `da104b2` | fix: resolve 6 critical/high issues from Knowledge Graph review |
+| `99bc3d8` | feat: rename Knowledge Graph to AI Overview + add detection explanations |
+
+---
+
+## สถานะปัจจุบัน (7 เมษายน 2569)
+
+- **เว็บ live:** https://aicheck.ohmai.me ✅
+- **AI Visibility:** 7 มิติ (เพิ่ม AI Overview) ✅
+- **Transparency:** Scoring Criteria มี "How we detect this" ทุกมิติ ✅
+- **Local = GitHub = AWS:** ทั้ง 3 ตรงกัน ✅
+- **Code review:** 31/48 issues แก้ครบ (Critical + High ครบ 100%) ✅
+- **AI Rate Limit:** 3 req/min per IP ✅
+- **Serper quota:** 2,500 ฟรี (ใช้ไปยังไม่ถึง 100) ✅
+- **Documentation:** PROJECT_OVERVIEW.html (EN/TH) พร้อมแจก DEV/CEO/COO ✅
