@@ -86,12 +86,19 @@ export interface Translations {
     readonly googleTop10: string;
     readonly googleLow: string;
     readonly googleNone: string;
+    readonly knowledgeGraph: string;
+    readonly knowledgeGraphFull: string;
+    readonly knowledgeGraphPartial: string;
+    readonly knowledgeGraphAnswerOnly: string;
+    readonly knowledgeGraphNone: string;
     readonly scoreBreakdown: string;
     readonly scoringCriteria: string;
     readonly criteriaItems: ReadonlyArray<{
       readonly label: string;
       readonly max: string;
       readonly desc: string;
+      readonly why: string;
+      readonly howToImprove: string;
     }>;
     readonly summary: string;
     readonly details: string;

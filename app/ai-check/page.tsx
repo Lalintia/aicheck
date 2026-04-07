@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo } from 'react';
-import { AlertCircle, ArrowRight, Loader2, Globe, Brain, CheckCircle, XCircle, AlertTriangle, Eye, Link2, Sparkles, Search, Package, Layers } from 'lucide-react';
+import { AlertCircle, ArrowRight, Loader2, Globe, Brain, CheckCircle, XCircle, AlertTriangle, Eye, Link2, Sparkles, Search, Package, Layers, Network, ChevronDown, ChevronUp } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 import { SiteNav } from '@/components/site-nav';
 import type { CheckResult } from '@/lib/types/checker';
@@ -105,8 +105,8 @@ const defaultAiCheck = {
   submit: 'Ask AI',
   scanning: 'Asking AI...',
   resultTitle: 'AI Visibility Result',
-  knows: 'AI Knows',
-  doesNotKnow: 'AI Does Not Know',
+  knows: 'AI Recognition',
+  doesNotKnow: 'AI Unknown',
   accuracy: 'Accuracy',
   accuracyLevels: {
     accurate: 'Accurate',
@@ -131,16 +131,22 @@ const defaultAiCheck = {
   googleTop10: 'Top 10',
   googleLow: 'Low',
   googleNone: 'Not Found',
+  knowledgeGraph: 'Knowledge Graph',
+  knowledgeGraphFull: 'Full Entity',
+  knowledgeGraphPartial: 'Knowledge Panel',
+  knowledgeGraphAnswerOnly: 'Answer Only',
+  knowledgeGraphNone: 'Not Indexed',
   scoreBreakdown: 'Score Breakdown',
   scoringCriteria: 'Scoring Criteria',
   criteriaItems: [
-    { label: 'AI Recognition', max: '25', desc: 'Does the AI recognize this website or organization?' },
-    { label: 'Accuracy', max: '20', desc: 'Is the AI\'s knowledge correct and up-to-date?' },
-    { label: 'URL Known', max: '10', desc: 'Can the AI provide the correct website URL?' },
-    { label: 'Knowledge Depth', max: '15', desc: 'How detailed is the AI\'s knowledge? (history, leadership, competitors)' },
-    { label: 'Products/Services', max: '15', desc: 'Can the AI name specific products or services offered?' },
-    { label: 'Google Presence', max: '15', desc: 'Does the brand appear in Google search top results?' },
-  ] as ReadonlyArray<{ readonly label: string; readonly max: string; readonly desc: string }>,
+    { label: 'AI Recognition', max: '20', desc: 'Does the AI recognize this website?', why: '', howToImprove: '' },
+    { label: 'Accuracy', max: '15', desc: 'Is the AI\'s knowledge correct?', why: '', howToImprove: '' },
+    { label: 'URL Known', max: '10', desc: 'Can the AI provide the correct URL?', why: '', howToImprove: '' },
+    { label: 'Knowledge Depth', max: '15', desc: 'How deep is the AI\'s knowledge?', why: '', howToImprove: '' },
+    { label: 'Products/Services', max: '15', desc: 'Can AI name specific products?', why: '', howToImprove: '' },
+    { label: 'Google Presence', max: '10', desc: 'SEO ranking in Google search', why: '', howToImprove: '' },
+    { label: 'Knowledge Graph', max: '15', desc: 'Is the brand in Google Knowledge Graph?', why: '', howToImprove: '' },
+  ] as ReadonlyArray<{ readonly label: string; readonly max: string; readonly desc: string; readonly why: string; readonly howToImprove: string }>,
   summary: 'Summary',
   details: 'Details',
   model: 'Model',
@@ -283,6 +289,9 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
   const googlePresence = (d.googlePresence && typeof d.googlePresence === 'object')
     ? d.googlePresence as { totalResults: number; topPosition: number | null }
     : undefined;
+  const knowledgeGraphData = (d.knowledgeGraph && typeof d.knowledgeGraph === 'object')
+    ? d.knowledgeGraph as { hasKnowledgeGraph: boolean; hasAnswerBox: boolean; descriptionSource: string | null; title: string | null }
+    : undefined;
   const breakdown = (d.breakdown && typeof d.breakdown === 'object' && !Array.isArray(d.breakdown))
     ? d.breakdown as Record<string, number>
     : undefined;
@@ -306,6 +315,14 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
     return ai.googleNone;
   }, [googlePresence, ai]);
 
+  const kgLabel = useMemo(() => {
+    if (!knowledgeGraphData) { return ai.knowledgeGraphNone; }
+    if (knowledgeGraphData.hasKnowledgeGraph && knowledgeGraphData.hasAnswerBox) { return ai.knowledgeGraphFull; }
+    if (knowledgeGraphData.hasKnowledgeGraph) { return ai.knowledgeGraphPartial; }
+    if (knowledgeGraphData.hasAnswerBox) { return ai.knowledgeGraphAnswerOnly; }
+    return ai.knowledgeGraphNone;
+  }, [knowledgeGraphData, ai]);
+
   const circumference = 2 * Math.PI * 54;
   const offset = circumference - (score / 100) * circumference;
 
@@ -325,12 +342,13 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
   }
 
   const breakdownItems = [
-    { label: ai.knows, score: breakdown?.recognition ?? 0, max: 25 },
-    { label: ai.accuracy, score: breakdown?.accuracy ?? 0, max: 20 },
+    { label: ai.knows, score: breakdown?.recognition ?? 0, max: 20 },
+    { label: ai.accuracy, score: breakdown?.accuracy ?? 0, max: 15 },
     { label: ai.urlKnown, score: breakdown?.urlKnown ?? 0, max: 10 },
     { label: ai.knowledgeDepth, score: breakdown?.depth ?? 0, max: 15 },
     { label: ai.productsKnown, score: breakdown?.products ?? 0, max: 15 },
-    { label: ai.googlePresence, score: breakdown?.googlePresence ?? 0, max: 15 },
+    { label: ai.googlePresence, score: breakdown?.googlePresence ?? 0, max: 10 },
+    { label: ai.knowledgeGraph, score: breakdown?.knowledgeGraph ?? 0, max: 15 },
   ];
 
   return (
@@ -361,13 +379,13 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
         </div>
       </div>
 
-      {/* 6 Dimension Cards — 2x3 grid */}
-      <div className="animate-fade-up stagger-2 grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+      {/* 7 Dimension Cards — responsive grid */}
+      <div className="animate-fade-up stagger-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
         {/* 1. Knows */}
         <DimensionCard
           icon={knows ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
           label={knows ? ai.knows : ai.doesNotKnow}
-          value={`${breakdown?.recognition ?? 0}/25`}
+          value={`${breakdown?.recognition ?? 0}/20`}
           positive={knows}
         />
         {/* 2. Accuracy */}
@@ -407,6 +425,14 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
           value={googleLabel}
           positive={googlePresence?.topPosition !== null && (googlePresence?.topPosition ?? 99) <= 5}
           neutral={googlePresence?.topPosition !== null && (googlePresence?.topPosition ?? 99) <= 10}
+        />
+        {/* 7. Knowledge Graph */}
+        <DimensionCard
+          icon={<Network className="w-4 h-4" />}
+          label={ai.knowledgeGraph}
+          value={kgLabel}
+          positive={knowledgeGraphData?.hasKnowledgeGraph === true}
+          neutral={knowledgeGraphData?.hasAnswerBox === true && !knowledgeGraphData?.hasKnowledgeGraph}
         />
       </div>
 
@@ -450,20 +476,12 @@ function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.ReactEl
         </div>
       )}
 
-      {/* Scoring Criteria */}
+      {/* Scoring Criteria — expandable cards with Why + How to improve */}
       <div className="animate-fade-up stagger-5 glass-card rounded-2xl p-6 mb-4">
         <h3 className="text-sm font-semibold text-frost-700 mb-3">{ai.scoringCriteria}</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-2">
           {ai.criteriaItems.map((item) => (
-            <div key={item.label} className="flex gap-3 p-3 bg-frost-50/50 rounded-xl">
-              <div className="shrink-0 w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
-                <span className="text-xs font-bold text-violet-600">{item.max}</span>
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-frost-700">{item.label}</p>
-                <p className="text-[11px] text-frost-500 leading-snug">{item.desc}</p>
-              </div>
-            </div>
+            <CriteriaCard key={item.label} item={item} />
           ))}
         </div>
       </div>
@@ -497,6 +515,65 @@ interface DimensionCardProps {
   readonly value: string;
   readonly positive?: boolean;
   readonly neutral?: boolean;
+}
+
+// ─── Criteria Card (expandable) ──────────────────────────────
+interface CriteriaItem {
+  readonly label: string;
+  readonly max: string;
+  readonly desc: string;
+  readonly why: string;
+  readonly howToImprove: string;
+}
+
+interface CriteriaCardProps {
+  readonly item: CriteriaItem;
+}
+
+function CriteriaCard({ item }: CriteriaCardProps): React.ReactElement {
+  const [expanded, setExpanded] = useState(false);
+  const hasDetails = item.why.length > 0 || item.howToImprove.length > 0;
+
+  return (
+    <div className="bg-frost-50/50 rounded-xl overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        disabled={!hasDetails}
+        aria-expanded={expanded}
+        className="w-full flex items-center gap-3 p-3 text-left hover:bg-frost-50 transition-colors disabled:cursor-default"
+      >
+        <div className="shrink-0 w-10 h-10 rounded-lg bg-violet-100 flex items-center justify-center">
+          <span className="text-xs font-bold text-violet-600">{item.max}</span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold text-frost-700">{item.label}</p>
+          <p className="text-[11px] text-frost-500 leading-snug">{item.desc}</p>
+        </div>
+        {hasDetails && (
+          <div className="shrink-0 text-frost-400" aria-hidden="true">
+            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </div>
+        )}
+      </button>
+      {expanded && hasDetails && (
+        <div className="px-3 pb-3 pt-0 space-y-3 border-t border-frost-100/50">
+          {item.why && (
+            <div className="pt-3">
+              <p className="text-[10px] font-semibold text-violet-600 uppercase tracking-wide mb-1">Why it matters</p>
+              <p className="text-[11px] text-frost-600 leading-relaxed">{item.why}</p>
+            </div>
+          )}
+          {item.howToImprove && (
+            <div>
+              <p className="text-[10px] font-semibold text-emerald-600 uppercase tracking-wide mb-1">How to improve</p>
+              <p className="text-[11px] text-frost-600 leading-relaxed">{item.howToImprove}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function DimensionCard({ icon, label, value, positive, neutral }: DimensionCardProps): React.ReactElement {

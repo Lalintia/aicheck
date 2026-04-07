@@ -1,14 +1,15 @@
 /**
- * AI Visibility Checker — 6-Dimension Scoring
+ * AI Visibility Checker — 7-Dimension Scoring
  * Asks GPT-4.1 nano + Serper Google Search API to evaluate AI visibility
  *
  * Scoring (100 points total):
- *   1. AI Recognition     (25) — Does AI know this brand?
- *   2. Accuracy           (20) — Is AI's knowledge correct?
+ *   1. AI Recognition     (20) — Does AI know this brand?
+ *   2. Accuracy           (15) — Is AI's knowledge correct?
  *   3. URL Known          (10) — Can AI provide the correct URL?
  *   4. Knowledge Depth    (15) — How deep is AI's knowledge?
  *   5. Products Known     (15) — Can AI name specific products/services?
- *   6. Google Presence    (15) — Does the brand appear in Google search?
+ *   6. Google Presence    (10) — Does the brand appear in Google search (SEO)?
+ *   7. Knowledge Graph    (15) — Does Google/AI Overview have structured data?
  *
  * Cost: ~$0.001 per check (GPT-4.1 nano) + Serper API (free 2,500 queries)
  */
@@ -32,6 +33,13 @@ interface AIVisibilityResponse {
 interface GoogleSearchResult {
   readonly totalResults: number;
   readonly topPosition: number | null;
+}
+
+interface KnowledgeGraphResult {
+  readonly hasKnowledgeGraph: boolean;
+  readonly hasAnswerBox: boolean;
+  readonly descriptionSource: string | null;
+  readonly title: string | null;
 }
 
 function sanitizeMeta(value: string, maxLength: number): string {
@@ -120,12 +128,9 @@ function parseAIResponse(text: string): AIVisibilityResponse | null {
   }
 }
 
-async function searchGoogle(domain: string): Promise<GoogleSearchResult> {
+async function serperSearch(query: string): Promise<Record<string, unknown> | null> {
   const apiKey = process.env.SERPER_API_KEY;
-
-  if (!apiKey) {
-    return { totalResults: 0, topPosition: null };
-  }
+  if (!apiKey) { return null; }
 
   try {
     const controller = new AbortController();
@@ -139,21 +144,17 @@ async function searchGoogle(domain: string): Promise<GoogleSearchResult> {
           'X-API-KEY': apiKey,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ q: domain, num: 10 }),
+        body: JSON.stringify({ q: query, num: 10 }),
         signal: controller.signal,
       });
     } finally {
       clearTimeout(timeoutId);
     }
 
-    if (!response.ok) {
-      return { totalResults: 0, topPosition: null };
-    }
+    if (!response.ok) { return null; }
 
     const cl = response.headers.get('content-length');
-    if (cl && parseInt(cl, 10) > 512 * 1024) {
-      return { totalResults: 0, topPosition: null };
-    }
+    if (cl && parseInt(cl, 10) > 512 * 1024) { return null; }
 
     let jsonTimeout: ReturnType<typeof setTimeout> | undefined;
     const data = await Promise.race([
@@ -163,29 +164,52 @@ async function searchGoogle(domain: string): Promise<GoogleSearchResult> {
       }),
     ]);
     clearTimeout(jsonTimeout);
-    const organic: Array<{ link?: string }> = data.organic ?? [];
-    const totalResults = organic.length > 0
-      ? Math.max(organic.length * 100, 1000)
-      : 0;
-
-    let topPosition: number | null = null;
-    for (let i = 0; i < organic.length; i++) {
-      const link: string = organic[i].link ?? '';
-      if (link.includes(domain)) {
-        topPosition = i + 1;
-        break;
-      }
-    }
-
-    return { totalResults, topPosition };
+    return data as Record<string, unknown>;
   } catch {
-    return { totalResults: 0, topPosition: null };
+    return null;
   }
+}
+
+function extractGoogleSearchResult(data: Record<string, unknown> | null, domain: string): GoogleSearchResult {
+  if (!data) { return { totalResults: 0, topPosition: null }; }
+
+  const organic: Array<{ link?: string }> = (data.organic as Array<{ link?: string }>) ?? [];
+  const totalResults = organic.length > 0
+    ? Math.max(organic.length * 100, 1000)
+    : 0;
+
+  let topPosition: number | null = null;
+  for (let i = 0; i < organic.length; i++) {
+    const link: string = organic[i].link ?? '';
+    if (link.includes(domain)) {
+      topPosition = i + 1;
+      break;
+    }
+  }
+
+  return { totalResults, topPosition };
+}
+
+function extractKnowledgeGraph(data: Record<string, unknown> | null): KnowledgeGraphResult {
+  if (!data) {
+    return { hasKnowledgeGraph: false, hasAnswerBox: false, descriptionSource: null, title: null };
+  }
+
+  const kg = data.knowledgeGraph as Record<string, unknown> | undefined;
+  const answerBox = data.answerBox as Record<string, unknown> | undefined;
+
+  return {
+    hasKnowledgeGraph: Boolean(kg && (kg.title || kg.description)),
+    hasAnswerBox: Boolean(answerBox && (answerBox.answer || answerBox.snippet)),
+    descriptionSource: (kg?.descriptionSource as string) ?? null,
+    title: (kg?.title as string) ?? null,
+  };
 }
 
 function scoreFromResponse(
   response: AIVisibilityResponse,
-  googleResult: GoogleSearchResult
+  googleResult: GoogleSearchResult,
+  knowledgeGraph: KnowledgeGraphResult
 ): {
   score: number;
   warnings: string[];
@@ -194,22 +218,22 @@ function scoreFromResponse(
   const warnings: string[] = [];
   const breakdown: Record<string, number> = {};
 
-  // 1. AI Recognition (25 points)
+  // 1. AI Recognition (20 points)
   if (response.knows) {
-    breakdown.recognition = 25;
+    breakdown.recognition = 20;
   } else {
     breakdown.recognition = 0;
     warnings.push('AI does not recognize this website or organization');
   }
 
-  // 2. Accuracy (20 points)
+  // 2. Accuracy (15 points)
   if (response.accuracy === 'accurate') {
-    breakdown.accuracy = 20;
+    breakdown.accuracy = 15;
   } else if (response.accuracy === 'partial') {
-    breakdown.accuracy = 10;
+    breakdown.accuracy = 8;
     warnings.push('AI has partial/incomplete information about this site');
   } else if (response.accuracy === 'inaccurate') {
-    breakdown.accuracy = 3;
+    breakdown.accuracy = 2;
     warnings.push('AI has inaccurate information — this can mislead potential customers');
   } else {
     breakdown.accuracy = 0;
@@ -247,20 +271,34 @@ function scoreFromResponse(
     }
   }
 
-  // 6. Google Presence (15 points)
+  // 6. Google Presence — SEO ranking (10 points)
   if (googleResult.topPosition !== null && googleResult.topPosition <= 3) {
-    breakdown.googlePresence = 15;
+    breakdown.googlePresence = 10;
   } else if (googleResult.topPosition !== null && googleResult.topPosition <= 5) {
-    breakdown.googlePresence = 12;
-  } else if (googleResult.topPosition !== null && googleResult.topPosition <= 10) {
     breakdown.googlePresence = 8;
-  } else if (googleResult.totalResults > 1000) {
+  } else if (googleResult.topPosition !== null && googleResult.topPosition <= 10) {
     breakdown.googlePresence = 5;
+  } else if (googleResult.totalResults > 1000) {
+    breakdown.googlePresence = 3;
   } else if (googleResult.totalResults > 0) {
-    breakdown.googlePresence = 2;
+    breakdown.googlePresence = 1;
   } else {
     breakdown.googlePresence = 0;
     warnings.push('Brand has low visibility in Google search results');
+  }
+
+  // 7. Knowledge Graph / AI Overview (15 points)
+  // Knowledge Graph = the structured data Google & AI Overview use to understand brands
+  if (knowledgeGraph.hasKnowledgeGraph && knowledgeGraph.hasAnswerBox) {
+    breakdown.knowledgeGraph = 15;
+  } else if (knowledgeGraph.hasKnowledgeGraph) {
+    breakdown.knowledgeGraph = 12;
+  } else if (knowledgeGraph.hasAnswerBox) {
+    breakdown.knowledgeGraph = 6;
+    warnings.push('Brand has answer box but no Knowledge Graph entry');
+  } else {
+    breakdown.knowledgeGraph = 0;
+    warnings.push('Brand is not in Google Knowledge Graph — AI Overview will not cite this brand');
   }
 
   const score = Object.values(breakdown).reduce((sum, v) => sum + v, 0);
@@ -284,11 +322,20 @@ export async function checkAIVisibility(url: string, html: string): Promise<Chec
     const domain = new URL(url).hostname.replace(/^www\./, '');
     const prompt = buildPrompt(url, title, description);
 
-    // Run GPT + Google Search in parallel
-    const [aiResult, googleResult] = await Promise.all([
+    // Knowledge Graph lookup: use "{brand} company" to disambiguate
+    // e.g. "apple" alone returns the fruit, but "apple company" returns Apple Inc.
+    const brandName = domain.split('.')[0];
+    const kgQuery = `${brandName} company`;
+
+    // Run 3 requests in parallel: GPT + SEO search + Knowledge Graph search
+    const [aiResult, seoSearchData, kgSearchData] = await Promise.all([
       callOpenAI(apiKey, prompt),
-      searchGoogle(domain),
+      serperSearch(domain),
+      serperSearch(kgQuery),
     ]);
+
+    const googleResult = extractGoogleSearchResult(seoSearchData, domain);
+    const knowledgeGraph = extractKnowledgeGraph(kgSearchData);
 
     if ('error' in aiResult) {
       return createPartialResult(
@@ -308,7 +355,7 @@ export async function checkAIVisibility(url: string, html: string): Promise<Chec
       );
     }
 
-    const { score, warnings, breakdown } = scoreFromResponse(aiResponse, googleResult);
+    const { score, warnings, breakdown } = scoreFromResponse(aiResponse, googleResult, knowledgeGraph);
 
     const resultData: Record<string, unknown> = {
       knows: aiResponse.knows,
@@ -319,6 +366,12 @@ export async function checkAIVisibility(url: string, html: string): Promise<Chec
       googlePresence: {
         totalResults: googleResult.totalResults,
         topPosition: googleResult.topPosition,
+      },
+      knowledgeGraph: {
+        hasKnowledgeGraph: knowledgeGraph.hasKnowledgeGraph,
+        hasAnswerBox: knowledgeGraph.hasAnswerBox,
+        descriptionSource: knowledgeGraph.descriptionSource,
+        title: knowledgeGraph.title,
       },
       breakdown,
       summary: aiResponse.summary,
