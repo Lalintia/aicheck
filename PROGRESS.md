@@ -6,7 +6,77 @@
 
 ---
 
-## อัปเดตล่าสุด — 7 เมษายน 2569
+## อัปเดตล่าสุด — 7 เมษายน 2569 (รอบบ่าย)
+
+### Checker Accuracy — แก้ false-negatives ที่เจอใน production
+
+**จุดเริ่ม:** สงสัยผลเช็คของ vercel.com (62) และ anthropic.com (63) ว่าถูกจริงไหม → ตรวจสอบ raw HTML ด้วย `curl` เทียบกับผล checker → เจอ 2 bug ใหญ่
+
+**Bug #1 — SSR meta description: regex บังคับ attribute order**
+
+- ไฟล์: `lib/checkers/ssr-checker.ts`
+- Regex เดิม: `/<meta[^>]*name="description"[^>]*content="[^"]{10,}"/i`
+- ปัญหา: บังคับ `name` ก่อน `content` — แต่ HTML อนุญาตให้สลับได้
+- Anthropic ใช้ `<meta content="..." name="description"/>` → false negative
+- **แก้:** เพิ่ม regex ตัวที่ 2 สำหรับ `content`-first order, `hasMetaDescription` เช็คทั้งคู่
+
+**Bug #2 — Schema Corporation ไม่ถูกนับเป็น Organization**
+
+- ไฟล์: `lib/checkers/schema-validators/jsonld-utils.ts`
+- `isSchemaOfType` ใช้ strict equality: `types === typeName`
+- Shopify ใช้ `@type: "Corporation"` ซึ่งเป็น subtype ของ Organization ตาม Schema.org spec (valid 100%)
+- **แก้:** เพิ่ม `ORGANIZATION_SUBTYPES` Set ครอบคลุม Corporation, NGO, EducationalOrganization, GovernmentOrganization, MedicalOrganization, NewsMediaOrganization, ResearchOrganization, SportsOrganization, Airline ฯลฯ (ไม่รวม LocalBusiness เพราะ validate แยก)
+- `matchesTypeWithSubtypes()` helper รู้จัก parent-child relationship
+
+**Bonus — Code deduplication:**
+
+- เจอ `findSchemasByType` + `isSchemaOfType` ซ้ำอยู่ทั้งใน `jsonld-utils.ts` และ `organization-validator.ts`
+- ลบสำเนาใน organization-validator, import จาก jsonld-utils แทน + re-export
+- Single source of truth → bug fix ที่เดียวส่งผลทุกที่
+
+**Results (verified on production):**
+
+| Site | ก่อน | หลัง | Δ | สาเหตุ |
+|---|---:|---:|---:|---|
+| **Shopify** | 62 | **86** | +24 🎉 | Corporation detected as Organization + meta desc |
+| **Anthropic** | 63 | **66** | +3 | Meta desc detected (SSR 75→95) |
+| Vercel | 62 | 62 | 0 | ไม่มี bug ที่เกี่ยวข้อง |
+
+**Key lesson:** อย่าเชื่อ checker output โดยไม่ verify กับ raw HTML — false negatives ซ่อนตัวอยู่ในการ parse
+
+**Commit:** `43f6b0e` — `fix: detect meta description in any attr order + recognize Organization subtypes`
+
+---
+
+### Code Review — แก้ทุก Critical/High ก่อนหน้า
+
+Commit `444b9da` — จากการรัน `/review-all` ด้วย 3 subagents (security / performance / react-ts)
+
+**Security (Critical/High):**
+- **H2** Content-Length bypass ใน `/api/check` + `/api/ai-check` — อ่าน body เป็น text ก่อนพร้อม hard cap 4096 bytes
+- **H3** Prompt injection ใน `ai-visibility-checker` — strip JSON chars (`{`, `}`, `[`, `]`, `"`, `'`, `:`) + ห่อ `"""..."""` รอบ title/description
+- **H4** Timer leak ใน `callOpenAI` body-read — เพิ่ม `try/finally` ครอบ Promise.race
+- **H5** Rate limiter duplicate class — รวม `AIRateLimiter` เข้า `RateLimiter` ที่รับ `limit` + `window` params
+- **M5** Sanitize domain fallback ใน Serper query
+
+**Type Safety:**
+- **H6** `parseBreakdown()` type guard แทน `as` cast ใน `ai-check/page.tsx`
+
+**Accessibility:**
+- **C2** Focus trap — เพิ่ม `onKeyDown` + `role="presentation"` บน modal backdrop
+- **C3** Array index → string content เป็น React key ใน `schema-details.tsx`
+- **H7** `type="button"` บน expand buttons
+- **H8** ลบ `aria-label` จาก non-interactive `<span>` → ใช้ `sr-only sm:not-sr-only`
+- **M10** `useId()` แทน hardcoded panel id
+- **M11** `aria-current="page"` บน active nav link
+
+**Path/Naming cleanup:**
+- `package.json` name: `ai-search-checker` → `aicheck`
+- PROJECT_SUMMARY.md: แก้ทุก path `/var/www/ai-search-checker/` → `/var/www/ai-checker/`
+- Nav pill: "12 Checks" → "10 Checks"
+- Deploy path fix: PM2 รันจาก `/var/www/ai-checker/.next/standalone/` (ไม่ใช่ `/var/www/ai-checker/`) — rsync commands แก้ให้ตรงแล้ว
+
+---
 
 ### Scorer Recalibration — ปลดล็อกเพดาน 75/100
 
