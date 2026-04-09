@@ -42,6 +42,50 @@
 
 **Verified รอบ 11:** ทั้ง 3 agents confirm CLEAN อีกครั้ง
 
+### 🔍 Real-world Testing (พบ bug ที่ automated review ไม่เจอ)
+
+หลัง review รอบ 11 สะอาดแล้ว ทดสอบจริงกับเว็บไซต์หลากหลายและ**เจอ 3 business logic bugs** ที่ review agents 11 รอบไม่เจอ:
+
+#### Bug 1 — URL colon strip (`aa839ea`)
+- **เจอจาก:** user ทดสอบ apple.com, google.com → `URL Known = 0/10`
+- **Root cause:** บรรทัด `url.replace(/[{}[\]"'`:]/g, '')` ที่เพิ่มในรอบ 5 (prompt injection hardening) strip colon `:` ออกจาก URL → `https://www.apple.com` → `https//www.apple.com` → GPT ไม่รู้จักรูปแบบ URL → ตอบ `hasUrl: false` + `accuracy: partial` ทุกเว็บ
+- **Fix:** Sanitizer ใหม่ strip เฉพาะสิ่งที่เสี่ยงจริง (backticks, triple-quote, control chars) — เก็บ URL-valid chars
+- **Impact:** ทุกเว็บที่เคย test ก่อน 9 เม.ย. คะแนน accuracy + urlKnown ต่ำกว่าความจริง ~17 คะแนน
+
+#### Bug 2 — Wikipedia/GitHub KG = 0 (`08c751f`)
+- **เจอจาก:** user ลอง wikipedia.org → `AI Overview = 0/15`
+- **Root cause:** `kgQuery = "${brandName} company"` ใช้ได้กับ brand ทั่วไป (apple, target) แต่พังกับ non-corporate entities (wikipedia, github, reddit, stackoverflow) เพราะ Google ไม่ return KG สำหรับ query "wikipedia company"
+- **Fix:** Fallback — ถ้า `kgQuery` ไม่มี KG ให้ลองใช้ `seoQuery` (domain) แทน — domain query เช่น "wikipedia.org" trigger KG บน Google ได้ reliably
+- **Impact:** Non-corporate entities 5+ ตัวที่ทดสอบ ทุกตัวเปลี่ยนจาก KG=0 → KG=12
+
+#### Bug 3 — Thai brand locale missing (`e57a15e`)
+- **เจอจาก:** user batch test scb.co.th → `KG = 0`
+- **Root cause:** Serper default เป็น `gl=us` (United States) → Knowledge Panel ของ brand non-US ไม่ถูก return
+- **Fix:** เพิ่ม `TLD_LOCALE` map (24 country codes) — auto-detect country TLD แล้ว pass `gl`+`hl` ไปยัง Serper
+- **Coverage:** th, jp, kr, cn, tw, hk, sg, my, id, vn, ph, in, au, nz, uk, de, fr, it, es, nl, br, mx, ar, ru
+- **Impact:** kasikornbank.com KG ทำงาน; scb.co.th ยังเป็น known limitation เพราะชื่อย่อกำกวม
+
+### 📊 Real-world Test Results (9 เม.ย. 2569, after all fixes)
+
+| Site | Score | URL | Acc | KG | Notes |
+|---|---:|:---:|:---:|:---:|---|
+| apple.com | 97 | ✅ | accurate | ✅ | tech giant baseline |
+| google.com | 97 | ✅ | accurate | ✅ | tech giant baseline |
+| stackoverflow.com | 97 | ✅ | accurate | ✅ | non-corporate ✓ |
+| reddit.com | 97 | ✅ | accurate | ✅ | non-corporate ✓ |
+| mozilla.org | 97 | ✅ | accurate | ✅ | non-corporate ✓ |
+| wikipedia.org | 97 | ✅ | accurate | ✅ | **fixed from 85 via KG fallback** |
+| microsoft.com | 90 | ✅ | partial | ✅ | tech giant |
+| github.com | 90 | ✅ | partial | ✅ | fixed via KG fallback |
+| kasikornbank.com | 84 | ✅ | accurate | ✅ | Thai bank ✓ |
+| scb.co.th | 79 | ✅ | accurate | ❌ | edge case (ชื่อย่อกำกวม) |
+
+### 💡 Key Lesson
+
+**Review agents 11 รอบ จับ bugs ในมิติ security/performance/a11y ได้ครบ แต่ไม่เจอ semantic bugs** (business logic ผิด) เพราะ regex ทำงานถูก, API call ถูกต้อง, types ตรงทุกอย่าง — ผิดแค่ "intent" ของ logic ซึ่งต้องมีมนุษย์ทดสอบกับ real-world data ถึงจะเห็น
+
+**Moral:** AI code review + automated tests + TypeScript + linting รวมกันยังไม่ replace การทดสอบจริงกับ production data ได้ โดยเฉพาะในระบบที่ทำงานกับ LLM ซึ่งผลลัพธ์ไม่ deterministic
+
 ---
 
 #### 🔒 Security fixes (รอบ 4–8)
