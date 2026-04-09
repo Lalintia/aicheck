@@ -78,9 +78,17 @@ function buildSystemMessage(): string {
 
 function buildPrompt(url: string, title: string, description: string): string {
   const rawDomain = new URL(url).hostname.replace(/^www\./, '');
-  // Sanitize URL and domain to neutralize prompt-injection attempts via crafted
-  // hostnames or path segments (e.g. "ignore-above.evil.com").
-  const safeUrl = url.replace(/[{}[\]"'`:]/g, '').replace(/\s+/g, '').slice(0, 200);
+  // URL is already Zod-validated + SSRF-checked + triple-quoted below.
+  // Only neutralize characters that could break the delimiter or prompt context:
+  //   - backticks (code fence break)
+  //   - triple-quote sequence (delimiter escape)
+  //   - control chars + newlines
+  // Keep URL-valid chars (: / . - _ ? = & # %) so GPT recognizes real URLs.
+  const safeUrl = url
+    .replace(/[`\x00-\x1f\x7f]/g, '')
+    .replace(/"""+/g, '"')
+    .replace(/\s+/g, '')
+    .slice(0, 200);
   const safeDomain = rawDomain.replace(/[^a-zA-Z0-9.\-]/g, '').slice(0, 100);
   const safeTitle = sanitizeMeta(title, 60);
   const safeDescription = sanitizeMeta(description, 120);

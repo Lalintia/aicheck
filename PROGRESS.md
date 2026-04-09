@@ -8,16 +8,39 @@
 
 ## อัปเดตล่าสุด — 9 เมษายน 2569
 
-### Multi-Agent Review Sweep (รอบ 4–9) + Font Fix + Production Hardening
+### Multi-Agent Review Sweep (รอบ 4–11) + Design Refresh + Font Fix + Production Hardening
 
-**Context:** พรีเซนต์บริษัทแม่ที่สิงคโปร์ 20 เม.ย. ต้องทำให้ production-ready เต็มรูปแบบ
-
-**กระบวนการ:** รัน `/review-all` ซ้ำ 6 รอบ (รอบที่ 4 → 9) ใช้ 3 subagents parallel แต่ละรอบ:
+**กระบวนการ:** รัน `/review-all` ซ้ำ 8 รอบ (รอบที่ 4 → 11) ใช้ 3 subagents parallel แต่ละรอบ:
 - `security-auditor` — SSRF, injection, rate-limit, secrets
 - `performance-error-reviewer` — memory leaks, timeouts, regex, algorithmic complexity
 - `react-typescript-reviewer` — a11y, memo, type safety, i18n, server/client boundaries
 
-**รวม 18 audit passes (3 agents × 6 รอบ)** แก้ **50+ issues** จนได้ "clean" verdict ทั้ง 3 agents ในรอบที่ 9
+**รวม 24 audit passes (3 agents × 8 รอบ)** แก้ **55+ issues** จนได้ "clean" verdict ทั้ง 3 agents 2 รอบติดกัน (รอบ 9 และ 11) หลัง design refresh
+
+### 🎨 Design Refresh (รอบ 10) — Navy + Sky + Bento Grid
+
+ใช้ `ui-ux-pro-max` skill แนะนำ design system จาก reasoning engine (161 rules) สำหรับ B2B sales enablement tool:
+- **Pattern:** Enterprise Gateway
+- **Style:** Sales Intelligence Dashboard + Apple-style Bento Grid (Results page)
+- **Palette:** Navy `#0f172a` + Sky `#0369a1` + Slate
+- **Anti-pattern ที่หลีกเลี่ยง:** Dark mode by default (reasoning: ใช้โชว์ลูกค้าต่อหน้า ต้องการ light + authoritative)
+
+**สิ่งที่แก้:**
+- `tailwind.config.ts` — remap `frost-*` scale เป็น Slate+Sky values (backward compat, ไม่ต้องแก้ code ทั่วโปรเจกต์)
+- `app/globals.css` — update CSS custom properties + เพิ่ม `.bento-tile` utility + `prefers-reduced-motion` media query
+- `results-view.tsx` — refactor hero เป็น bento grid (Score 2/3 + Stats 1/3 on desktop)
+- `design-system/aicheck/MASTER.md` — persist ui-ux-pro-max recommendation เป็น reference file ถาวร
+
+**Issues รอบ 10 ที่เจอหลัง design refresh:**
+| # | Severity | Issue | Fix |
+|---|---|---|---|
+| H1 | High | `text-frost-500` กลายเป็น Sky blue → contrast regression บน stat labels | เปลี่ยนเป็น `text-frost-700` |
+| M1 | Medium | `animatedScore` counter ไม่เคารพ `prefers-reduced-motion` | เพิ่ม `matchMedia` check ใน useEffect |
+| M2 | Medium | `StatCard` ไม่มี accessible grouping | เพิ่ม `role="group"` + `aria-label` |
+| L1 | Low | `.bento-tile:hover` scale transform + inset shadow → full repaint | ลบ transform เหลือแค่ shadow |
+| L2 | Low | `React.ReactElement` return type แต่ไม่ import | `import type { ReactElement }` |
+
+**Verified รอบ 11:** ทั้ง 3 agents confirm CLEAN อีกครั้ง
 
 ---
 
@@ -93,12 +116,14 @@
 | `bb64cbc` | fix(review): address round-6 followup findings | 16 files |
 | `733309f` | fix(perf): drain response body on !ok or oversized paths | 2 files |
 | `e04910b` | fix(perf): drain response body on all checker early-return paths | 4 files |
+| `e53c955` | feat(design): Navy + Sky palette + bento grid results + reduced-motion | 5 files |
+| `68015a5` | fix(review): address round-10 findings (post-design-refresh) | 4 files |
 
-#### ✅ Round 9 verdict (final verification)
+#### ✅ Round 11 final verdict
 
-- 🔒 **security-auditor:** "No new actionable findings. All critical controls correctly in place."
-- ⚡ **performance-error-reviewer:** "Codebase is CLEAN. Every !response.ok path drains body. All AbortController + clearTimeout pairs properly scoped."
-- ⚛️ **react-typescript-reviewer:** "Production-ready from a frontend quality perspective. No new issues."
+- 🔒 **security-auditor:** "Design changes purely presentational — no regressions. All previously hardened paths intact."
+- ⚡ **performance-error-reviewer:** "matchMedia SSR-safe, memo intact, shadow-only hover. CONFIRM CLEAN."
+- ⚛️ **react-typescript-reviewer:** "All 5 round-10 fixes verified. No new issues detected. Production-ready."
 
 #### 🎯 Key lesson
 
