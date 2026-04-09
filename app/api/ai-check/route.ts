@@ -53,9 +53,12 @@ export async function POST(request: NextRequest) {
         signal: controller.signal,
       });
 
-      if (pageResponse.ok) {
+      if (!pageResponse.ok) {
+        pageResponse.body?.cancel().catch(() => { /* already closed */ });
+      } else {
         const htmlCl = pageResponse.headers.get('content-length');
         if (htmlCl && parseInt(htmlCl, 10) > 5 * 1024 * 1024) {
+          pageResponse.body?.cancel().catch(() => { /* already closed */ });
           html = '';
         } else {
           let htmlReadTimeout: ReturnType<typeof setTimeout> | undefined;

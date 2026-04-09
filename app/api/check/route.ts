@@ -80,6 +80,8 @@ export async function POST(request: NextRequest) {
     const pageTtfb = Date.now() - fetchStart;
 
     if (!pageResponse.ok) {
+      // Drain body to release socket (important on redirect → error page path)
+      pageResponse.body?.cancel().catch(() => { /* already closed */ });
       return NextResponse.json(
         { error: `Unable to access website (${pageResponse.status})` },
         { status: 400 }
@@ -90,6 +92,7 @@ export async function POST(request: NextRequest) {
     const MAX_HTML_SIZE = 10 * 1024 * 1024; // 10MB
     const contentLengthHeader = pageResponse.headers.get('content-length');
     if (contentLengthHeader && parseInt(contentLengthHeader, 10) > MAX_HTML_SIZE) {
+      pageResponse.body?.cancel().catch(() => { /* already closed */ });
       return NextResponse.json(
         { error: 'Website content too large to analyze' },
         { status: 400 }
