@@ -165,13 +165,60 @@ function parseAIResponse(text: string): AIVisibilityResponse | null {
   }
 }
 
-async function serperSearch(query: string): Promise<Record<string, unknown> | null> {
+// Country-code TLD → Serper gl (geo-location) + hl (UI language) mapping.
+// Used to localize Google Knowledge Panel lookups for non-US domains
+// (e.g. scb.co.th returns proper Thai KG only when gl=th).
+const TLD_LOCALE: Record<string, { gl: string; hl: string }> = {
+  th: { gl: 'th', hl: 'th' },
+  jp: { gl: 'jp', hl: 'ja' },
+  kr: { gl: 'kr', hl: 'ko' },
+  cn: { gl: 'cn', hl: 'zh-cn' },
+  tw: { gl: 'tw', hl: 'zh-tw' },
+  hk: { gl: 'hk', hl: 'zh-hk' },
+  sg: { gl: 'sg', hl: 'en' },
+  my: { gl: 'my', hl: 'en' },
+  id: { gl: 'id', hl: 'id' },
+  vn: { gl: 'vn', hl: 'vi' },
+  ph: { gl: 'ph', hl: 'en' },
+  in: { gl: 'in', hl: 'en' },
+  au: { gl: 'au', hl: 'en' },
+  nz: { gl: 'nz', hl: 'en' },
+  uk: { gl: 'uk', hl: 'en' },
+  de: { gl: 'de', hl: 'de' },
+  fr: { gl: 'fr', hl: 'fr' },
+  it: { gl: 'it', hl: 'it' },
+  es: { gl: 'es', hl: 'es' },
+  nl: { gl: 'nl', hl: 'nl' },
+  br: { gl: 'br', hl: 'pt-br' },
+  mx: { gl: 'mx', hl: 'es' },
+  ar: { gl: 'ar', hl: 'es' },
+  ru: { gl: 'ru', hl: 'ru' },
+};
+
+function detectLocale(hostname: string): { gl: string; hl: string } | null {
+  // Match the last label (e.g. ".co.th" → "th", ".com" → "com")
+  const parts = hostname.toLowerCase().split('.');
+  const tld = parts[parts.length - 1];
+  if (tld && TLD_LOCALE[tld]) { return TLD_LOCALE[tld]; }
+  return null;
+}
+
+async function serperSearch(
+  query: string,
+  locale?: { gl: string; hl: string } | null
+): Promise<Record<string, unknown> | null> {
   const apiKey = process.env.SERPER_API_KEY;
   if (!apiKey) { return null; }
 
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), GOOGLE_SEARCH_TIMEOUT);
+
+    const body: Record<string, unknown> = { q: query, num: 10 };
+    if (locale) {
+      body.gl = locale.gl;
+      body.hl = locale.hl;
+    }
 
     let response: Response;
     try {
@@ -181,7 +228,7 @@ async function serperSearch(query: string): Promise<Record<string, unknown> | nu
           'X-API-KEY': apiKey,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ q: query, num: 10 }),
+        body: JSON.stringify(body),
         signal: controller.signal,
       });
     } finally {
@@ -377,13 +424,18 @@ export async function checkAIVisibility(url: string, html: string): Promise<Chec
     const safeDomain = domain.replace(/[^\w.-]/g, '').slice(0, 100);
     const kgQuery = brandName ? `${brandName} company` : safeDomain;
 
+    // Detect country TLD and pass geo/language hint to Serper so
+    // Knowledge Panel lookups resolve against the correct Google locale
+    // (e.g. scb.co.th → gl=th,hl=th to surface Thai Knowledge Graph)
+    const locale = detectLocale(domain);
+
     // Run requests in parallel with allSettled — skip duplicate serper call
     // when kgQuery collapses to domain (saves 1 quota on single-word domains)
     const dedupeKg = kgQuery === domain;
     const [aiSettled, seoSettled, kgSettled] = await Promise.allSettled([
       callOpenAI(apiKey, prompt),
-      serperSearch(domain),
-      dedupeKg ? Promise.resolve(null) : serperSearch(kgQuery),
+      serperSearch(domain, locale),
+      dedupeKg ? Promise.resolve(null) : serperSearch(kgQuery, locale),
     ]);
 
     const aiResult = aiSettled.status === 'fulfilled'
