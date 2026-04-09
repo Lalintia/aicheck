@@ -6,6 +6,12 @@ import { UrlForm } from './url-form';
 import { useI18n } from '@/lib/i18n';
 import type { CheckResponse } from '@/lib/types/checker';
 
+// Module-level icon constants — declared before components so they are visible
+// at definition time (and so consumers can see them without scrolling down).
+const SHIELD_ICON = <Shield className="w-4 h-4" />;
+const RADAR_ICON = <Radar className="w-4 h-4" />;
+const SPARKLES_ICON = <Sparkles className="w-4 h-4" />;
+
 interface HeroSectionProps {
   readonly onSuccess: (data: CheckResponse) => void;
   readonly onError: (error: string) => void;
@@ -70,10 +76,6 @@ export function HeroSection({ onSuccess, onError }: HeroSectionProps): React.Rea
     </section>
   );
 }
-
-const SHIELD_ICON = <Shield className="w-4 h-4" />;
-const RADAR_ICON = <Radar className="w-4 h-4" />;
-const SPARKLES_ICON = <Sparkles className="w-4 h-4" />;
 
 interface TrustIndicatorProps {
   readonly icon: React.ReactNode;

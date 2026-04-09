@@ -56,7 +56,7 @@ const AUTHORITY_CHECKS: readonly AuthorityCheck[] = [
   },
   {
     name: 'authorBio',
-    pattern: /(ประวัติ|bio|about.*author)/i,
+    pattern: /(ประวัติ|bio|about.{0,50}author)/i,
     weight: 10,
   },
 ];

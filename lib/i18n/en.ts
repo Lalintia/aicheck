@@ -35,6 +35,7 @@ export const en: Translations = {
     pass: 'Pass',
     fail: 'Fail',
     analyzeAnother: 'Analyze Another Website',
+    scoreAriaLabel: (score, grade) => `AI Search readiness score: ${score} out of 100 — ${grade}`,
   },
   grades: {
     excellent: 'Excellent',
@@ -233,5 +234,8 @@ export const en: Translations = {
     model: 'Model',
     analyzeAnother: 'Check Another Website',
     skipped: 'Check was skipped',
+    trustLabel1: 'GPT-4.1 nano',
+    trustLabel2: 'Real AI Check',
+    trustLabel3: 'Instant Result',
   },
 };

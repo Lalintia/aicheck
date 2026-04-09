@@ -63,9 +63,9 @@ function RecommendationGroupImpl({
         <span className={`ml-auto text-xs font-mono ${c.headerText} opacity-70`}>{count}</span>
       </div>
       <div className="space-y-2">
-        {items.map((item, idx) => (
+        {items.map((item) => (
           <div
-            key={`${item.category}-${idx}`}
+            key={`${item.category}-${item.message}`}
             className={`${c.itemBg} rounded-xl p-4 border ${c.itemBorder} transition-all duration-200 hover:shadow-sm`}
           >
             <div className="flex-1 min-w-0">

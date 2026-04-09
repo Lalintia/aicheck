@@ -8,6 +8,16 @@ import type { AiCheckStrings } from '../_lib/default-ai-check';
 import { DimensionCard } from './dimension-card';
 import { CriteriaCard } from './criteria-card';
 
+// Module-level icon constants — shared references keep DimensionCard memo effective
+const CHECK_ICON = <CheckCircle className="w-4 h-4" />;
+const X_ICON = <XCircle className="w-4 h-4" />;
+const EYE_ICON = <Eye className="w-4 h-4" />;
+const LINK_ICON = <Link2 className="w-4 h-4" />;
+const LAYERS_ICON = <Layers className="w-4 h-4" />;
+const PACKAGE_ICON = <Package className="w-4 h-4" />;
+const SEARCH_ICON = <Search className="w-4 h-4" />;
+const NETWORK_ICON = <Network className="w-4 h-4" />;
+
 export interface AICheckResponse {
   readonly url: string;
   readonly result: CheckResult;
@@ -121,46 +131,46 @@ export function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.
 
       <div className="animate-fade-up stagger-2 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
         <DimensionCard
-          icon={knows ? <CheckCircle className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
+          icon={knows ? CHECK_ICON : X_ICON}
           label={knows ? ai.knows : ai.doesNotKnow}
           value={`${breakdown?.recognition ?? 0}/20`}
           positive={knows}
         />
         <DimensionCard
-          icon={<Eye className="w-4 h-4" />}
+          icon={EYE_ICON}
           label={ai.accuracy}
           value={ai.accuracyLevels[accuracy as keyof typeof ai.accuracyLevels] ?? accuracy}
           positive={accuracy === 'accurate'}
           neutral={accuracy === 'partial'}
         />
         <DimensionCard
-          icon={<Link2 className="w-4 h-4" />}
+          icon={LINK_ICON}
           label={hasUrl ? ai.urlKnown : ai.urlNotKnown}
           value={`${breakdown?.urlKnown ?? 0}/10`}
           positive={hasUrl}
         />
         <DimensionCard
-          icon={<Layers className="w-4 h-4" />}
+          icon={LAYERS_ICON}
           label={ai.knowledgeDepth}
           value={ai.depthLevels[knowledgeDepth as keyof typeof ai.depthLevels] ?? knowledgeDepth}
           positive={knowledgeDepth === 'deep'}
           neutral={knowledgeDepth === 'moderate'}
         />
         <DimensionCard
-          icon={<Package className="w-4 h-4" />}
+          icon={PACKAGE_ICON}
           label={productsKnown ? ai.productsKnown : ai.productsNotKnown}
           value={`${breakdown?.products ?? 0}/15`}
           positive={productsKnown}
         />
         <DimensionCard
-          icon={<Search className="w-4 h-4" />}
+          icon={SEARCH_ICON}
           label={ai.googlePresence}
           value={googleLabel}
           positive={googlePresence?.topPosition !== null && (googlePresence?.topPosition ?? 99) <= 5}
           neutral={googlePresence?.topPosition !== null && (googlePresence?.topPosition ?? 99) <= 10}
         />
         <DimensionCard
-          icon={<Network className="w-4 h-4" />}
+          icon={NETWORK_ICON}
           label={ai.aiOverview}
           value={kgLabel}
           positive={knowledgeGraphData?.hasKnowledgeGraph === true}

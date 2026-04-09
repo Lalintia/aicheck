@@ -60,4 +60,7 @@ export const defaultAiCheck: AiCheckStrings = {
   model: 'Model',
   analyzeAnother: 'Check Another Website',
   skipped: 'Check was skipped',
+  trustLabel1: 'GPT-4.1 nano',
+  trustLabel2: 'Real AI Check',
+  trustLabel3: 'Instant Result',
 };

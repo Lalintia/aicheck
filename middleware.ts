@@ -115,11 +115,9 @@ function isValidIpFormat(ip: string): boolean {
   const ipv4Pattern = /^(25[0-5]|2[0-4]\d|[01]?\d\d?)(\.(25[0-5]|2[0-4]\d|[01]?\d\d?)){3}$/;
   if (ipv4Pattern.test(ip)) { return true; }
 
-  const ipv6Pattern = /^[0-9a-fA-F:]+$/;
-  if (ipv6Pattern.test(ip)) {
-    const colonCount = (ip.match(/:/g) ?? []).length;
-    return colonCount >= 2 && colonCount <= 8;
-  }
+  // IPv6: must contain at least one hex digit between colons (rejects "::::::")
+  const ipv6Pattern = /^[0-9a-fA-F]*(?::[0-9a-fA-F]*){2,7}$/;
+  if (ipv6Pattern.test(ip) && /[0-9a-fA-F]/.test(ip)) { return true; }
 
   return false;
 }

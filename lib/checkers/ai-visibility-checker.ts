@@ -112,8 +112,12 @@ Respond in this exact JSON format only, no other text:
 }
 
 function extractMeta(html: string): { title: string; description: string } {
-  const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-  const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i);
+  // Scope extraction to the <head> section (or first 16KB) to avoid false matches
+  // from inline scripts and to bound regex work on large pages.
+  const headEnd = html.indexOf('</head>');
+  const scope = headEnd > 0 ? html.slice(0, headEnd) : html.slice(0, 16_384);
+  const titleMatch = scope.match(/<title[^>]*>([^<]*)<\/title>/i);
+  const descMatch = scope.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']*)["']/i);
 
   return {
     title: titleMatch ? titleMatch[1].trim() : '',

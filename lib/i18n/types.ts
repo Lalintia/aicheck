@@ -35,6 +35,7 @@ export interface Translations {
     readonly pass: string;
     readonly fail: string;
     readonly analyzeAnother: string;
+    readonly scoreAriaLabel: (score: number, grade: string) => string;
   };
   readonly grades: {
     readonly excellent: string;
@@ -145,5 +146,8 @@ export interface Translations {
     readonly model: string;
     readonly analyzeAnother: string;
     readonly skipped: string;
+    readonly trustLabel1: string;
+    readonly trustLabel2: string;
+    readonly trustLabel3: string;
   };
 }

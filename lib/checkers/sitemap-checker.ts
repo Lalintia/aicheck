@@ -21,13 +21,18 @@ interface FoundSitemap {
   readonly hasPriority: boolean;
 }
 
-async function trySitemapUrl(sitemapUrl: string): Promise<FoundSitemap> {
+async function trySitemapUrl(sitemapUrl: string, sharedSignal?: AbortSignal): Promise<FoundSitemap> {
   if (!(await isSafeUrlWithDns(sitemapUrl))) {
     throw new Error(`${sitemapUrl}: URL not allowed`);
   }
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000);
+  // Chain the shared signal so Promise.any winner triggers abort on the losers
+  if (sharedSignal) {
+    if (sharedSignal.aborted) { controller.abort(); }
+    else { sharedSignal.addEventListener('abort', () => controller.abort(), { once: true }); }
+  }
 
   let response: Response;
   try {
@@ -129,10 +134,16 @@ export async function checkSitemap(
     }
 
     let foundSitemap: FoundSitemap;
+    // Shared controller so the first successful attempt aborts the losers
+    const sharedController = new AbortController();
     try {
       // Race URLs in parallel (cap at 5 to limit outbound connections)
-      foundSitemap = await Promise.any(sitemapUrls.slice(0, 5).map(trySitemapUrl));
+      foundSitemap = await Promise.any(
+        sitemapUrls.slice(0, 5).map((u) => trySitemapUrl(u, sharedController.signal))
+      );
+      sharedController.abort();
     } catch (err) {
+      sharedController.abort();
       const errors =
         err instanceof AggregateError
           ? err.errors.map((e: unknown) => (e instanceof Error ? e.message : 'Fetch error'))

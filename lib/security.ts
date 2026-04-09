@@ -200,6 +200,10 @@ export async function safeFetch(
   const location = response.headers.get('location');
   if (!location) return response;
 
+  // Drain the redirect response body so the socket is released immediately
+  // (Node.js fetch will otherwise hold the connection open until GC)
+  response.body?.cancel().catch(() => { /* already closed */ });
+
   // Resolve relative redirect against the original URL
   let resolvedUrl: string;
   try {
@@ -208,12 +212,17 @@ export async function safeFetch(
     throw new Error('Invalid redirect location');
   }
 
+  // Abort check BEFORE DNS — avoids up to 3s of wasted lookup if caller aborted
+  if (options.signal?.aborted) {
+    throw new DOMException('Aborted', 'AbortError');
+  }
+
   // Block redirects to unsafe (internal/private) addresses — DNS check prevents rebinding
   if (!(await isSafeUrlWithDns(resolvedUrl))) {
     throw new Error('Redirect to unsafe URL blocked');
   }
 
-  // Abort if the caller's signal already fired during DNS validation
+  // Re-check abort after DNS too (in case it fired during lookup)
   if (options.signal?.aborted) {
     throw new DOMException('Aborted', 'AbortError');
   }

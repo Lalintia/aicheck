@@ -185,7 +185,8 @@ export async function checkRobotsTxt(url: string): Promise<CheckResult> {
         allowedBots,
         content: safeContent,
         // rawContent: used internally by sitemap-checker to extract Sitemap: URLs
-        rawContent: content.slice(0, 1000),
+        // Keep 10KB so Sitemap: URLs declared late in the file are preserved
+        rawContent: content.slice(0, 10000),
       },
       warnings.length > 0 ? warnings : undefined
     );

@@ -75,6 +75,7 @@ export function AICheckHero({ onSubmit, isLoading, error, ai, formT }: AICheckHe
             <button
               type="submit"
               disabled={isLoading}
+              aria-label={isLoading ? ai.scanning : ai.submit}
               className="w-full bg-gradient-to-r from-violet-500 to-frost-500 hover:from-violet-600 hover:to-frost-600 disabled:from-frost-300 disabled:to-frost-300 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/30 hover:scale-[1.01] active:scale-[0.99] disabled:shadow-none disabled:scale-100"
             >
               {isLoading ? (
@@ -96,15 +97,15 @@ export function AICheckHero({ onSubmit, isLoading, error, ai, formT }: AICheckHe
         <div className="animate-fade-up stagger-4 mt-10 flex flex-wrap items-center justify-center gap-8 text-frost-500 text-sm">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-violet-400" aria-hidden="true" />
-            <span>GPT-4.1 nano</span>
+            <span>{ai.trustLabel1}</span>
           </div>
           <div className="flex items-center gap-2">
             <Eye className="w-4 h-4 text-frost-400" aria-hidden="true" />
-            <span>Real AI Check</span>
+            <span>{ai.trustLabel2}</span>
           </div>
           <div className="flex items-center gap-2">
             <Brain className="w-4 h-4 text-frost-400" aria-hidden="true" />
-            <span>Instant Result</span>
+            <span>{ai.trustLabel3}</span>
           </div>
         </div>
       </div>

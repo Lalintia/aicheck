@@ -54,7 +54,7 @@ export function ScoreDisplay({ score, grade, url }: ScoreDisplayProps): React.Re
       <div className="flex flex-col items-center mb-6">
         <div
           role="img"
-          aria-label={`AI Search readiness score: ${score} out of 100 — ${gradeLabel}`}
+          aria-label={t.results.scoreAriaLabel(score, gradeLabel)}
           className="relative w-44 h-44 mb-5"
         >
           <svg className="w-full h-full" viewBox="0 0 120 120" aria-hidden="true">

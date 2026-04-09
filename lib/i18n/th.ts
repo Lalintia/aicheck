@@ -35,6 +35,7 @@ export const th: Translations = {
     pass: 'ผ่าน',
     fail: 'ไม่ผ่าน',
     analyzeAnother: 'วิเคราะห์เว็บไซต์อื่น',
+    scoreAriaLabel: (score, grade) => `คะแนนความพร้อม AI Search: ${score} จาก 100 คะแนน — ${grade}`,
   },
   grades: {
     excellent: 'ดีเยี่ยม',
@@ -233,5 +234,8 @@ export const th: Translations = {
     model: 'โมเดล',
     analyzeAnother: 'ตรวจเว็บอื่น',
     skipped: 'ข้ามการตรวจ',
+    trustLabel1: 'GPT-4.1 nano',
+    trustLabel2: 'ตรวจด้วย AI จริง',
+    trustLabel3: 'ได้ผลทันที',
   },
 };

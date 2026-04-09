@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
         passed,
         warning,
         failed,
-        total: 10,
+        total: Object.keys(checks).length,
       },
     };
 
