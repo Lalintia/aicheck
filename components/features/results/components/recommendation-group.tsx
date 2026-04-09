@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { Recommendation } from '@/lib/types/checker';
 
 interface RecommendationGroupProps {
@@ -41,7 +42,7 @@ const colorStyles = {
   },
 } as const;
 
-export function RecommendationGroup({
+function RecommendationGroupImpl({
   title,
   count,
   items,
@@ -62,9 +63,9 @@ export function RecommendationGroup({
         <span className={`ml-auto text-xs font-mono ${c.headerText} opacity-70`}>{count}</span>
       </div>
       <div className="space-y-2">
-        {items.map((item) => (
+        {items.map((item, idx) => (
           <div
-            key={`${item.category}-${item.message}`}
+            key={`${item.category}-${idx}`}
             className={`${c.itemBg} rounded-xl p-4 border ${c.itemBorder} transition-all duration-200 hover:shadow-sm`}
           >
             <div className="flex-1 min-w-0">
@@ -80,3 +81,5 @@ export function RecommendationGroup({
     </div>
   );
 }
+
+export const RecommendationGroup = memo(RecommendationGroupImpl);

@@ -29,19 +29,37 @@ const DIV_RATIO_HIGH = 20;
 const DIV_PENALTY_SEVERE = 15;
 const DIV_PENALTY_HIGH = 8;
 
+// Count occurrences of a literal substring without allocating a match array.
+// Case-insensitive by scanning both lowercase and uppercase forms of the tag.
+function countTag(html: string, tag: string): number {
+  const lower = tag.toLowerCase();
+  const upper = tag.toUpperCase();
+  let count = 0;
+  let pos = 0;
+  while ((pos = html.indexOf(lower, pos)) !== -1) {
+    count++;
+    pos += lower.length;
+  }
+  pos = 0;
+  while ((pos = html.indexOf(upper, pos)) !== -1) {
+    count++;
+    pos += upper.length;
+  }
+  return count;
+}
+
 export function checkSemanticHTML(html: string): CheckResult {
   const found: string[] = [];
   const missing: string[] = [];
   let weightedScore = 0;
 
-  // Count div elements to detect div soup
-  const divCount = (html.match(/<div/gi) || []).length;
-  const sectionCount = (html.match(/<section/gi) || []).length;
-  const articleCount = (html.match(/<article/gi) || []).length;
+  // Count div elements to detect div soup (counter loop — no array allocation)
+  const divCount = countTag(html, '<div');
+  const sectionCount = countTag(html, '<section');
+  const articleCount = countTag(html, '<article');
 
-  const htmlLower = html.toLowerCase();
   for (const element of SEMANTIC_ELEMENTS) {
-    const hasElement = htmlLower.includes(element.tag);
+    const hasElement = countTag(html, element.tag) > 0;
 
     if (hasElement) {
       found.push(element.tag.replace('<', ''));
@@ -74,10 +92,10 @@ export function checkSemanticHTML(html: string): CheckResult {
   };
 
   // Add points for ARIA landmarks if semantic elements are missing
-  if (!html.includes('<header') && hasBanner) weightedScore += 10;
-  if (!html.includes('<nav') && hasNavigation) weightedScore += 10;
-  if (!html.includes('<main') && hasMain) weightedScore += 10;
-  if (!html.includes('<footer') && hasContentinfo) weightedScore += 10;
+  if (countTag(html, '<header') === 0 && hasBanner) weightedScore += 10;
+  if (countTag(html, '<nav') === 0 && hasNavigation) weightedScore += 10;
+  if (countTag(html, '<main') === 0 && hasMain) weightedScore += 10;
+  if (countTag(html, '<footer') === 0 && hasContentinfo) weightedScore += 10;
 
   const finalScore = Math.max(0, Math.min(100, weightedScore));
 

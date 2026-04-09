@@ -166,7 +166,8 @@ export async function checkRobotsTxt(url: string): Promise<CheckResult> {
           content: safeContent,
           // rawContent: used internally by sitemap-checker to extract Sitemap: URLs
           // Must NOT be HTML-escaped so that URLs with & characters parse correctly.
-          rawContent: content.slice(0, 1000),
+          // Keep enough content to preserve Sitemap: URLs declared after first 1KB
+          rawContent: content.slice(0, 10000),
         },
         warnings.length > 0 ? warnings : undefined
       );

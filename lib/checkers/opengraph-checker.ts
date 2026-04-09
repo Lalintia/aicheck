@@ -12,33 +12,30 @@ interface OGProperty {
   readonly name: string;
   readonly weight: number;
   readonly required: boolean;
-  readonly propPattern: RegExp;
-  readonly namePattern: RegExp;
+  // Single merged pattern matches meta tag by either property= or name= attribute
+  readonly existsPattern: RegExp;
   readonly contentPattern: RegExp;
 }
 
 const OG_PROPERTIES: readonly OGProperty[] = [
   { name: 'og:title', weight: 25, required: true,
-    propPattern: /<meta[^>]+property=["']og:title["'][^>]*>/i,
-    namePattern: /<meta[^>]+name=["']og:title["'][^>]*>/i,
-    contentPattern: /<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i },
+    existsPattern: /<meta[^>]{0,500}(?:property|name)=["']og:title["'][^>]{0,500}>/i,
+    contentPattern: /<meta[^>]{0,500}(?:property|name)=["']og:title["'][^>]{0,500}content=["']([^"']+)["']/i },
   { name: 'og:description', weight: 25, required: true,
-    propPattern: /<meta[^>]+property=["']og:description["'][^>]*>/i,
-    namePattern: /<meta[^>]+name=["']og:description["'][^>]*>/i,
-    contentPattern: /<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i },
+    existsPattern: /<meta[^>]{0,500}(?:property|name)=["']og:description["'][^>]{0,500}>/i,
+    contentPattern: /<meta[^>]{0,500}(?:property|name)=["']og:description["'][^>]{0,500}content=["']([^"']+)["']/i },
   { name: 'og:image', weight: 25, required: true,
-    propPattern: /<meta[^>]+property=["']og:image["'][^>]*>/i,
-    namePattern: /<meta[^>]+name=["']og:image["'][^>]*>/i,
-    contentPattern: /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i },
+    existsPattern: /<meta[^>]{0,500}(?:property|name)=["']og:image["'][^>]{0,500}>/i,
+    contentPattern: /<meta[^>]{0,500}(?:property|name)=["']og:image["'][^>]{0,500}content=["']([^"']+)["']/i },
   { name: 'og:type', weight: 15, required: true,
-    propPattern: /<meta[^>]+property=["']og:type["'][^>]*>/i,
-    namePattern: /<meta[^>]+name=["']og:type["'][^>]*>/i,
-    contentPattern: /<meta[^>]+property=["']og:type["'][^>]+content=["']([^"']+)["']/i },
+    existsPattern: /<meta[^>]{0,500}(?:property|name)=["']og:type["'][^>]{0,500}>/i,
+    contentPattern: /<meta[^>]{0,500}(?:property|name)=["']og:type["'][^>]{0,500}content=["']([^"']+)["']/i },
   { name: 'og:url', weight: 10, required: false,
-    propPattern: /<meta[^>]+property=["']og:url["'][^>]*>/i,
-    namePattern: /<meta[^>]+name=["']og:url["'][^>]*>/i,
-    contentPattern: /<meta[^>]+property=["']og:url["'][^>]+content=["']([^"']+)["']/i },
+    existsPattern: /<meta[^>]{0,500}(?:property|name)=["']og:url["'][^>]{0,500}>/i,
+    contentPattern: /<meta[^>]{0,500}(?:property|name)=["']og:url["'][^>]{0,500}content=["']([^"']+)["']/i },
 ];
+
+const MAX_OG_VALUE_LENGTH = 2048;
 
 export function checkOpenGraph(html: string): CheckResult {
   const found: string[] = [];
@@ -47,7 +44,7 @@ export function checkOpenGraph(html: string): CheckResult {
   let weightedScore = 0;
 
   for (const prop of OG_PROPERTIES) {
-    const hasProperty = prop.propPattern.test(html) || prop.namePattern.test(html);
+    const hasProperty = prop.existsPattern.test(html);
 
     if (hasProperty) {
       found.push(prop.name);
@@ -73,10 +70,14 @@ export function checkOpenGraph(html: string): CheckResult {
     }
   }
 
-  // Validate image URL if present
-  if (extracted['og:image']) {
-    if (!extracted['og:image'].startsWith('http')) {
-      warnings.push('og:image URL should be absolute');
+  // Validate image URL if present — force https for secure social previews
+  if (rawExtracted['og:image']) {
+    const img = rawExtracted['og:image'];
+    if (img.length > MAX_OG_VALUE_LENGTH) {
+      warnings.push('og:image URL too long');
+      weightedScore -= 5;
+    } else if (!img.startsWith('https://')) {
+      warnings.push('og:image URL should use https://');
       weightedScore -= 5;
     }
   }

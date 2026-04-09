@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
+import { cookies } from 'next/headers';
 import { I18nProvider } from '@/components/i18n-provider';
 import { LanguageSwitcher } from '@/components/language-switcher';
+import type { Locale } from '@/lib/i18n';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -87,13 +89,17 @@ const faqSchema: Record<string, unknown> = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   readonly children: React.ReactNode;
-}): React.ReactElement {
+}): Promise<React.ReactElement> {
+  const cookieStore = await cookies();
+  const cookieLocale = cookieStore.get('locale')?.value;
+  const initialLocale: Locale = cookieLocale === 'th' ? 'th' : 'en';
+
   return (
-    <html lang="en">
+    <html lang={initialLocale}>
       <head>
         <link
           href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap"
@@ -117,7 +123,7 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased min-h-screen bg-frost-50 font-sans bg-grid">
-        <I18nProvider>
+        <I18nProvider initialLocale={initialLocale}>
           <LanguageSwitcher />
           {children}
         </I18nProvider>

@@ -83,7 +83,7 @@ export function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.
     );
   }
 
-  const breakdownItems = [
+  const breakdownItems = useMemo(() => [
     { label: ai.knows, score: breakdown?.recognition ?? 0, max: 20 },
     { label: ai.accuracy, score: breakdown?.accuracy ?? 0, max: 15 },
     { label: ai.urlKnown, score: breakdown?.urlKnown ?? 0, max: 10 },
@@ -91,7 +91,7 @@ export function AICheckResult({ data, onReset, ai }: AICheckResultProps): React.
     { label: ai.productsKnown, score: breakdown?.products ?? 0, max: 15 },
     { label: ai.googlePresence, score: breakdown?.googlePresence ?? 0, max: 10 },
     { label: ai.aiOverview, score: breakdown?.knowledgeGraph ?? 0, max: 15 },
-  ];
+  ], [ai.knows, ai.accuracy, ai.urlKnown, ai.knowledgeDepth, ai.productsKnown, ai.googlePresence, ai.aiOverview, breakdown]);
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-20">

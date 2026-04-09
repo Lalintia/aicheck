@@ -55,7 +55,9 @@ function isPlaceholderAlt(alt: string): boolean {
 
 function parseImages(html: string): ImageInfo[] {
   const images: ImageInfo[] = [];
-  const imgRegex = /<img\b([^>]*)>/gi;
+  // Cap attribute scan at 2000 chars to prevent pathological backtracking
+  // on malformed pages with embedded base64 images and no closing `>`
+  const imgRegex = /<img\b([^>]{0,2000})>/gi;
   let match: RegExpExecArray | null;
 
   while (images.length < 500 && (match = imgRegex.exec(html)) !== null) {

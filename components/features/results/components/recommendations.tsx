@@ -5,6 +5,11 @@ import type { CheckResponse } from '@/lib/types/checker';
 import { useI18n } from '@/lib/i18n';
 import { RecommendationGroup } from './recommendation-group';
 
+// Module-level icon constants — new JSX refs would defeat RecommendationGroup memo
+const ROSE_ICON = <AlertTriangle className="w-4 h-4" />;
+const AMBER_ICON = <AlertCircle className="w-4 h-4" />;
+const BLUE_ICON = <Lightbulb className="w-4 h-4" />;
+
 interface RecommendationsProps {
   readonly recommendations: CheckResponse['recommendations'];
 }
@@ -47,9 +52,9 @@ export function Recommendations({ recommendations }: RecommendationsProps): Reac
       </div>
 
       <div className="space-y-4">
-        <RecommendationGroup title={urgentTitle} count={urgentItems.length} items={urgentItems} color="rose" icon={<AlertTriangle className="w-4 h-4" />} />
-        <RecommendationGroup title={t.results.mediumPriority} count={medium.length} items={medium} color="amber" icon={<AlertCircle className="w-4 h-4" />} />
-        <RecommendationGroup title={t.results.lowPriority} count={low.length} items={low} color="blue" icon={<Lightbulb className="w-4 h-4" />} />
+        <RecommendationGroup title={urgentTitle} count={urgentItems.length} items={urgentItems} color="rose" icon={ROSE_ICON} />
+        <RecommendationGroup title={t.results.mediumPriority} count={medium.length} items={medium} color="amber" icon={AMBER_ICON} />
+        <RecommendationGroup title={t.results.lowPriority} count={low.length} items={low} color="blue" icon={BLUE_ICON} />
       </div>
     </div>
   );

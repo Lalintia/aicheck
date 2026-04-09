@@ -11,7 +11,7 @@ interface RateLimitRecord {
 const RATE_LIMIT = 10; // requests
 const RATE_WINDOW = 60 * 1000; // 1 minute in milliseconds
 const CLEANUP_INTERVAL = 5 * 60 * 1000; // Cleanup every 5 minutes
-const MAX_ENTRIES = 100_000; // Hard cap to prevent memory exhaustion from IP flooding
+const MAX_ENTRIES = 20_000; // Hard cap (~3MB worst case) to prevent memory exhaustion from IP flooding
 
 class RateLimiter {
   private map = new Map<string, RateLimitRecord>();

@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 
@@ -9,14 +10,19 @@ interface StatsSummaryProps {
   readonly failed: number;
 }
 
+// Module-level constants prevent new element references on every render
+const CHECK_ICON = <CheckCircle className="w-5 h-5" />;
+const WARN_ICON = <AlertTriangle className="w-5 h-5" />;
+const FAIL_ICON = <XCircle className="w-5 h-5" />;
+
 export function StatsSummary({ passed, warning, failed }: StatsSummaryProps): React.ReactElement {
   const { t } = useI18n();
 
   return (
     <div className="grid grid-cols-3 gap-3">
-      <StatCard icon={<CheckCircle className="w-5 h-5" />} value={passed} label={t.results.passed} color="emerald" />
-      <StatCard icon={<AlertTriangle className="w-5 h-5" />} value={warning} label={t.results.partial} color="amber" />
-      <StatCard icon={<XCircle className="w-5 h-5" />} value={failed} label={t.results.failed} color="red" />
+      <StatCard icon={CHECK_ICON} value={passed} label={t.results.passed} color="emerald" />
+      <StatCard icon={WARN_ICON} value={warning} label={t.results.partial} color="amber" />
+      <StatCard icon={FAIL_ICON} value={failed} label={t.results.failed} color="red" />
     </div>
   );
 }
@@ -34,7 +40,7 @@ const COLORS = {
   red: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-100' },
 } as const;
 
-function StatCard({ icon, value, label, color }: StatCardProps): React.ReactElement {
+const StatCard = memo(function StatCard({ icon, value, label, color }: StatCardProps): React.ReactElement {
   const c = COLORS[color];
 
   return (
@@ -44,4 +50,4 @@ function StatCard({ icon, value, label, color }: StatCardProps): React.ReactElem
       <div className="text-frost-500 text-xs sm:text-sm font-medium">{label}</div>
     </div>
   );
-}
+});

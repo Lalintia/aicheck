@@ -52,6 +52,20 @@ export interface Translations {
     readonly tryAgain: string;
   };
   readonly loading: string;
+  readonly checkReferences: {
+    readonly viewReferenceLabel: (title: string) => string;
+    readonly closeReferenceLabel: (title: string) => string;
+    readonly referenceButtonLabel: string;
+    readonly weightLabel: string;
+    readonly whyCheckTitle: string;
+    readonly checklistItemsTitle: string;
+    readonly checklistItemsCount: (n: number) => string;
+    readonly standardsTitle: string;
+    readonly standardsCount: (n: number) => string;
+    readonly footerLine1: string;
+    readonly footerLine2: string;
+    readonly viewAllCriteria: string;
+  };
   readonly schemaDetails: {
     readonly title: string;
     readonly noneFound: string;

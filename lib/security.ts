@@ -45,8 +45,8 @@ export function isSafeUrl(url: string): boolean {
     if (/^\d+$/.test(hostname)) {
       const num = parseInt(hostname, 10);
       if (!isNaN(num)) {
-        const ip = [(num >>> 24) & 0xFF, (num >>> 16) & 0xFF, (num >>> 8) & 0xFF, num & 0xFF];
-        if (ip[0] === 10 || ip[0] === 127 || (ip[0] === 192 && ip[1] === 168)) return false;
+        const dotted = `${(num >>> 24) & 0xFF}.${(num >>> 16) & 0xFF}.${(num >>> 8) & 0xFF}.${num & 0xFF}`;
+        if (isPrivateIPv4(dotted)) return false;
       }
     }
     

@@ -6,13 +6,18 @@ import type { Locale } from '@/lib/i18n';
 
 interface I18nProviderProps {
   readonly children: React.ReactNode;
+  readonly initialLocale?: Locale;
 }
 
-export function I18nProvider({ children }: I18nProviderProps): React.ReactElement {
-  const [locale, setLocaleState] = useState<Locale>('en');
+export function I18nProvider({ children, initialLocale = 'en' }: I18nProviderProps): React.ReactElement {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
 
   const setLocale = useCallback((newLocale: Locale): void => {
     setLocaleState(newLocale);
+    // Persist to cookie so the next SSR render has the correct lang
+    if (typeof document !== 'undefined') {
+      document.cookie = `locale=${newLocale}; path=/; max-age=31536000; samesite=lax`;
+    }
   }, []);
 
   useEffect(() => {

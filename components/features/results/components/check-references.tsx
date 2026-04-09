@@ -4,12 +4,35 @@ import { useState, useEffect, useRef, useId } from "react";
 import Link from "next/link";
 import { BookOpen, ExternalLink, ChevronDown, ChevronUp, X } from "lucide-react";
 import { checkReferences } from "@/lib/data/checkReferences";
+import { useI18n } from "@/lib/i18n";
+
+// Shared scroll-lock counter — prevents multiple open modals from corrupting body.style.overflow
+let scrollLockCount = 0;
+let previousOverflow: string | null = null;
+
+function lockBodyScroll(): void {
+  if (scrollLockCount === 0) {
+    previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+  }
+  scrollLockCount++;
+}
+
+function unlockBodyScroll(): void {
+  scrollLockCount = Math.max(0, scrollLockCount - 1);
+  if (scrollLockCount === 0) {
+    document.body.style.overflow = previousOverflow ?? '';
+    previousOverflow = null;
+  }
+}
 
 interface CheckReferenceButtonProps {
   readonly checkType: string;
 }
 
 export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): React.ReactElement | null {
+  const { t } = useI18n();
+  const tr = t.checkReferences;
   const [open, setOpen] = useState(false);
   const [expandedChecks, setExpandedChecks] = useState(true);
   const [expandedStandards, setExpandedStandards] = useState(true);
@@ -51,20 +74,17 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
 
     if (open) {
       wasOpen.current = true;
-      document.body.style.overflow = 'hidden';
+      lockBodyScroll();
       window.addEventListener('keydown', handleKeyDown);
       requestAnimationFrame(() => closeButtonRef.current?.focus());
-    } else {
-      document.body.style.overflow = 'unset';
-      if (wasOpen.current) {
-        wasOpen.current = false;
-        requestAnimationFrame(() => triggerButtonRef.current?.focus());
-      }
+    } else if (wasOpen.current) {
+      wasOpen.current = false;
+      requestAnimationFrame(() => triggerButtonRef.current?.focus());
     }
 
     return () => {
-      document.body.style.overflow = 'unset';
       window.removeEventListener('keydown', handleKeyDown);
+      if (open) { unlockBodyScroll(); }
     };
   }, [open]);
 
@@ -80,11 +100,11 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
         ref={triggerButtonRef}
         type="button"
         onClick={() => setOpen(true)}
-        aria-label={`View reference for ${reference.title}`}
+        aria-label={tr.viewReferenceLabel(reference.title)}
         className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
       >
         <BookOpen className="h-3.5 w-3.5" aria-hidden="true" />
-        <span className="hidden sm:inline">Reference</span>
+        <span className="hidden sm:inline">{tr.referenceButtonLabel}</span>
       </button>
 
       {open && (
@@ -108,7 +128,7 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
                 <h2 id={titleId} className="text-xl font-semibold text-gray-900 flex items-center gap-2">
                   {reference.title}
                   <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-700 rounded-full">
-                    Weight {reference.weight}
+                    {tr.weightLabel} {reference.weight}
                   </span>
                 </h2>
                 <p id={descriptionId} className="text-sm text-gray-500 mt-1">
@@ -120,7 +140,7 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
                 type="button"
                 onClick={() => setOpen(false)}
                 className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-                aria-label={`Close ${reference.title} reference`}
+                aria-label={tr.closeReferenceLabel(reference.title)}
               >
                 <X className="h-5 w-5 text-gray-500" />
               </button>
@@ -132,7 +152,7 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
               <div className="bg-blue-50 rounded-lg p-4">
                 <h4 className="font-medium text-sm text-blue-900 mb-2 flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                  Why check this?
+                  {tr.whyCheckTitle}
                 </h4>
                 <p className="text-sm text-blue-800 leading-relaxed">
                   {reference.why}
@@ -154,10 +174,10 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
                     ) : (
                       <ChevronDown className="h-4 w-4 text-gray-500" />
                     )}
-                    Checklist items
+                    {tr.checklistItemsTitle}
                   </span>
                   <span className="text-xs text-gray-500">
-                    ({reference.checks.length} items)
+                    {tr.checklistItemsCount(reference.checks.length)}
                   </span>
                 </button>
                 
@@ -191,10 +211,10 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
                     ) : (
                       <ChevronDown className="h-4 w-4 text-gray-500" />
                     )}
-                    Standards reference
+                    {tr.standardsTitle}
                   </span>
                   <span className="text-xs text-gray-500">
-                    ({reference.standards.length} sources)
+                    {tr.standardsCount(reference.standards.length)}
                   </span>
                 </button>
                 
@@ -227,9 +247,9 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
             {/* Footer */}
             <div className="px-6 py-4 border-t bg-gray-50 rounded-b-xl">
               <p className="text-xs text-gray-500 text-center">
-                Validation criteria based on Google Search Central and W3C standards
+                {tr.footerLine1}
                 <br />
-                Last updated: February 2026
+                {tr.footerLine2}
               </p>
             </div>
           </div>
@@ -241,13 +261,14 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
 
 // View all criteria button (for Header or Footer)
 export function ViewAllCriteriaButton(): React.ReactElement {
+  const { t } = useI18n();
   return (
     <Link
       href="/docs/validation-criteria"
       className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-colors"
     >
       <BookOpen className="h-4 w-4" aria-hidden="true" />
-      View all validation criteria
+      {t.checkReferences.viewAllCriteria}
       <ExternalLink className="h-3 w-3" aria-hidden="true" />
     </Link>
   );

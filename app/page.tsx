@@ -50,6 +50,7 @@ export default function HomePage(): React.ReactElement {
                 <h1 className="text-red-700 font-bold text-lg mb-2">{t.error.title}</h1>
                 <p id="page-error-message" className="text-frost-700 mb-6">{error}</p>
                 <button
+                  type="button"
                   onClick={handleReset}
                   className="bg-frost-500 hover:bg-frost-600 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 active:scale-[0.98]"
                   aria-describedby="page-error-message"

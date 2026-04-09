@@ -3,6 +3,9 @@
 import { CheckCircle, AlertCircle, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState, useId } from 'react';
 import { useI18n } from '@/lib/i18n';
+import type { Translations } from '@/lib/i18n';
+
+type SchemaDetailsStrings = Translations['schemaDetails'];
 
 export interface SchemaDetail {
   readonly score: number;
@@ -69,46 +72,51 @@ export function SchemaDetails({
       <div id={panelId} hidden={!expanded} className="mt-3 space-y-3">
         {organizations && organizations.map((org, i) => (
           <SchemaTypeDetail
-            key={`org-${org.score}-${org.found.length}-${i}`}
+            key={`org-${i}`}
             type="Organization"
             detail={org}
             description={s.descriptions.organization}
+            strings={s}
           />
         ))}
 
         {websites && websites.map((web, i) => (
           <SchemaTypeDetail
-            key={`web-${web.score}-${web.found.length}-${i}`}
+            key={`web-${i}`}
             type="WebSite"
             detail={web}
             description={s.descriptions.website}
+            strings={s}
           />
         ))}
 
         {articles && articles.map((art, i) => (
           <SchemaTypeDetail
-            key={`art-${art.score}-${art.found.length}-${i}`}
+            key={`art-${i}`}
             type={art.specificType || 'Article'}
             detail={art}
             description={s.descriptions.article}
+            strings={s}
           />
         ))}
 
         {breadcrumbLists && breadcrumbLists.map((bc, i) => (
           <SchemaTypeDetail
-            key={`bc-${bc.score}-${bc.found.length}-${i}`}
+            key={`bc-${i}`}
             type="BreadcrumbList"
             detail={bc}
             description={s.descriptions.breadcrumb}
+            strings={s}
           />
         ))}
 
         {localBusinesses && localBusinesses.map((lb, i) => (
           <SchemaTypeDetail
-            key={`lb-${lb.score}-${lb.found.length}-${i}`}
+            key={`lb-${i}`}
             type={lb.specificType || 'LocalBusiness'}
             detail={lb}
             description={s.descriptions.localBusiness}
+            strings={s}
           />
         ))}
       </div>
@@ -120,6 +128,7 @@ interface SchemaTypeDetailProps {
   readonly type: string;
   readonly detail: SchemaDetail;
   readonly description: string;
+  readonly strings: SchemaDetailsStrings;
 }
 
 function getScoreColor(score: number): string {
@@ -140,9 +149,7 @@ function getIcon(score: number): React.ReactElement {
   return <XCircle className="w-4 h-4 text-rose-600" />;
 }
 
-function SchemaTypeDetail({ type, detail, description }: SchemaTypeDetailProps): React.ReactElement {
-  const { t } = useI18n();
-  const s = t.schemaDetails;
+function SchemaTypeDetail({ type, detail, description, strings: s }: SchemaTypeDetailProps): React.ReactElement {
   const [showDetails, setShowDetails] = useState(false);
 
   const missingRequired = detail.missingRequired || [];

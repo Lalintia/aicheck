@@ -28,6 +28,7 @@ export function checkFAQBlocks(html: string): CheckResult {
   let weightedScore = 0;
 
   for (const pattern of FAQ_PATTERNS) {
+    if (weightedScore >= 100) { break; }
     const matches = pattern.pattern.test(html);
     if (matches) {
       foundPatterns.push(pattern.name);

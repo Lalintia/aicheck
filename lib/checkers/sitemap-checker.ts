@@ -53,7 +53,18 @@ async function trySitemapUrl(sitemapUrl: string): Promise<FoundSitemap> {
     throw new Error('Sitemap too large');
   }
 
-  const rawContent = await response.text();
+  let bodyReadTimeoutId: ReturnType<typeof setTimeout> | undefined;
+  let rawContent: string;
+  try {
+    rawContent = await Promise.race([
+      response.text(),
+      new Promise<never>((_, reject) => {
+        bodyReadTimeoutId = setTimeout(() => reject(new Error('sitemap body read timeout')), 10000);
+      }),
+    ]);
+  } finally {
+    clearTimeout(bodyReadTimeoutId);
+  }
   if (rawContent.length > MAX_SITEMAP_SIZE) {
     throw new Error('Sitemap too large');
   }

@@ -1,4 +1,8 @@
-export const defaultAiCheck = {
+import type { Translations } from '@/lib/i18n';
+
+export type AiCheckStrings = NonNullable<Translations['aiCheck']>;
+
+export const defaultAiCheck: AiCheckStrings = {
   badge: 'AI Visibility',
   title: 'Does AI',
   titleHighlight: 'know your brand?',
@@ -57,5 +61,3 @@ export const defaultAiCheck = {
   analyzeAnother: 'Check Another Website',
   skipped: 'Check was skipped',
 };
-
-export type AiCheckStrings = typeof defaultAiCheck;

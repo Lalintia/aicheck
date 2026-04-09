@@ -77,14 +77,18 @@ function buildSystemMessage(): string {
 }
 
 function buildPrompt(url: string, title: string, description: string): string {
-  const domain = new URL(url).hostname.replace(/^www\./, '');
+  const rawDomain = new URL(url).hostname.replace(/^www\./, '');
+  // Sanitize URL and domain to neutralize prompt-injection attempts via crafted
+  // hostnames or path segments (e.g. "ignore-above.evil.com").
+  const safeUrl = url.replace(/[{}[\]"'`:]/g, '').replace(/\s+/g, '').slice(0, 200);
+  const safeDomain = rawDomain.replace(/[^a-zA-Z0-9.\-]/g, '').slice(0, 100);
   const safeTitle = sanitizeMeta(title, 60);
   const safeDescription = sanitizeMeta(description, 120);
 
   return `Evaluate how well you know this website across multiple dimensions.
 
-Website URL: """${url}"""
-Domain: """${domain}"""
+Website URL: """${safeUrl}"""
+Domain: """${safeDomain}"""
 ${safeTitle ? `Page Title: """${safeTitle}"""` : ''}
 ${safeDescription ? `Description: """${safeDescription}"""` : ''}
 
@@ -355,19 +359,22 @@ export async function checkAIVisibility(url: string, html: string): Promise<Chec
     const safeDomain = domain.replace(/[^\w.-]/g, '').slice(0, 100);
     const kgQuery = brandName ? `${brandName} company` : safeDomain;
 
-    // Run 3 requests in parallel with allSettled to avoid wasting quota
-    // when one call fails — all three must be independently tolerant
+    // Run requests in parallel with allSettled — skip duplicate serper call
+    // when kgQuery collapses to domain (saves 1 quota on single-word domains)
+    const dedupeKg = kgQuery === domain;
     const [aiSettled, seoSettled, kgSettled] = await Promise.allSettled([
       callOpenAI(apiKey, prompt),
       serperSearch(domain),
-      serperSearch(kgQuery),
+      dedupeKg ? Promise.resolve(null) : serperSearch(kgQuery),
     ]);
 
     const aiResult = aiSettled.status === 'fulfilled'
       ? aiSettled.value
       : { error: 'OpenAI request failed', reason: 'network_error' };
     const seoSearchData = seoSettled.status === 'fulfilled' ? seoSettled.value : null;
-    const kgSearchData = kgSettled.status === 'fulfilled' ? kgSettled.value : null;
+    const kgSearchData = dedupeKg
+      ? (seoSettled.status === 'fulfilled' ? seoSettled.value : null)
+      : (kgSettled.status === 'fulfilled' ? kgSettled.value : null);
 
     const googleResult = extractGoogleSearchResult(seoSearchData, domain);
     const knowledgeGraph = extractKnowledgeGraph(kgSearchData);

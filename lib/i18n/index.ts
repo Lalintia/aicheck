@@ -16,7 +16,9 @@ interface I18nContextValue {
 export const I18nContext = createContext<I18nContextValue>({
   locale: 'en',
   t: en,
-  setLocale: () => { console.error('useI18n must be used within I18nProvider'); },
+  setLocale: () => {
+    // no-op default — the provider always wraps the app so this is unreachable
+  },
 });
 
 export function useI18n(): I18nContextValue {

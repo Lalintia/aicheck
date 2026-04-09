@@ -1,5 +1,7 @@
 'use client';
 
+import { memo } from 'react';
+
 interface DimensionCardProps {
   readonly icon: React.ReactNode;
   readonly label: string;
@@ -8,7 +10,7 @@ interface DimensionCardProps {
   readonly neutral?: boolean;
 }
 
-export function DimensionCard({ icon, label, value, positive, neutral }: DimensionCardProps): React.ReactElement {
+function DimensionCardImpl({ icon, label, value, positive, neutral }: DimensionCardProps): React.ReactElement {
   const borderColor = positive ? 'ring-emerald-200' : neutral ? 'ring-amber-200' : 'ring-frost-200';
   const iconBg = positive ? 'bg-emerald-50 text-emerald-500' : neutral ? 'bg-amber-50 text-amber-500' : 'bg-frost-50 text-frost-400';
   const valueColor = positive ? 'text-emerald-600' : neutral ? 'text-amber-600' : 'text-frost-500';
@@ -23,3 +25,5 @@ export function DimensionCard({ icon, label, value, positive, neutral }: Dimensi
     </div>
   );
 }
+
+export const DimensionCard = memo(DimensionCardImpl);
