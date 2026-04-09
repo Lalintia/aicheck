@@ -395,7 +395,17 @@ export async function checkAIVisibility(url: string, html: string): Promise<Chec
       : (kgSettled.status === 'fulfilled' ? kgSettled.value : null);
 
     const googleResult = extractGoogleSearchResult(seoSearchData, domain);
-    const knowledgeGraph = extractKnowledgeGraph(kgSearchData);
+    // Try the disambiguated "brand company" query first; if it has no KG
+    // (common for non-corporate entities like wikipedia.org, github.com,
+    // stackoverflow.com), fall back to the SEO query (raw domain) which
+    // reliably triggers the Knowledge Panel on Google.
+    let knowledgeGraph = extractKnowledgeGraph(kgSearchData);
+    if (!knowledgeGraph.hasKnowledgeGraph && !knowledgeGraph.hasAnswerBox && seoSearchData !== kgSearchData) {
+      const seoKg = extractKnowledgeGraph(seoSearchData);
+      if (seoKg.hasKnowledgeGraph || seoKg.hasAnswerBox) {
+        knowledgeGraph = seoKg;
+      }
+    }
 
     if ('error' in aiResult) {
       return createPartialResult(
