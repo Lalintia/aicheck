@@ -29,7 +29,7 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["'Satoshi'", "system-ui", "-apple-system", "sans-serif"],
+        sans: ["'Satoshi'", "'Anuphan'", "system-ui", "-apple-system", "sans-serif"],
         mono: ["'JetBrains Mono'", "ui-monospace", "monospace"],
       },
       borderRadius: {
