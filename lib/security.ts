@@ -141,6 +141,7 @@ function isPrivateIPv6(address: string): boolean {
   }
   if (lower.startsWith('64:ff9b:')) { return true; } // NAT64
   if (lower.startsWith('2001:db8:')) { return true; } // documentation range
+  if (/^2001:0{0,4}:/.test(lower)) { return true; } // 2001:0000::/32 Teredo tunneling
   if (lower.startsWith('100::')) { return true; } // discard prefix
   return false;
 }

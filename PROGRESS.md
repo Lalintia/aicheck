@@ -6,7 +6,104 @@
 
 ---
 
-## อัปเดตล่าสุด — 7 เมษายน 2569 (รอบบ่าย)
+## อัปเดตล่าสุด — 8 เมษายน 2569
+
+### Refactor + i18n + Review รอบ 3
+
+**1. Refactor `app/ai-check/page.tsx` (676 → 93 บรรทัด)**
+
+แยกเป็นไฟล์ย่อยใต้ `app/ai-check/_components/` และ `app/ai-check/_lib/`:
+
+| ไฟล์ | บรรทัด | หน้าที่ |
+|---|---:|---|
+| `page.tsx` | 93 | Page container + form handler |
+| `_components/ai-check-hero.tsx` | 113 | Hero section + form |
+| `_components/ai-check-result.tsx` | 243 | Result view + score ring + cards |
+| `_components/criteria-card.tsx` | 96 | Expandable criteria card (memoized) |
+| `_components/dimension-card.tsx` | 25 | Single dimension card |
+| `_lib/parsers.ts` | 42 | parseGooglePresence, parseKnowledgeGraph, parseBreakdown |
+| `_lib/default-ai-check.ts` | 61 | Default AI check strings fallback |
+
+ใช้ `_` prefix เพื่อไม่ให้ Next.js App Router มอง folder เป็น route
+
+**2. i18n `components/features/results/components/schema-details.tsx`**
+
+- เพิ่ม `schemaDetails` section ใน `lib/i18n/types.ts`, `en.ts`, `th.ts`
+- ครอบคลุม: title, descriptions (organization/website/article/breadcrumb/localBusiness), found, missingRequired, missingRecommended, errors, warnings, items, validPositions, validAddress, hide/details, toggleDetailsLabel (function)
+- ใช้ `useI18n()` hook ใน component — ไม่มี hardcoded English string เหลือ
+
+**3. Full Code Review รอบ 3 — รัน 3 subagents parallel**
+
+รัน `/review-all` (security + performance + react-ts) หลัง refactor → แก้ **3 real issues**:
+
+| Severity | Issue | ไฟล์ | Fix |
+|---|---|---|---|
+| **High** | `aria-controls` ชี้ไปที่ element ที่ไม่อยู่ตอน collapsed (panel conditionally rendered) | `schema-details.tsx:69` | ใช้ `hidden={!expanded}` แทน conditional render — keep panel mounted เสมอ |
+| **Medium** | Inline `labels` object defeats `CriteriaCard` memo — re-render ทุกครั้ง | `ai-check-result.tsx` | `useMemo` สำหรับ `criteriaLabels` |
+| **Medium** | Index-based keys ทำให้ state ของ `SchemaTypeDetail` รั่วเมื่อ list เปลี่ยน order | `schema-details.tsx:72-108` | Composite key: `${type}-${score}-${found.length}-${i}` |
+
+**Security audit:** ไม่มี new vulnerability — SSRF guard, body size limit, Zod validation, React JSX rendering ยังถูกต้องทุกจุด
+
+**4. Cleanup EC2**
+
+- ตรวจสอบ `/var/www/ai-checker/.env` → ไม่มี `GOOGLE_CSE_API_KEY` / `GOOGLE_CSE_CX` แล้ว (clean อยู่แล้ว)
+- เหลือแค่ `OPENAI_API_KEY` + `SERPER_API_KEY`
+- SSH key ที่ใช้ได้: `~/Desktop/Keypair/n8n-singapore-key-ed25519.pem`
+
+**Typecheck:** ผ่านทั้งหมด (error ที่มีอยู่เป็นของ test files เดิม ไม่เกี่ยวกับการแก้)
+
+### EC2 Security Group Hardening
+
+**Instance:** `i-03b97cd2d09cfb685` (ap-southeast-1) — SG `sg-089a8c9aba5bbbb78` (launch-wizard-1)
+
+**ก่อน:** 6 ports เปิด `0.0.0.0/0` ทั้งหมด (22, 80, 443, 5678, 8001, 8002)
+
+**หลัง:**
+
+| Port | Rule | เหตุผล |
+|---|---|---|
+| 22 | 0.0.0.0/0 (ไม่แตะ) | SSH key-only, password auth ปิด — ปลอดภัยพอ |
+| 80 | Cloudflare IPv4 (15 CIDR) | ทุกเว็บผ่าน Cloudflare proxy (orange cloud) |
+| 443 | Cloudflare IPv4 (15 CIDR) | เหมือนกัน |
+| 5678 | **ลบ** | n8n เก่า ไม่ได้รันแล้ว |
+| 8001 | `43.209.131.244/32` (n8n kairos.shareinvestor.app) | set-news-pipeline scraper — รับจาก n8n ตัวเดียว |
+| 8002 | **ลบ** | ไม่มี service |
+
+**EC2 ที่รันอยู่:**
+- nginx (main) → 9 sites: aicheck, esg, ohmai.me, ptt, dev2, hmc-chatbot, ptgesg, set-chatbot, default
+- aicheck (Next.js PM2 port 3001)
+- FTSE (docker compose: backend 8000 + frontend 3000 + nginx 8080 → behind main nginx via esg.ohmai.me)
+- set-news-pipeline (docker, 8001→8000 FastAPI)
+
+**Verified หลังเปลี่ยน:**
+- ✅ `https://aicheck.ohmai.me` → 200
+- ✅ `https://esg.ohmai.me` → 200
+- ✅ `https://ohmai.me` → 200
+- ✅ `http://54.169.168.58/` direct → blocked (000)
+- ✅ set-news-pipeline scrape log แสดง `POST /news/scrape 200 OK` จาก 43.209.131.244 ปกติ
+
+**Caller identification (จาก log analysis):**
+- `43.209.131.244` = n8n ที่ kairos.shareinvestor.app (n8n ของบริษัทที่พี่โอมใช้ — ไม่ได้ host เอง)
+- อื่นๆ ทั้งหมดเป็น bot scanners (404 + "Invalid HTTP request received")
+
+### TODO Decisions (skipped with reason)
+
+- ⏭ **SSH port 22 via SSM Session Manager** — ข้าม เพราะ SSH key-only ปลอดภัยพอแล้ว, การ setup SSM เสี่ยง lock out ถ้าทำผิด และ usability แย่ลง
+- ⏭ **ย้าย set-news-pipeline ไปหลัง nginx + set-api.ohmai.me** — ข้าม เพราะ n8n kairos เป็นของบริษัท พี่โอมแก้ workflow URL ได้แต่ไม่คุ้มกับความยุ่งยาก; IP production stable
+
+**Fallback plan ถ้าวันไหน n8n IP เปลี่ยน (scrape พัง):**
+1. ดู log `docker logs set-news-pipeline` ดู IP ใหม่
+2. `aws ec2 revoke-security-group-ingress ... --cidr 43.209.131.244/32`
+3. `aws ec2 authorize-security-group-ingress ... --cidr <NEW_IP>/32`
+4. ใช้เวลา < 1 นาที
+
+### SSH Key Reference
+- Key ที่ใช้ได้: `~/Desktop/Keypair/n8n-singapore-key-ed25519.pem`
+- Command: `ssh -i ~/Desktop/Keypair/n8n-singapore-key-ed25519.pem ubuntu@54.169.168.58`
+
+---
+
+## อัปเดต — 7 เมษายน 2569 (รอบบ่าย)
 
 ### Checker Accuracy — แก้ false-negatives ที่เจอใน production
 
@@ -458,10 +555,10 @@ Commit `444b9da` — จากการรัน `/review-all` ด้วย 3 su
 ## TODO
 
 - [ ] พิจารณาเปลี่ยนรูป project cards ที่ ohmai.me เป็น screenshot จริงแทน stock photos
-- [ ] Refactor `ai-check/page.tsx` (620+ บรรทัด) แยก AICheckResult/CriteriaCard เป็นไฟล์แยก
-- [ ] เพิ่ม i18n สำหรับ `schema-details.tsx` (hardcoded English)
-- [ ] Restrict EC2 security group ให้รับ traffic จาก Cloudflare IPs เท่านั้น
-- [ ] ลบ GOOGLE_CSE_API_KEY / GOOGLE_CSE_CX ออกจาก `.env` บน EC2 (ไม่ใช้แล้ว)
+- [x] ~~Refactor `ai-check/page.tsx` (620+ บรรทัด)~~ ✅ 8 เม.ย. 2569 — 676 → 93 บรรทัด
+- [x] ~~เพิ่ม i18n สำหรับ `schema-details.tsx`~~ ✅ 8 เม.ย. 2569
+- [x] ~~Restrict EC2 security group ให้รับ traffic จาก Cloudflare IPs เท่านั้น~~ ✅ 8 เม.ย. 2569 — 80/443 Cloudflare-only, 8001 IP allowlist, ปิด 5678/8002
+- [x] ~~ลบ GOOGLE_CSE_API_KEY / GOOGLE_CSE_CX ออกจาก `.env` บน EC2~~ ✅ 8 เม.ย. 2569 — clean อยู่แล้ว
 
 ---
 

@@ -78,6 +78,7 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
     <>
       <button
         ref={triggerButtonRef}
+        type="button"
         onClick={() => setOpen(true)}
         aria-label={`View reference for ${reference.title}`}
         className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
@@ -88,13 +89,9 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
 
       {open && (
         <div
-          role="presentation"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
           onClick={(e) => {
             if (e.target === e.currentTarget) setOpen(false);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') { setOpen(false); }
           }}
         >
           <div
@@ -120,6 +117,7 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
               </div>
               <button
                 ref={closeButtonRef}
+                type="button"
                 onClick={() => setOpen(false)}
                 className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
                 aria-label={`Close ${reference.title} reference`}
@@ -144,6 +142,7 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
               {/* Checks Section */}
               <div>
                 <button
+                  type="button"
                   onClick={() => setExpandedChecks(!expandedChecks)}
                   aria-expanded={expandedChecks}
                   aria-controls={checksListId}
@@ -180,6 +179,7 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
               {/* Standards Section */}
               <div>
                 <button
+                  type="button"
                   onClick={() => setExpandedStandards(!expandedStandards)}
                   aria-expanded={expandedStandards}
                   aria-controls={standardsListId}

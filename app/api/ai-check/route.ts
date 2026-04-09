@@ -69,8 +69,9 @@ export async function POST(request: NextRequest) {
           html = text.slice(0, 100000);
         }
       }
-    } catch {
+    } catch (err) {
       // Continue with empty HTML — AI check can still work with URL alone
+      console.error('[ai-check] HTML fetch failed:', err instanceof Error ? err.message : err);
     } finally {
       clearTimeout(timeoutId);
     }

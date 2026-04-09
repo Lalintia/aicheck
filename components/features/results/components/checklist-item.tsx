@@ -74,11 +74,11 @@ export function ChecklistItem({ index, check, checkType }: ChecklistItemProps): 
 
       {isSchema && check.data && (
         <SchemaDetails
-          organizations={Array.isArray(check.data.organizations) ? check.data.organizations as readonly SchemaDetail[] : undefined}
-          websites={Array.isArray(check.data.websites) ? check.data.websites as readonly SchemaDetail[] : undefined}
-          articles={Array.isArray(check.data.articles) ? check.data.articles as readonly SchemaDetail[] : undefined}
-          breadcrumbLists={Array.isArray(check.data.breadcrumbLists) ? check.data.breadcrumbLists as readonly SchemaDetail[] : undefined}
-          localBusinesses={Array.isArray(check.data.localBusinesses) ? check.data.localBusinesses as readonly SchemaDetail[] : undefined}
+          organizations={toSchemaDetails(check.data.organizations)}
+          websites={toSchemaDetails(check.data.websites)}
+          articles={toSchemaDetails(check.data.articles)}
+          breadcrumbLists={toSchemaDetails(check.data.breadcrumbLists)}
+          localBusinesses={toSchemaDetails(check.data.localBusinesses)}
         />
       )}
     </div>
@@ -97,6 +97,18 @@ interface StatusTranslations {
     readonly partial: string;
     readonly fail: string;
   };
+}
+
+function isSchemaDetail(value: unknown): value is SchemaDetail {
+  if (typeof value !== 'object' || value === null) { return false; }
+  const v = value as Record<string, unknown>;
+  return typeof v.score === 'number' && Array.isArray(v.found);
+}
+
+function toSchemaDetails(value: unknown): readonly SchemaDetail[] | undefined {
+  if (!Array.isArray(value)) { return undefined; }
+  const filtered = value.filter(isSchemaDetail);
+  return filtered.length > 0 ? filtered : undefined;
 }
 
 function getStatusInfo(score: number, found: boolean, t: StatusTranslations): StatusInfo {
