@@ -83,8 +83,8 @@ function buildPrompt(url: string, title: string, description: string): string {
 
   return `Evaluate how well you know this website across multiple dimensions.
 
-Website URL: ${url}
-Domain: ${domain}
+Website URL: """${url}"""
+Domain: """${domain}"""
 ${safeTitle ? `Page Title: """${safeTitle}"""` : ''}
 ${safeDescription ? `Description: """${safeDescription}"""` : ''}
 

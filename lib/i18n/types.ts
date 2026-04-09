@@ -52,6 +52,28 @@ export interface Translations {
     readonly tryAgain: string;
   };
   readonly loading: string;
+  readonly schemaDetails: {
+    readonly title: string;
+    readonly noneFound: string;
+    readonly descriptions: {
+      readonly organization: string;
+      readonly website: string;
+      readonly article: string;
+      readonly breadcrumb: string;
+      readonly localBusiness: string;
+    };
+    readonly found: string;
+    readonly missingRequired: string;
+    readonly missingRecommended: string;
+    readonly errors: string;
+    readonly warnings: string;
+    readonly items: string;
+    readonly validPositions: string;
+    readonly validAddress: string;
+    readonly hide: string;
+    readonly details: string;
+    readonly toggleDetailsLabel: (action: string, type: string) => string;
+  };
   readonly aiCheck?: {
     readonly badge: string;
     readonly title: string;

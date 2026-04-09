@@ -224,7 +224,7 @@ Scale         - สรุปน้ำหนัก
 - [x] สร้าง `app/docs/validation-criteria/page.tsx` - Full Documentation Page
 - [x] เพิ่มปุ่ม "อ้างอิง" ใน `checklist-item.tsx`
 - [x] เพิ่มปุ่ม "ดูเกณฑ์ทั้งหมด" ใน `hero-section.tsx`
-- [ ] Copy ไฟล์ไปยัง `ai-search-checker/` (ถ้าต่างโฟลเดอร์)
+- [ ] Copy ไฟล์ไปยัง `aicheck/` (ถ้าต่างโฟลเดอร์)
 - [ ] ทดสอบ build
 - [ ] Deploy
 
@@ -233,7 +233,7 @@ Scale         - สรุปน้ำหนัก
 ## 📂 File Structure
 
 ```
-ai-search-checker/
+aicheck/
 ├── app/
 │   └── docs/
 │       └── validation-criteria/

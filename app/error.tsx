@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { AlertCircle } from 'lucide-react';
 
 interface ErrorBoundaryProps {
@@ -8,6 +9,10 @@ interface ErrorBoundaryProps {
 }
 
 export default function ErrorBoundary({ error, reset }: ErrorBoundaryProps): React.ReactElement {
+  useEffect(() => {
+    console.error('[ErrorBoundary]', error);
+  }, [error]);
+
   return (
     <div role="alert" className="min-h-[400px] flex items-center justify-center px-4">
       <div className="glass-card rounded-2xl p-8 max-w-md w-full text-center">
@@ -22,6 +27,7 @@ export default function ErrorBoundary({ error, reset }: ErrorBoundaryProps): Rea
           <p className="text-xs text-frost-400 font-mono mb-4">Error ID: {error.digest}</p>
         )}
         <button
+          type="button"
           onClick={reset}
           aria-describedby="error-description"
           className="bg-frost-500 hover:bg-frost-600 text-white font-medium py-3 px-6 rounded-xl transition-all duration-200 active:scale-[0.98]"

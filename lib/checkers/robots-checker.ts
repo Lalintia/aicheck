@@ -64,7 +64,18 @@ export async function checkRobotsTxt(url: string): Promise<CheckResult> {
     if (contentLengthHeader && parseInt(contentLengthHeader, 10) > MAX_ROBOTS_SIZE) {
       return createFailureResult('robots.txt too large to analyze', { url: robotsUrl });
     }
-    const content = await response.text();
+    let bodyReadTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    let content: string;
+    try {
+      content = await Promise.race([
+        response.text(),
+        new Promise<never>((_, reject) => {
+          bodyReadTimeoutId = setTimeout(() => reject(new Error('robots.txt body read timeout')), 10000);
+        }),
+      ]);
+    } finally {
+      clearTimeout(bodyReadTimeoutId);
+    }
     if (content.length > MAX_ROBOTS_SIZE) {
       return createFailureResult('robots.txt too large to analyze', { url: robotsUrl });
     }

@@ -141,7 +141,7 @@ Initial State (HeroSection shown)
 ## 4. Project Structure
 
 ```
-ai-search-checker/
+aicheck/
 │
 ├── app/                          # Next.js App Router
 │   ├── api/
