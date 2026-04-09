@@ -50,11 +50,13 @@ async function trySitemapUrl(sitemapUrl: string, sharedSignal?: AbortSignal): Pr
   }
 
   if (!response.ok) {
+    response.body?.cancel().catch(() => { /* already closed */ });
     throw new Error(`HTTP ${response.status}`);
   }
 
   const contentLength = response.headers.get('content-length');
   if (contentLength && parseInt(contentLength, 10) > MAX_SITEMAP_SIZE) {
+    response.body?.cancel().catch(() => { /* already closed */ });
     throw new Error('Sitemap too large');
   }
 

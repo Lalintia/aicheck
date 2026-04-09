@@ -38,6 +38,7 @@ export async function checkLlmsTxt(url: string): Promise<CheckResult> {
     }
 
     if (!response.ok) {
+      response.body?.cancel().catch(() => { /* already closed */ });
       if (response.status === 404) {
         return createFailureResult('llms.txt not found (HTTP 404)', {
           url: llmsUrl,
@@ -53,6 +54,7 @@ export async function checkLlmsTxt(url: string): Promise<CheckResult> {
     // Size guard before buffering body
     const contentLengthHeader = response.headers.get('content-length');
     if (contentLengthHeader && parseInt(contentLengthHeader, 10) > MAX_LLMS_SIZE) {
+      response.body?.cancel().catch(() => { /* already closed */ });
       return createFailureResult('llms.txt too large to analyze', { url: llmsUrl });
     }
     let bodyReadTimeoutId: ReturnType<typeof setTimeout> | undefined;

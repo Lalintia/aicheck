@@ -180,10 +180,16 @@ async function serperSearch(query: string): Promise<Record<string, unknown> | nu
       clearTimeout(timeoutId);
     }
 
-    if (!response.ok) { return null; }
+    if (!response.ok) {
+      response.body?.cancel().catch(() => { /* already closed */ });
+      return null;
+    }
 
     const cl = response.headers.get('content-length');
-    if (cl && parseInt(cl, 10) > 512 * 1024) { return null; }
+    if (cl && parseInt(cl, 10) > 512 * 1024) {
+      response.body?.cancel().catch(() => { /* already closed */ });
+      return null;
+    }
 
     let jsonTimeout: ReturnType<typeof setTimeout> | undefined;
     try {
@@ -508,6 +514,7 @@ async function callOpenAI(
   }
 
   if (!response.ok) {
+    response.body?.cancel().catch(() => { /* already closed */ });
     return { error: 'API error', reason: 'api_error' };
   }
 

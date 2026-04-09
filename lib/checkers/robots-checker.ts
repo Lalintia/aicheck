@@ -47,6 +47,7 @@ export async function checkRobotsTxt(url: string): Promise<CheckResult> {
     }
 
     if (!response.ok) {
+      response.body?.cancel().catch(() => { /* already closed */ });
       if (response.status === 404) {
         return createFailureResult('robots.txt not found (HTTP 404)', {
           status: response.status,
@@ -62,6 +63,7 @@ export async function checkRobotsTxt(url: string): Promise<CheckResult> {
     // Size guard before buffering body
     const contentLengthHeader = response.headers.get('content-length');
     if (contentLengthHeader && parseInt(contentLengthHeader, 10) > MAX_ROBOTS_SIZE) {
+      response.body?.cancel().catch(() => { /* already closed */ });
       return createFailureResult('robots.txt too large to analyze', { url: robotsUrl });
     }
     let bodyReadTimeoutId: ReturnType<typeof setTimeout> | undefined;
