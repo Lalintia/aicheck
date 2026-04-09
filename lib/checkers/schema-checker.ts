@@ -293,10 +293,17 @@ export function checkSchema(_url: string, html: string): CheckResult {
       );
     }
 
-    return createFailureResult(
-      'Schema.org JSON-LD found but incomplete or invalid',
-      resultData
-    );
+    // Differentiate "nothing found" from "found but invalid" —
+    // the previous single-message was confusing because it claimed
+    // schemas were "found" even when totalSchemas was 0.
+    const failureMessage =
+      detailedResult.totalSchemas === 0
+        ? 'Schema.org JSON-LD not found'
+        : detailedResult.invalidSchemas > 0 && detailedResult.validSchemas === 0
+          ? `Schema.org JSON-LD found but all ${detailedResult.invalidSchemas} blocks are invalid`
+          : 'Schema.org JSON-LD found but missing important types (Organization, WebSite)';
+
+    return createFailureResult(failureMessage, resultData);
 
   } catch (error) {
     return createFailureResult('Error validating Schema.org', {
