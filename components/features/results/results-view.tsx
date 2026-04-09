@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactElement } from 'react';
 import type { CheckResponse } from '@/lib/types/checker';
 import { ScoreDisplay } from './components/score-display';
 import { StatsSummary } from './components/stats-summary';
@@ -12,7 +13,7 @@ interface ResultsViewProps {
   readonly onReset: () => void;
 }
 
-export function ResultsView({ result, onReset }: ResultsViewProps): React.ReactElement {
+export function ResultsView({ result, onReset }: ResultsViewProps): ReactElement {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 pb-20 pt-10 relative z-10">
       {/* Bento Grid Hero — Score (2/3) + Stats (1/3) on desktop */}

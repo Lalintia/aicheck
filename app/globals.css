@@ -225,7 +225,9 @@ body::before {
   }
 
   .bento-tile:hover {
-    transform: scale(1.01);
+    /* Shadow-only hover — no transform to keep compositor path cheap
+       (inset box-shadow on glow-accent-strong would force a full repaint
+       if combined with scale) */
     box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.08);
   }
 }

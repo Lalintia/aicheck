@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { ReactElement } from 'react';
 import type { CheckGrade } from '@/lib/types/checker';
 import { useI18n } from '@/lib/i18n';
 
@@ -11,19 +12,29 @@ interface ScoreDisplayProps {
 }
 
 const GRADE_COLORS: Record<CheckGrade, { ring: string; text: string; bg: string }> = {
-  excellent: { ring: '#2e9e6a', text: 'text-emerald-600', bg: 'bg-emerald-50' },
-  good: { ring: '#4a6fa5', text: 'text-frost-500', bg: 'bg-frost-100' },
-  fair: { ring: '#d4880f', text: 'text-amber-600', bg: 'bg-amber-50' },
-  poor: { ring: '#c94040', text: 'text-red-600', bg: 'bg-red-50' },
+  excellent: { ring: '#059669', text: 'text-emerald-600', bg: 'bg-emerald-50' },
+  good: { ring: '#0369a1', text: 'text-frost-500', bg: 'bg-frost-100' },
+  fair: { ring: '#d97706', text: 'text-amber-600', bg: 'bg-amber-50' },
+  poor: { ring: '#dc2626', text: 'text-red-600', bg: 'bg-red-50' },
 };
 
-export function ScoreDisplay({ score, grade, url }: ScoreDisplayProps): React.ReactElement {
+export function ScoreDisplay({ score, grade, url }: ScoreDisplayProps): ReactElement {
   const { t } = useI18n();
   const gradeLabel = t.grades[grade];
   const colors = GRADE_COLORS[grade];
   const [animatedScore, setAnimatedScore] = useState(0);
 
   useEffect(() => {
+    // Respect user preference for reduced motion — skip the counter animation
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReducedMotion) {
+      setAnimatedScore(score);
+      return;
+    }
+
     let frame: number;
     const duration = 1200;
     const start = performance.now();

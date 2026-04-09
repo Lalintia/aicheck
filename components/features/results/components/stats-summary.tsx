@@ -1,6 +1,7 @@
 'use client';
 
 import { memo } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
 
@@ -15,11 +16,15 @@ const CHECK_ICON = <CheckCircle className="w-5 h-5" />;
 const WARN_ICON = <AlertTriangle className="w-5 h-5" />;
 const FAIL_ICON = <XCircle className="w-5 h-5" />;
 
-export function StatsSummary({ passed, warning, failed }: StatsSummaryProps): React.ReactElement {
+export function StatsSummary({ passed, warning, failed }: StatsSummaryProps): ReactElement {
   const { t } = useI18n();
 
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div
+      className="grid grid-cols-3 gap-3"
+      role="group"
+      aria-label={`${t.results.passed}: ${passed}, ${t.results.partial}: ${warning}, ${t.results.failed}: ${failed}`}
+    >
       <StatCard icon={CHECK_ICON} value={passed} label={t.results.passed} color="emerald" />
       <StatCard icon={WARN_ICON} value={warning} label={t.results.partial} color="amber" />
       <StatCard icon={FAIL_ICON} value={failed} label={t.results.failed} color="red" />
@@ -28,7 +33,7 @@ export function StatsSummary({ passed, warning, failed }: StatsSummaryProps): Re
 }
 
 interface StatCardProps {
-  readonly icon: React.ReactNode;
+  readonly icon: ReactNode;
   readonly value: number;
   readonly label: string;
   readonly color: 'emerald' | 'amber' | 'red';
@@ -40,14 +45,17 @@ const COLORS = {
   red: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-100' },
 } as const;
 
-const StatCard = memo(function StatCard({ icon, value, label, color }: StatCardProps): React.ReactElement {
+const StatCard = memo(function StatCard({ icon, value, label, color }: StatCardProps): ReactElement {
   const c = COLORS[color];
 
   return (
-    <div className={`${c.bg} rounded-2xl p-4 text-center border ${c.border} transition-transform duration-200 hover:scale-105`}>
+    <div
+      className={`${c.bg} rounded-2xl p-4 text-center border ${c.border} transition-transform duration-200 hover:scale-105`}
+      aria-label={`${value} ${label}`}
+    >
       <div className={`${c.text} flex justify-center mb-2`} aria-hidden="true">{icon}</div>
       <div className={`text-2xl sm:text-3xl font-bold font-mono ${c.text}`}>{value}</div>
-      <div className="text-frost-500 text-xs sm:text-sm font-medium">{label}</div>
+      <div className="text-frost-700 text-xs sm:text-sm font-medium">{label}</div>
     </div>
   );
 });
