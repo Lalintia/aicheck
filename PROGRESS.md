@@ -6,7 +6,107 @@
 
 ---
 
-## อัปเดตล่าสุด — 8 เมษายน 2569
+## อัปเดตล่าสุด — 9 เมษายน 2569
+
+### Multi-Agent Review Sweep (รอบ 4–9) + Font Fix + Production Hardening
+
+**Context:** พรีเซนต์บริษัทแม่ที่สิงคโปร์ 20 เม.ย. ต้องทำให้ production-ready เต็มรูปแบบ
+
+**กระบวนการ:** รัน `/review-all` ซ้ำ 6 รอบ (รอบที่ 4 → 9) ใช้ 3 subagents parallel แต่ละรอบ:
+- `security-auditor` — SSRF, injection, rate-limit, secrets
+- `performance-error-reviewer` — memory leaks, timeouts, regex, algorithmic complexity
+- `react-typescript-reviewer` — a11y, memo, type safety, i18n, server/client boundaries
+
+**รวม 18 audit passes (3 agents × 6 รอบ)** แก้ **50+ issues** จนได้ "clean" verdict ทั้ง 3 agents ในรอบที่ 9
+
+---
+
+#### 🔒 Security fixes (รอบ 4–8)
+
+| # | Issue | ไฟล์ |
+|---|---|---|
+| 1 | Teredo `2001:0000::/32` ไม่ถูกบล็อกใน `isPrivateIPv6` | `lib/security.ts` |
+| 2 | Decimal-encoded IP bypass — `http://2852039166` (= `169.254.169.254` AWS metadata) ทะลุ single-integer check | `lib/security.ts` |
+| 3 | `safeFetch` redirect body ไม่ drain → socket leak | `lib/security.ts` |
+| 4 | `safeFetch` ไม่ check abort signal ก่อน DNS lookup (เสียเวลา 3s) | `lib/security.ts` |
+| 5 | Body-read timeout ขาดใน `sitemap-checker` (slowloris risk) | `lib/checkers/sitemap-checker.ts` |
+| 6 | URL/domain ไม่ sanitize ก่อนเข้า GPT prompt (prompt injection via crafted subdomain) | `lib/checkers/ai-visibility-checker.ts` |
+| 7 | `og:image` รับ `http://` (ไม่บังคับ https) | `lib/checkers/opengraph-checker.ts` |
+| 8 | IPv6 middleware regex accept `::::::` (rate-limit key pollution) | `middleware.ts` |
+| 9 | Socket leaks บน `!response.ok` path ใน 5 checkers + 2 API routes | ทุก checker + routes |
+
+#### ⚡ Performance fixes
+
+| # | Issue | Fix |
+|---|---|---|
+| 1 | `semantic-html-checker` ใช้ `match(/g)` allocate array ใหญ่ 3 ตัว + `toLowerCase` 10MB | Counter loop via `indexOf`, ไม่ allocate |
+| 2 | `image-checker` regex `[^>]*` backtrack บน base64 images | Cap `[^>]{0,2000}` |
+| 3 | `opengraph-checker` รัน 10 regex passes บน HTML (prop+name patterns แยกกัน) | Merge เป็น 5 `existsPattern` |
+| 4 | `faq-checker` ไม่ early-exit หลัง score ถึง 100 | Add `if (weightedScore >= 100) break` |
+| 5 | `sitemap-checker` `Promise.any` ปล่อย 4 connections hang ค้างหลัง winner resolves | Shared `AbortController` — winner aborts losers |
+| 6 | `author-checker` regex `about.*author` unbounded wildcard | Cap `about.{0,50}author` |
+| 7 | `extractMeta` scan ทั้ง HTML | Scope ไปที่ `<head>` หรือ 16KB แรก |
+| 8 | `robots-checker` rawContent slice 1000 bytes ตัด Sitemap URL หาย | เพิ่มเป็น 10000 bytes ทั้ง success + partial path |
+| 9 | `serper` call ซ้ำเมื่อ `kgQuery === domain` | Dedup — reuse seo result |
+| 10 | `rate-limiter` MAX_ENTRIES 100k → memory 15MB worst case | ลดเหลือ 20k (~3MB) |
+| 11 | `middleware` IPv6 check ก่อน IPv4 (แต่ CF เป็น IPv4 ส่วนใหญ่) | Swap order |
+| 12 | `api/check` `summary.total: 10` hardcoded | `Object.keys(checks).length` |
+
+#### ⚛️ React / A11y / i18n fixes
+
+| # | Issue | Fix |
+|---|---|---|
+| 1 | `app/error.tsx` ไม่ log error prop | เพิ่ม `useEffect(() => console.error(error), [error])` |
+| 2 | `checklist-item.tsx` unsafe `as readonly SchemaDetail[]` cast | Type guard `isSchemaDetail` + `toSchemaDetails()` helper |
+| 3 | `check-references.tsx` backdrop duplicate `onKeyDown` + `role="presentation"` | Remove (window listener already handles Escape) |
+| 4 | `lib/i18n/index.ts` ติด `'use client'` ทำให้ Server Component ใช้ `getTranslations` ไม่ได้ | Split ไป `lib/i18n/translations.ts` (pure module) |
+| 5 | `<html lang="en">` hardcoded — Thai user SSR initial paint ยังเป็น EN | อ่าน cookie server-side, pass `initialLocale` ไป `I18nProvider` |
+| 6 | `DimensionCard`, `StatCard`, `RecommendationGroup` ไม่ memo + inline icon JSX | Module-level icon constants + `React.memo` |
+| 7 | `check-references.tsx` modal strings hardcode English ทั้งหมด — modal ภาษาไทยเป็น EN | Full i18n ใน `en.ts`/`th.ts`/`types.ts` |
+| 8 | `check-references.tsx` `body.style.overflow` race ระหว่าง modal หลายตัว | Module-level scroll-lock refcount |
+| 9 | `ScoreDisplay` aria-label hardcoded "AI Search readiness score" | `scoreAriaLabel(score, grade)` i18n function |
+| 10 | `AICheckHero` trust labels "GPT-4.1 nano / Real AI Check / Instant Result" hardcoded EN | เพิ่ม `trustLabel1/2/3` i18n |
+| 11 | `SchemaTypeDetail` เรียก `useI18n()` ในแต่ละ loop item | Pass `strings` prop จาก parent |
+| 12 | Schema details keys ผสม runtime values `${score}-${length}-${i}` | Stable `${i}` |
+| 13 | `loading.tsx` "Loading..." hardcode | ใช้ `t.loading` |
+| 14 | `i18n/index.ts` `console.error` ใน default context value | No-op default |
+| 15 | `AiCheckStrings = typeof defaultAiCheck` type coupling | Explicit `NonNullable<Translations['aiCheck']>` |
+
+#### 🔤 Font Fix
+
+- ตัวอักษรไทย fallback ไป system font แทน Anuphan ที่ตั้งใจใช้
+- **Root cause:** `tailwind.config.ts` `sans` stack ไม่มี Anuphan → Tailwind `font-sans` class บน `<body>` override `globals.css`
+- **Fix:** เพิ่ม `'Anuphan'` ใน Tailwind sans fallback chain 1 บรรทัด
+
+#### 🧹 Naming cleanup
+
+- Purge `ai-search-checker` ทั้งหมดจากเอกสาร (6 ไฟล์): PROJECT_OVERVIEW.html, PROJECT_OVERVIEW.md, PROJECT_SUMMARY.md, UI_DESIGN.md, deploy/package.json, package-lock.json
+- `PROJECT_OVERVIEW.html` แก้ "11 checkers" → "10 checkers" + path `/var/www/ai-search-checker/` → `/var/www/ai-checker/`
+
+#### 📦 Commits (main branch)
+
+| Commit | Scope | Files |
+|---|---|---|
+| `aca640d` | fix: code review round 4 + purge ai-search-checker references | 26 files |
+| `3719761` | fix(style): add Anuphan to tailwind sans font stack for Thai text | 1 file |
+| `1dd6abe` | fix(review): address round-5 findings across security/perf/react | 26 files |
+| `bb64cbc` | fix(review): address round-6 followup findings | 16 files |
+| `733309f` | fix(perf): drain response body on !ok or oversized paths | 2 files |
+| `e04910b` | fix(perf): drain response body on all checker early-return paths | 4 files |
+
+#### ✅ Round 9 verdict (final verification)
+
+- 🔒 **security-auditor:** "No new actionable findings. All critical controls correctly in place."
+- ⚡ **performance-error-reviewer:** "Codebase is CLEAN. Every !response.ok path drains body. All AbortController + clearTimeout pairs properly scoped."
+- ⚛️ **react-typescript-reviewer:** "Production-ready from a frontend quality perspective. No new issues."
+
+#### 🎯 Key lesson
+
+Multi-agent code review with 3 specialized subagents (parallel) caught issues that no single-agent pass would have found. Running in iterative rounds (not one-shot) surfaced second-order issues introduced by earlier fixes (e.g. recommendation-group index key regression, DimensionCard memo defeat after round-5 fix). The "clean" state was only reached at round 9.
+
+---
+
+## อัปเดต — 8 เมษายน 2569
 
 ### Refactor + i18n + Review รอบ 3
 

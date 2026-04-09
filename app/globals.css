@@ -3,24 +3,25 @@
 @tailwind utilities;
 
 :root {
-  --bg-base: #f4f8fc;
+  /* Navy + Sky palette — B2B sales enablement, authoritative, trustworthy */
+  --bg-base: #f8fafc;
   --bg-card: #ffffff;
-  --bg-card-hover: #f8fbff;
-  --bg-elevated: #eaf1fa;
-  --border-subtle: rgba(74, 111, 165, 0.1);
-  --border-medium: rgba(74, 111, 165, 0.18);
-  --text-primary: #1a2a3a;
-  --text-secondary: #4a5e73;
-  --text-muted: #8a9bb0;
-  --accent: #4a6fa5;
-  --accent-light: #d4e4f7;
-  --accent-glow: rgba(74, 111, 165, 0.12);
-  --silver: #c0c0c0;
-  --success: #2e9e6a;
-  --warning: #d4880f;
-  --danger: #c94040;
-  --ring-start: #4a6fa5;
-  --ring-end: #7ba4d4;
+  --bg-card-hover: #f1f5f9;
+  --bg-elevated: #f1f5f9;
+  --border-subtle: rgba(15, 23, 42, 0.08);
+  --border-medium: rgba(15, 23, 42, 0.14);
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --accent: #0369a1;
+  --accent-light: #e0f2fe;
+  --accent-glow: rgba(3, 105, 161, 0.12);
+  --silver: #cbd5e1;
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #dc2626;
+  --ring-start: #0369a1;
+  --ring-end: #0ea5e9;
 }
 
 body {
@@ -215,5 +216,30 @@ body::before {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Bento grid tile — Apple-style rounded cards with subtle shadow */
+  .bento-tile {
+    @apply bg-white rounded-3xl p-6 border border-frost-200/60 transition-all duration-200;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.04);
+  }
+
+  .bento-tile:hover {
+    transform: scale(1.01);
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.08);
+  }
+}
+
+/* Respect user preference for reduced motion — disable non-essential
+   animations, transitions and smooth scrolling. Keeps interactions
+   readable for users with vestibular disorders or motion sensitivity. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
