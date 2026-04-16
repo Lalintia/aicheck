@@ -21,6 +21,14 @@ export function AICheckHero({ onSubmit, isLoading, error, ai, formT }: AICheckHe
       </div>
 
       <div className="max-w-2xl mx-auto text-center relative z-10">
+        {/* Beta badge */}
+        <div className="animate-fade-up mb-4">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 text-xs font-bold tracking-wide uppercase">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" aria-hidden="true" />
+            Beta
+          </span>
+        </div>
+
         <div className="animate-fade-up inline-flex items-center gap-2 px-4 py-2 rounded-full ai-badge-glow text-sm font-medium mb-8">
           <Brain className="w-4 h-4 text-violet-500" aria-hidden="true" />
           <span className="bg-gradient-to-r from-violet-600 to-frost-500 bg-clip-text text-transparent font-semibold">

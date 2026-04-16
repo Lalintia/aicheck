@@ -42,6 +42,14 @@ export function HeroSection({ onSuccess, onError }: HeroSectionProps): React.Rea
       </div>
 
       <div className="max-w-2xl mx-auto text-center relative z-10">
+        {/* Beta badge */}
+        <div className="animate-fade-up mb-4">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 text-xs font-bold tracking-wide uppercase">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" aria-hidden="true" />
+            Beta
+          </span>
+        </div>
+
         {/* Badge */}
         <div className="animate-fade-up inline-flex items-center gap-2 px-4 py-2 rounded-full bg-frost-500/10 border border-frost-500/20 text-frost-600 text-sm font-medium mb-8 backdrop-blur-sm">
           <Radar className="w-4 h-4" aria-hidden="true" />

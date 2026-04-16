@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Search Checker — Project Overview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --frost-50: #f4f8fc;
+    --frost-100: #e0ebf5;
+    --frost-200: #c3d9eb;
+    --frost-400: #6b8fba;
+    --frost-500: #4a6fa5;
+    --frost-600: #3a5a8a;
+    --frost-700: #2c4566;
+    --frost-900: #0f172a;
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-800: #1e293b;
+    --violet-500: #8b5cf6;
+    --violet-600: #7c3aed;
+    --violet-50: #f5f3ff;
+    --emerald-500: #10b981;
+    --emerald-600: #059669;
+    --emerald-50: #ecfdf5;
+    --teal-500: #14b8a6;
+    --teal-600: #0d9488;
+    --amber-500: #f59e0b;
+    --amber-50: #fffbeb;
+    --rose-500: #ef4444;
+    --rose-50: #fef2f2;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+  body {
+    font-family: 'Inter', 'IBM Plex Sans Thai', -apple-system, sans-serif;
+    background: linear-gradient(180deg, var(--frost-50) 0%, #ffffff 60%);
+    color: var(--slate-800);
+    line-height: 1.75;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1040px; margin: 0 auto; padding: 48px 32px; }
+
+  /* ─── LANG TOGGLE ─── */
+  html[lang="th"] [data-lang="en"] { display: none !important; }
+  html[lang="en"] [data-lang="th"] { display: none !important; }
+
+  .lang-switcher {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+    display: flex;
+    background: white;
+    border-radius: 999px;
+    padding: 4px;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+    border: 1px solid var(--slate-200);
+  }
+  .lang-switcher button {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--slate-500);
+    cursor: pointer;
+    border-radius: 999px;
+    transition: all 0.2s;
+  }
+  .lang-switcher button.active {
+    background: var(--frost-500);
+    color: white;
+    box-shadow: 0 1px 3px rgba(74, 111, 165, 0.3);
+  }
+  .lang-switcher button:hover:not(.active) { color: var(--slate-700); }
+
+  /* ─── HERO ─── */
+  header.hero {
+    background: linear-gradient(135deg, #6d28d9 0%, var(--frost-600) 50%, var(--teal-600) 100%);
+    color: white;
+    border-radius: 28px;
+    padding: 72px 56px;
+    margin-bottom: 56px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 30px 80px -30px rgba(109, 40, 217, 0.5);
+  }
+  header.hero::before {
+    content: '';
+    position: absolute;
+    top: -40%; right: -10%;
+    width: 55%; height: 180%;
+    background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 60%);
+  }
+  header.hero::after {
+    content: '';
+    position: absolute;
+    bottom: -30%; left: -10%;
+    width: 40%; height: 150%;
+    background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 60%);
+  }
+  .badge-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    position: relative;
+    z-index: 1;
+  }
+  .audience-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    backdrop-filter: blur(8px);
+  }
+  header.hero h1 {
+    font-size: 52px;
+    font-weight: 900;
+    letter-spacing: -1.8px;
+    line-height: 1.05;
+    margin-bottom: 18px;
+    position: relative;
+    z-index: 1;
+  }
+  header.hero .subtitle {
+    font-size: 19px;
+    opacity: 0.93;
+    font-weight: 400;
+    max-width: 720px;
+    position: relative;
+    z-index: 1;
+  }
+  header.hero .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px;
+    margin-top: 40px;
+    padding-top: 28px;
+    border-top: 1px solid rgba(255,255,255,0.25);
+    font-size: 13px;
+    position: relative;
+    z-index: 1;
+  }
+  header.hero .meta span { opacity: 0.88; }
+  header.hero .meta strong { font-weight: 700; }
+
+  /* ─── TOC ─── */
+  nav.toc {
+    background: white;
+    border: 1px solid var(--slate-200);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 48px;
+  }
+  nav.toc h2 {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--slate-500);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 18px;
+  }
+  nav.toc ol {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px 28px;
+    counter-reset: item;
+  }
+  nav.toc li {
+    counter-increment: item;
+    font-size: 14px;
+  }
+  nav.toc a {
+    color: var(--slate-700);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: color 0.15s;
+  }
+  nav.toc a::before {
+    content: counter(item, decimal-leading-zero);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--frost-500);
+    font-weight: 700;
+  }
+  nav.toc a:hover { color: var(--frost-500); }
+
+  /* ─── SECTIONS ─── */
+  section { margin-bottom: 64px; scroll-margin-top: 24px; }
+  section h2 {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--frost-900);
+    letter-spacing: -0.8px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--slate-100);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  section h2 .num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--violet-600), var(--frost-500));
+    color: white;
+    border-radius: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 800;
+  }
+  section h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--frost-700);
+    margin-top: 32px;
+    margin-bottom: 14px;
+  }
+  section h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--slate-700);
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+  section p { margin-bottom: 16px; color: var(--slate-700); font-size: 16px; }
+  section ul, section ol { margin-bottom: 18px; padding-left: 24px; }
+  section li { margin-bottom: 8px; color: var(--slate-700); }
+
+  /* ─── STAT CARDS ─── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin: 28px 0;
+  }
+  .stat-card {
+    background: white;
+    border: 1px solid var(--slate-200);
+    border-radius: 16px;
+    padding: 24px 20px;
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.1);
+  }
+  .stat-card .value {
+    font-size: 34px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--violet-600), var(--frost-500));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat-card .label {
+    font-size: 11px;
+    color: var(--slate-500);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+  }
+
+  /* ─── HIGHLIGHT BOX ─── */
+  .highlight-box {
+    background: linear-gradient(135deg, var(--violet-50), var(--frost-50));
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-left: 4px solid var(--violet-500);
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin: 24px 0;
+  }
+  .highlight-box h4 {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--violet-600);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    margin-top: 0;
+  }
+  .highlight-box p { margin-bottom: 0; font-size: 16px; }
+
+  /* ─── CALLOUT ─── */
+  .callout {
+    padding: 18px 24px;
+    border-radius: 12px;
+    margin: 20px 0;
+    border-left: 4px solid;
+  }
+  .callout-info { background: var(--frost-50); border-color: var(--frost-500); }
+  .callout-success { background: var(--emerald-50); border-color: var(--emerald-500); }
+  .callout-warning { background: var(--amber-50); border-color: var(--amber-500); }
+  .callout-danger { background: var(--rose-50); border-color: var(--rose-500); }
+  .callout strong { display: block; margin-bottom: 6px; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ─── TABLE ─── */
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 20px 0;
+    font-size: 14px;
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  }
+  table th {
+    background: var(--slate-50);
+    color: var(--slate-700);
+    text-align: left;
+    padding: 14px 18px;
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--slate-200);
+  }
+  table td {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--slate-100);
+    color: var(--slate-700);
+  }
+  table tr:last-child td { border-bottom: none; }
+  table tr:hover td { background: var(--slate-50); }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    background: var(--slate-100);
+    color: var(--violet-600);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  pre {
+    background: var(--frost-900);
+    color: #e2e8f0;
+    padding: 22px 26px;
+    border-radius: 14px;
+    overflow-x: auto;
+    margin: 18px 0;
+    font-size: 13px;
+    line-height: 1.65;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+  }
+  pre code {
+    background: none;
+    color: inherit;
+    padding: 0;
+    font-size: inherit;
+    font-weight: 400;
+  }
+  pre .comment { color: #64748b; }
+  pre .keyword { color: #c084fc; }
+  pre .string { color: #86efac; }
+  pre .fn { color: #7dd3fc; }
+
+  /* ─── COMPARISON ─── */
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 28px 0;
+  }
+  .comp-card {
+    border-radius: 16px;
+    padding: 26px;
+  }
+  .comp-card.old {
+    background: var(--slate-50);
+    border: 1px solid var(--slate-200);
+  }
+  .comp-card.new {
+    background: linear-gradient(135deg, var(--violet-50), var(--emerald-50));
+    border: 1px solid rgba(139, 92, 246, 0.15);
+  }
+  .comp-card h4 {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-top: 0;
+    margin-bottom: 14px;
+  }
+  .comp-card.old h4 { color: var(--slate-500); }
+  .comp-card.new h4 { color: var(--violet-600); }
+  .comp-card h3 { font-size: 22px; margin-top: 0; margin-bottom: 12px; }
+  .comp-card ul { padding-left: 20px; }
+  .comp-card li { font-size: 14px; margin-bottom: 6px; }
+
+  /* ─── CASE STUDY ─── */
+  .case-study {
+    background: white;
+    border: 1px solid var(--slate-200);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin: 20px 0;
+  }
+  .case-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--slate-100);
+  }
+  .case-title { font-size: 18px; font-weight: 700; color: var(--frost-900); }
+  .case-score { font-size: 28px; font-weight: 900; font-family: 'JetBrains Mono', monospace; }
+  .case-score.good { color: var(--emerald-500); }
+  .case-score.bad { color: var(--rose-500); }
+  .case-bars { display: flex; flex-direction: column; gap: 10px; }
+  .case-bar-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 52px;
+    gap: 14px;
+    align-items: center;
+    font-size: 13px;
+  }
+  .case-bar-label { color: var(--slate-600); font-weight: 500; }
+  .case-bar-track {
+    height: 8px;
+    background: var(--slate-100);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .case-bar-fill { height: 100%; border-radius: 999px; transition: width 0.6s; }
+  .case-bar-value { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--slate-600); text-align: right; }
+
+  /* ─── FLOW DIAGRAM ─── */
+  .flow-diagram {
+    background: white;
+    border: 1px solid var(--slate-200);
+    border-radius: 16px;
+    padding: 32px;
+    margin: 24px 0;
+    text-align: center;
+    overflow-x: auto;
+  }
+  .flow-step {
+    display: inline-block;
+    padding: 12px 20px;
+    background: var(--frost-50);
+    border: 2px solid var(--frost-200);
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--frost-700);
+    margin: 6px;
+  }
+  .flow-arrow { color: var(--frost-400); font-size: 18px; margin: 0 4px; }
+
+  /* ─── PROCESS FLOW ─── */
+  .process-flow {
+    background: white;
+    border: 1px solid var(--slate-200);
+    border-radius: 14px;
+    padding: 28px 32px;
+    margin: 20px 0;
+  }
+  .process-step {
+    display: flex;
+    gap: 18px;
+    padding: 18px 0;
+    border-bottom: 1px dashed var(--slate-200);
+  }
+  .process-step:last-child { border-bottom: none; }
+  .process-step .step-num {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--teal-500), var(--frost-500));
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 15px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .process-step .step-content { flex: 1; padding-top: 4px; }
+  .process-step .step-title { font-weight: 700; margin-bottom: 4px; font-size: 15px; color: var(--slate-800); }
+  .process-step .step-detail { font-size: 13px; color: var(--slate-600); }
+
+  /* ─── RISK MATRIX ─── */
+  .risk-matrix {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 20px 0;
+  }
+  .risk-card {
+    border-radius: 12px;
+    padding: 18px 20px;
+    border-left: 4px solid;
+  }
+  .risk-card.high { background: var(--rose-50); border-color: var(--rose-500); }
+  .risk-card.medium { background: var(--amber-50); border-color: var(--amber-500); }
+  .risk-card.low { background: var(--emerald-50); border-color: var(--emerald-500); }
+  .risk-card h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-top: 0;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+  .risk-card.high h4 { color: var(--rose-500); }
+  .risk-card.medium h4 { color: var(--amber-500); }
+  .risk-card.low h4 { color: var(--emerald-500); }
+  .risk-card .risk-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; color: var(--slate-800); }
+  .risk-card .risk-desc { font-size: 13px; color: var(--slate-600); }
+  .risk-card .risk-mitigation {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0,0,0,0.06);
+    font-size: 12px;
+    color: var(--slate-600);
+  }
+
+  /* ─── GRID 2 ─── */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .card {
+    background: white;
+    border: 1px solid var(--slate-200);
+    border-radius: 14px;
+    padding: 22px;
+  }
+  .card h4 {
+    margin-top: 0;
+    font-size: 14px;
+    color: var(--frost-700);
+    font-weight: 700;
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    margin-top: 80px;
+    padding-top: 32px;
+    border-top: 1px solid var(--slate-200);
+    text-align: center;
+    color: var(--slate-500);
+    font-size: 13px;
+  }
+  footer a { color: var(--violet-600); text-decoration: none; }
+
+  @media (max-width: 768px) {
+    .container { padding: 24px 16px; }
+    header.hero { padding: 40px 28px; }
+    header.hero h1 { font-size: 34px; }
+    header.hero .subtitle { font-size: 16px; }
+    nav.toc ol { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .comparison-grid, .risk-matrix, .grid-2 { grid-template-columns: 1fr; }
+    .case-bar-row { grid-template-columns: 100px 1fr 42px; font-size: 11px; }
+    section h2 { font-size: 24px; }
+    .lang-switcher { top: 12px; right: 12px; }
+    .lang-switcher button { padding: 6px 12px; font-size: 11px; }
+  }
+  @media print {
+    body { background: white; }
+    header.hero { box-shadow: none; break-inside: avoid; }
+    section { break-inside: avoid-page; }
+    nav.toc, .lang-switcher { display: none; }
+    html[lang="th"] [data-lang="en"] { display: initial !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="lang-switcher" role="group" aria-label="Language switcher">
+  <button type="button" data-set-lang="en">EN</button>
+  <button type="button" data-set-lang="th" class="active">TH</button>
+</div>
+
+<div class="container">
+
+<header class="hero">
+  <div class="badge-row">
+    <div class="audience-badge">🔒 <span data-lang="th">ใช้ภายใน</span><span data-lang="en">Internal Use</span></div>
+  </div>
+  <h1>AI Search Checker</h1>
+  <p class="subtitle" data-lang="th"><strong>เครื่องมือภายในสำหรับทีม Sale</strong> — ใช้ตรวจเว็บลูกค้าเพื่อตอบคำถามเรื่อง AI readiness แบบมีหลักฐาน ประกอบการนำเสนอ service และป้องกันไม่ให้ Sale over-promise กับลูกค้า</p>
+  <p class="subtitle" data-lang="en"><strong>An internal sales enablement tool</strong> — used by the Sales team to audit customer websites, answer AI readiness questions with evidence, support service proposals, and prevent sales reps from over-promising.</p>
+</header>
+
+<nav class="toc">
+  <h2 data-lang="th">สารบัญ</h2>
+  <h2 data-lang="en">Table of Contents</h2>
+  <ol>
+    <li><a href="#overview"><span data-lang="th">สรุปภาพรวม</span><span data-lang="en">Executive Summary</span></a></li>
+    <li><a href="#features"><span data-lang="th">สิ่งที่เราสร้าง</span><span data-lang="en">What We Built</span></a></li>
+    <li><a href="#scoring"><span data-lang="th">คะแนน + Case Studies</span><span data-lang="en">Scoring Logic + Case Studies</span></a></li>
+    <li><a href="#stack"><span data-lang="th">Tech Stack</span><span data-lang="en">Tech Stack</span></a></li>
+    <li><a href="#architecture"><span data-lang="th">สถาปัตยกรรม</span><span data-lang="en">Architecture</span></a></li>
+    <li><a href="#api"><span data-lang="th">API Reference</span><span data-lang="en">API Reference</span></a></li>
+    <li><a href="#dev-deploy"><span data-lang="th">การพัฒนาและ Deploy</span><span data-lang="en">Development & Deployment</span></a></li>
+    <li><a href="#how-built"><span data-lang="th">โปรเจกต์นี้ถูกสร้างขึ้นมาได้ยังไง</span><span data-lang="en">How This Was Built</span></a></li>
+  </ol>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="overview">
+  <h2><span class="num">01</span><span data-lang="th">สรุปภาพรวม</span><span data-lang="en">Executive Summary</span></h2>
+
+  <p data-lang="th"><strong>AI Search Checker</strong> วิเคราะห์เว็บไซต์ใดก็ได้ใน 5 วินาที เพื่อตอบ 2 คำถามสำคัญ:</p>
+  <p data-lang="en"><strong>AI Search Checker</strong> analyzes any website in 5 seconds to answer 2 key questions:</p>
+
+  <ol data-lang="th">
+    <li><strong>เว็บของคุณพร้อมสำหรับ AI Search ไหม?</strong> — ตรวจ 10 ปัจจัยทางเทคนิค (Schema.org, Semantic HTML, SSR, robots.txt ฯลฯ)</li>
+    <li><strong>AI รู้จักแบรนด์ของคุณขนาดไหน?</strong> — ถาม GPT-4.1 nano ตรงๆ แล้ววัด 7 มิติ พร้อมเช็ค Google Knowledge Graph</li>
+  </ol>
+  <ol data-lang="en">
+    <li><strong>Is your website ready for AI Search?</strong> — Tests 10 technical factors (Schema.org, Semantic HTML, SSR, robots.txt, etc.)</li>
+    <li><strong>How well does AI know your brand?</strong> — Directly asks GPT-4.1 nano and measures 7 dimensions plus Google Knowledge Graph</li>
+  </ol>
+
+  <div class="callout callout-info">
+    <strong data-lang="th">🔒 Internal Use — เครื่องมือสำหรับทีม Sale เท่านั้น</strong>
+    <strong data-lang="en">🔒 Internal Use — Sales Team Only</strong>
+    <p data-lang="th"><strong>aicheck.ohmai.me ไม่ใช่ public product</strong> — เป็นเครื่องมือภายในที่ทีม Sale ของเราใช้ตรวจเว็บลูกค้าแบบ real-time ระหว่างการนำเสนอ</p>
+    <p data-lang="en"><strong>aicheck.ohmai.me is not a public product</strong> — it is an internal tool used by our Sales team to audit customer websites in real time during sales conversations.</p>
+  </div>
+
+  <h3 data-lang="th">🎯 ปัญหาที่ Sale เจอ &amp; วิธีที่ aicheck แก้</h3>
+  <h3 data-lang="en">🎯 The Sales Problem &amp; How aicheck Solves It</h3>
+
+  <blockquote style="border-left: 4px solid var(--frost-500); padding: 16px 20px; margin: 20px 0; background: var(--frost-50); border-radius: 8px; font-style: italic; color: var(--slate-700);">
+    "Our clients are seeking assurance that our website design and content are fully optimized for AI discovery and recognition — specifically by models like Copilot, Gemini, and ChatGPT."
+  </blockquote>
+
+  <p data-lang="th">ก่อนมี aicheck ทีม Sale ตอบคำถามแบบนี้ได้แค่ <em>"ครับ เราทำให้ AI-friendly แล้ว"</em> โดยไม่มีหลักฐานประกอบ ทำให้ลูกค้าไม่เชื่อจริง</p>
+  <p data-lang="en">Before aicheck, the Sales team could only answer with <em>"Yes, we've made it AI-friendly"</em> — without evidence to back it up, customers remained unconvinced.</p>
+
+  <p data-lang="th"><strong>aicheck แก้ปัญหานี้โดย:</strong></p>
+  <p data-lang="en"><strong>aicheck solves this by:</strong></p>
+  <ul data-lang="th">
+    <li>Sale รันเช็คเว็บลูกค้าต่อหน้า ได้ผลจริงใน 5 วินาที (Grade A–D + 10 checks + AI Visibility score)</li>
+    <li>ตอบคำถามด้วย <strong>หลักฐานที่ตรวจสอบได้</strong> ไม่ใช่คำพูดลอยๆ</li>
+    <li>ถ้าคะแนนดี → ยืนยัน quality ที่ส่งมอบ → ปิดดีลง่ายขึ้น</li>
+    <li>ถ้าคะแนนต่ำ → ใช้ gap เป็น lead-in เสนอ service แก้ไข → upsell ได้</li>
+  </ul>
+  <ul data-lang="en">
+    <li>Sales runs the check live in front of the customer — real results in 5 seconds (Grade A–D + 10 checks + AI Visibility score)</li>
+    <li>Answers with <strong>verifiable evidence</strong>, not vague claims</li>
+    <li>If scores are good → confirms delivered quality → closes deals faster</li>
+    <li>If scores are low → turns the gap into a lead-in for a fix proposal → enables upsell</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="features">
+  <h2><span class="num">02</span><span data-lang="th">สิ่งที่เราสร้าง</span><span data-lang="en">What We Built</span></h2>
+
+  <p data-lang="th">เว็บแอปที่มี 2 feature หลัก</p>
+  <p data-lang="en">A web app with 2 main features.</p>
+
+  <h3 data-lang="th">1. 10 Checks — พื้นฐาน AI-Friendly (หน้า <code>/</code>)</h3>
+  <h3 data-lang="en">1. 10 Checks — AI-Friendly Fundamentals (at <code>/</code>)</h3>
+  <p data-lang="th">ตรวจ 10 ปัจจัยทางเทคนิคที่ทำให้เว็บ AI รู้จักได้ง่าย ให้ผลลัพธ์เป็น <strong>Grade A-D</strong> + per-check score + คำแนะนำการแก้ไข</p>
+  <p data-lang="en">Tests 10 technical factors that make a website AI-readable. Returns a <strong>Grade A-D</strong> + per-check score + actionable recommendations.</p>
+
+  <table>
+    <thead>
+      <tr><th>#</th><th>Checker</th><th>Weight</th><th>Tests</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Schema.org</td><td><code>22%</code></td><td>JSON-LD: Organization, Article, LocalBusiness</td></tr>
+      <tr><td>2</td><td>SSR/CSR Detection</td><td><code>17%</code></td><td>Server-rendered vs JavaScript-dependent</td></tr>
+      <tr><td>3</td><td>robots.txt</td><td><code>12%</code></td><td>robots.txt exists + allows AI crawlers</td></tr>
+      <tr><td>4</td><td>Image AI Readiness</td><td><code>10%</code></td><td>alt text + optimization</td></tr>
+      <tr><td>5</td><td>Heading Hierarchy</td><td><code>9%</code></td><td>H1-H6 order</td></tr>
+      <tr><td>6</td><td>Semantic HTML</td><td><code>7%</code></td><td>&lt;main&gt;, &lt;article&gt;, &lt;nav&gt;</td></tr>
+      <tr><td>7</td><td>sitemap.xml</td><td><code>7%</code></td><td>Sitemap exists + valid</td></tr>
+      <tr><td>8</td><td>llms.txt</td><td><code>6%</code></td><td>llms.txt presence (Answer.AI standard)</td></tr>
+      <tr><td>9</td><td>Open Graph</td><td><code>5%</code></td><td>og:title, og:description, og:image</td></tr>
+      <tr><td>10</td><td>Page Speed</td><td><code>5%</code></td><td>TTFB performance</td></tr>
+    </tbody>
+  </table>
+
+  <h3 data-lang="th">2. AI Visibility — 7 มิติ (หน้า <code>/ai-check</code>)</h3>
+  <h3 data-lang="en">2. AI Visibility — 7 Dimensions (at <code>/ai-check</code>)</h3>
+  <p data-lang="th">หนึ่งในไม่กี่เครื่องมือในไทยที่ <strong>ถาม GPT ตรงๆ</strong> ว่ารู้จักเว็บนี้ไหม + เช็ค Google Knowledge Graph + วัดเป็น 7 มิติ รวม 100 คะแนน</p>
+  <p data-lang="en">One of the few tools in Thailand that <strong>asks GPT directly</strong> whether it knows a website + checks Google Knowledge Graph + measures 7 dimensions totaling 100 points.</p>
+
+  <table>
+    <thead><tr><th>Dimension</th><th>Points</th><th>Measures</th></tr></thead>
+    <tbody>
+      <tr><td><strong>AI Recognition</strong></td><td>20</td><td>Does AI recognize the brand?</td></tr>
+      <tr><td><strong>Accuracy</strong></td><td>15</td><td>Is AI's knowledge accurate?</td></tr>
+      <tr><td><strong>URL Known</strong></td><td>10</td><td>Can AI provide the URL?</td></tr>
+      <tr><td><strong>Knowledge Depth</strong></td><td>15</td><td>How deep is the knowledge?</td></tr>
+      <tr><td><strong>Products/Services</strong></td><td>15</td><td>Can AI name products?</td></tr>
+      <tr><td><strong>Google Presence</strong></td><td>10</td><td>Google search ranking (SEO)</td></tr>
+      <tr><td><strong>AI Overview</strong></td><td>15</td><td>In Google Knowledge Graph</td></tr>
+    </tbody>
+  </table>
+
+  <p data-lang="th">ทุกมิติมีคำอธิบาย 3 ส่วน: <strong>Why it matters</strong> · <strong>How to improve</strong> · <strong>How we detect this</strong></p>
+  <p data-lang="en">Each dimension has three explanation panels: <strong>Why it matters</strong> · <strong>How to improve</strong> · <strong>How we detect this</strong></p>
+
+  <h3 data-lang="th">Features อื่นๆ</h3>
+  <h3 data-lang="en">Other Features</h3>
+  <ul>
+    <li>🌐 <strong>Bilingual UI + GPT response (EN/TH)</strong> — i18n + GPT returns both languages in one call; instant locale switch, no re-fetch</li>
+    <li>❄️ <strong>Navy + Sky Bento UI</strong> — B2B sales-enablement design (from the ui-ux-pro-max recommendation engine)</li>
+    <li>🔒 <strong>Security</strong> — SSRF + DNS validation cache (60s), rate limiting (10/min main, 3/min AI), CORS allowlist, prompt-injection sanitizer, AbortSignal threading</li>
+    <li>🆓 <strong>No account required</strong> — stateless, no data storage</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="scoring">
+  <h2><span class="num">03</span><span data-lang="th">Case Studies จริง</span><span data-lang="en">Real Case Studies</span></h2>
+
+  <p data-lang="th">ผลทดสอบจริงจากเว็บที่รันผ่านระบบ — แสดง gap ชัดเจนระหว่าง SEO แบบเดิมกับ AI Visibility</p>
+  <p data-lang="en">Real test results from websites run through the system — clearly showing the gap between traditional SEO and AI Visibility.</p>
+
+  <div class="case-study">
+    <div class="case-header">
+      <div class="case-title"><span data-lang="th">🍎 apple.com — แบรนด์ระดับโลก</span><span data-lang="en">🍎 apple.com — Global Brand</span></div>
+      <div class="case-score good">97/100</div>
+    </div>
+    <div class="case-bars">
+      <div class="case-bar-row"><div class="case-bar-label">AI Recognition</div><div class="case-bar-track"><div class="case-bar-fill" style="width:100%;background:#10b981"></div></div><div class="case-bar-value">20/20</div></div>
+      <div class="case-bar-row"><div class="case-bar-label">Accuracy</div><div class="case-bar-track"><div class="case-bar-fill" style="width:100%;background:#10b981"></div></div><div class="case-bar-value">15/15</div></div>
+      <div class="case-bar-row"><div class="case-bar-label">URL Known</div><div class="case-bar-track"><div class="case-bar-fill" style="width:100%;background:#10b981"></div></div><div class="case-bar-value">10/10</div></div>
+      <div class="case-bar-row"><div class="case-bar-label">Knowledge Depth</div><div class="case-bar-track"><div class="case-bar-fill" style="width:100%;background:#10b981"></div></div><div class="case-bar-value">15/15</div></div>
+      <div class="case-bar-row"><div class="case-bar-label">Products</div><div class="case-bar-track"><div class="case-bar-fill" style="width:100%;background:#10b981"></div></div><div class="case-bar-value">15/15</div></div>
+      <div class="case-bar-row"><div class="case-bar-label">Google Presence</div><div class="case-bar-track"><div class="case-bar-fill" style="width:100%;background:#10b981"></div></div><div class="case-bar-value">10/10</div></div>
+      <div class="case-bar-row"><div class="case-bar-label">AI Overview</div><div class="case-bar-track"><div class="case-bar-fill" style="width:80%;background:#10b981"></div></div><div class="case-bar-value">12/15</div></div>
+    </div>
+    <p style="margin-top: 16px; font-size: 14px; color: var(--slate-600);" data-lang="th"><strong>Insight:</strong> แบรนด์ใหญ่ AI รู้จักครบเกือบทุกมิติ มี Wikipedia + Knowledge Graph</p>
+    <p style="margin-top: 16px; font-size: 14px; color: var(--slate-600);" data-lang="en"><strong>Insight:</strong> Large brand — AI knows it across nearly all dimensions, with Wikipedia + Knowledge Graph present.</p>
+  </div>
+
+  <div class="callout callout-success">
+    <strong data-lang="th">รูปแบบที่เจอบ่อย</strong>
+    <strong data-lang="en">Common Pattern</strong>
+    <span data-lang="th">ธุรกิจไทยจำนวนมากอยู่ในสถานการณ์ "SEO ดี แต่ AI มองไม่เห็น" — เป็นจังหวะที่ Sale ใช้เสนอบริการ GEO audit + implementation ได้ทันที</span>
+    <span data-lang="en">Many Thai businesses are in a "good SEO but invisible to AI" situation — a clear opening for Sales to offer GEO audit + implementation services.</span>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="stack">
+  <h2><span class="num">04</span>Tech Stack</h2>
+
+  <h3 data-lang="th">Frontend & Framework</h3>
+  <h3 data-lang="en">Frontend & Framework</h3>
+  <table>
+    <thead><tr><th>Layer</th><th>Technology</th><th>Version</th><th data-lang="th">วัตถุประสงค์</th><th data-lang="en">Purpose</th></tr></thead>
+    <tbody>
+      <tr><td>Framework</td><td>Next.js</td><td><code>15.5.14</code></td><td data-lang="th">App Router, standalone output, middleware</td><td data-lang="en">App Router, standalone output, middleware</td></tr>
+      <tr><td>Language</td><td>TypeScript</td><td><code>5.7.3</code></td><td data-lang="th">strict mode, ห้าม <code>any</code></td><td data-lang="en">strict mode, no <code>any</code></td></tr>
+      <tr><td>UI Library</td><td>React</td><td><code>19.0.0</code></td><td data-lang="th">Functional components + hooks only</td><td data-lang="en">Functional components + hooks only</td></tr>
+      <tr><td>Styling</td><td>Tailwind CSS</td><td><code>3.4.19</code></td><td data-lang="th">Utility-first + Arctic Frost theme</td><td data-lang="en">Utility-first + Arctic Frost theme</td></tr>
+      <tr><td>Icons</td><td>lucide-react</td><td><code>0.474</code></td><td data-lang="th">Tree-shakeable SVG</td><td data-lang="en">Tree-shakeable SVG</td></tr>
+      <tr><td>Validation</td><td>Zod</td><td><code>4.3.6</code></td><td data-lang="th">Runtime schema + URL validation</td><td data-lang="en">Runtime schema + URL validation</td></tr>
+    </tbody>
+  </table>
+
+  <h3>External APIs</h3>
+  <table>
+    <thead><tr><th>Service</th><th>Endpoint</th><th data-lang="th">วัตถุประสงค์</th><th data-lang="en">Purpose</th><th data-lang="th">ค่าใช้จ่าย</th><th data-lang="en">Cost</th></tr></thead>
+    <tbody>
+      <tr><td>OpenAI</td><td><code>api.openai.com/v1/chat/completions</code></td><td data-lang="th">GPT-4.1 nano (AI Visibility)</td><td data-lang="en">GPT-4.1 nano (AI Visibility)</td><td data-lang="th">~$0.001/check</td><td data-lang="en">~$0.001/check</td></tr>
+      <tr><td>Serper.dev</td><td><code>google.serper.dev/search</code></td><td data-lang="th">Google Search + Knowledge Graph</td><td data-lang="en">Google Search + Knowledge Graph</td><td data-lang="th">ฟรี 2,500 queries</td><td data-lang="en">Free 2,500 queries</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-warning">
+    <strong>Why Serper, not Google Custom Search API?</strong>
+    <span data-lang="th">Google ปิด Custom Search JSON API สำหรับลูกค้าใหม่ตั้งแต่ปี 2026 เรา migrate มา Serper.dev ที่ถูกกว่า 30-50 เท่า</span>
+    <span data-lang="en">Google closed Custom Search JSON API to new customers starting 2026. We migrated to Serper.dev which is 30-50× cheaper.</span>
+  </div>
+
+  <h3>Infrastructure</h3>
+  <table>
+    <thead><tr><th>Component</th><th>Technology</th><th>Details</th></tr></thead>
+    <tbody>
+      <tr><td>Runtime</td><td>Node.js</td><td><code>20.20.0</code></td></tr>
+      <tr><td>Process Manager</td><td>PM2</td><td data-lang="th">fork mode, auto-restart, pm2 save</td><td data-lang="en">fork mode, auto-restart, pm2 save</td></tr>
+      <tr><td>Server</td><td>AWS EC2</td><td>Singapore (ap-southeast-1), Ubuntu</td></tr>
+      <tr><td>Web Server</td><td>Nginx</td><td>Reverse proxy → <code>localhost:3001</code></td></tr>
+      <tr><td>CDN</td><td>Cloudflare</td><td>DDoS, SSL, caching</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="architecture">
+  <h2><span class="num">05</span><span data-lang="th">สถาปัตยกรรม</span><span data-lang="en">Architecture</span></h2>
+
+  <h3 data-lang="th">Request Flow</h3>
+  <h3 data-lang="en">Request Flow</h3>
+  <div class="flow-diagram">
+    <div class="flow-step">User Browser</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">Cloudflare (CDN + SSL)</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">AWS EC2 Singapore</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">Nginx :80/:443</div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">PM2 + Next.js :3001</div>
+  </div>
+
+  <h3>Request Lifecycle</h3>
+<pre><code>POST /api/check or /api/ai-check
+  ↓
+parseCheckRequest()        <span class="comment">// 4KB body cap + JSON + Zod validate</span>
+isSafeUrlWithDns()         <span class="comment">// SSRF: string + DNS (60s cache); blocks rebinding</span>
+safeFetch()                <span class="comment">// re-validate every redirect</span>
+  ↓
+/api/check     →  10 checkers via Promise.all → calculateOverallScore + recommendations
+/api/ai-check  →  Promise.allSettled([callOpenAI, serperSearch×2]) with AbortSignal threading
+                  → parseAIResponse → 7-dimension score (bilingual EN+TH)</code></pre>
+
+  <h3 data-lang="th">ชั้นความปลอดภัย</h3>
+  <h3 data-lang="en">Security Layers</h3>
+  <ul>
+    <li>Zod validation + 4KB body cap (DoS + invalid input)</li>
+    <li>SSRF string check — block <code>127.0.0.1</code>, <code>::1</code>, AWS metadata, Teredo</li>
+    <li>SSRF DNS check (60s cache) — blocks DNS rebinding</li>
+    <li>safeFetch — re-validates redirect URLs at every hop</li>
+    <li>Response size caps (10MB HTML, 512KB Serper) — memory exhaustion</li>
+    <li>Rate limiter (10/min main, 3/min AI) + CORS allowlist (CSRF / SSRF-relay)</li>
+    <li><code>sanitizeMeta()</code> + system-message framing — LLM prompt injection</li>
+    <li>AbortSignal threading from request → OpenAI/Serper — cancels paid calls on client disconnect</li>
+  </ul>
+
+  <h3 data-lang="th">โครงสร้างโปรเจกต์</h3>
+  <h3 data-lang="en">Project Structure</h3>
+<pre><code>aicheck/
+├── app/                  <span class="comment">// Next.js routes + API handlers</span>
+│   ├── page.tsx          <span class="comment">//   home (10 Checks)</span>
+│   ├── ai-check/         <span class="comment">//   AI Visibility page (split into _components/)</span>
+│   └── api/{check,ai-check}/route.ts
+├── components/           <span class="comment">// shared React (SiteNav, i18n-provider, results UI)</span>
+├── lib/
+│   ├── checkers/         <span class="comment">// 10 checkers + ai-visibility-checker; weights in base.ts</span>
+│   │   └── schema-validators/
+│   ├── i18n/             <span class="comment">// type-safe EN/TH (no library)</span>
+│   ├── hooks/            <span class="comment">// useAbortController</span>
+│   ├── utils/            <span class="comment">// normalize-url, parse-check-request, check-helpers</span>
+│   ├── security.ts       <span class="comment">// isSafeUrlWithDns + safeFetch + readWithTimeout + DNS cache (60s)</span>
+│   ├── rate-limiter.ts   <span class="comment">// 10/min main, AI_RATE_LIMIT=3/min</span>
+│   └── validations/url.ts
+├── middleware.ts         <span class="comment">// rate limit + CORS allowlist + security headers</span>
+└── public/               <span class="comment">// robots.txt, sitemap.xml, llms.txt</span></code></pre>
+
+  <p data-lang="th"><strong>หลักการ:</strong> <code>_</code>-prefix folders = page-scoped (Next.js ignore เป็น route) · <code>lib/</code> = framework-agnostic (ทดสอบได้โดยไม่ต้อง mock Next.js) · co-location ของไฟล์ที่ใช้เฉพาะหน้าเดียว · file ≤ 300 lines</p>
+  <p data-lang="en"><strong>Principles:</strong> <code>_</code>-prefix folders are page-scoped (Next.js ignores them as routes) · <code>lib/</code> is framework-agnostic (testable without Next.js mocks) · co-locate single-page files under their route · file ≤ 300 lines</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="api">
+  <h2><span class="num">06</span>API Reference</h2>
+
+  <h3>POST /api/check</h3>
+<pre><code><span class="comment">// Request</span>
+{ <span class="string">"url"</span>: <span class="string">"https://example.com"</span> }
+
+<span class="comment">// Response (200)</span>
+{
+  <span class="string">"url"</span>: <span class="string">"https://example.com"</span>,
+  <span class="string">"overallScore"</span>: 85,
+  <span class="string">"grade"</span>: <span class="string">"good"</span>,          <span class="comment">// excellent | good | fair | poor</span>
+  <span class="string">"checks"</span>: { <span class="string">"schema"</span>: {...}, <span class="string">"ssrCsr"</span>: {...}, ... },
+  <span class="string">"recommendations"</span>: [
+    { <span class="string">"priority"</span>: <span class="string">"critical"</span>, <span class="string">"message"</span>: <span class="string">"..."</span> }
+  ],
+  <span class="string">"summary"</span>: { <span class="string">"passed"</span>: 8, <span class="string">"warning"</span>: 1, <span class="string">"failed"</span>: 1, <span class="string">"total"</span>: 10 }
+}</code></pre>
+
+  <h3>POST /api/ai-check</h3>
+<pre><code><span class="comment">// Request</span>
+{ <span class="string">"url"</span>: <span class="string">"https://apple.com"</span> }
+
+<span class="comment">// Response (200)</span>
+{
+  <span class="string">"url"</span>: <span class="string">"https://apple.com"</span>,
+  <span class="string">"result"</span>: {
+    <span class="string">"score"</span>: 97,
+    <span class="string">"status"</span>: <span class="string">"success"</span>,
+    <span class="string">"data"</span>: {
+      <span class="string">"knows"</span>: true,
+      <span class="string">"accuracy"</span>: <span class="string">"accurate"</span>,
+      <span class="string">"hasUrl"</span>: true,
+      <span class="string">"knowledgeDepth"</span>: <span class="string">"deep"</span>,
+      <span class="string">"productsKnown"</span>: true,
+      <span class="string">"googlePresence"</span>: { <span class="string">"topPosition"</span>: 1 },
+      <span class="string">"knowledgeGraph"</span>: { <span class="string">"hasKnowledgeGraph"</span>: true },
+      <span class="string">"breakdown"</span>: { <span class="string">"recognition"</span>: 20, <span class="string">"accuracy"</span>: 15, ... },
+      <span class="comment">// Bilingual response — frontend picks per locale, no re-fetch on language switch</span>
+      <span class="string">"summaryEn"</span>: <span class="string">"Apple Inc. is an American multinational technology..."</span>,
+      <span class="string">"summaryTh"</span>: <span class="string">"Apple Inc. คือบริษัทเทคโนโลยีข้ามชาติของอเมริกา..."</span>,
+      <span class="string">"detailsEn"</span>: <span class="string">"Founded in 1976. Known for iPhone, Mac..."</span>,
+      <span class="string">"detailsTh"</span>: <span class="string">"ก่อตั้งปี 1976 เป็นที่รู้จักจาก iPhone, Mac..."</span>,
+      <span class="string">"model"</span>: <span class="string">"gpt-4.1-nano"</span>
+    }
+  }
+}</code></pre>
+
+  <p data-lang="th"><strong>หมายเหตุ:</strong> ทั้ง 2 endpoints ตอบ <code>403</code> ถ้ามาจาก origin ที่ไม่อยู่ใน allowlist (CSRF/SSRF-relay protection), <code>413</code> ถ้า body &gt; 4096 bytes, <code>429</code> ถ้าเกิน rate limit (10/min main, 3/min AI)</p>
+  <p data-lang="en"><strong>Note:</strong> Both endpoints return <code>403</code> for disallowed origins (CSRF/SSRF-relay protection), <code>413</code> when body exceeds 4096 bytes, and <code>429</code> when rate limit is exceeded (10/min main, 3/min AI)</p>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="dev-deploy">
+  <h2><span class="num">07</span><span data-lang="th">การพัฒนาและ Deploy</span><span data-lang="en">Development & Deployment</span></h2>
+
+  <p data-lang="th"><strong>Local:</strong> <code>git clone</code> → <code>npm install</code> → ใส่ <code>OPENAI_API_KEY</code> + <code>SERPER_API_KEY</code> ใน <code>.env.local</code> → <code>npm run dev</code></p>
+  <p data-lang="en"><strong>Local:</strong> <code>git clone</code> → <code>npm install</code> → add <code>OPENAI_API_KEY</code> + <code>SERPER_API_KEY</code> to <code>.env.local</code> → <code>npm run dev</code></p>
+
+  <p data-lang="th"><strong>Production:</strong> <code>npm run build</code> → rsync 3 dirs (<code>.next/standalone</code> + <code>.next/static</code> + <code>public</code>) ไป EC2 → SSH + PM2 restart พร้อม env vars → verify HTTPS 200</p>
+  <p data-lang="en"><strong>Production:</strong> <code>npm run build</code> → rsync 3 dirs (<code>.next/standalone</code> + <code>.next/static</code> + <code>public</code>) to EC2 → SSH + PM2 restart with env vars → verify HTTPS 200</p>
+
+  <p data-lang="th"><strong>หมายเหตุสำคัญ:</strong> rsync ต้องใช้ <code>--delete</code> สำหรับ <code>.next/static</code> เพราะแต่ละ build สร้าง hashed chunk ใหม่ (ไม่งั้นจะ 404), และต้อง <code>set -a; source .env; set +a</code> ก่อน <code>pm2 restart --update-env</code> เพราะ Next.js standalone ไม่ auto-load <code>.env</code></p>
+  <p data-lang="en"><strong>Notes:</strong> rsync needs <code>--delete</code> on <code>.next/static</code> because each build creates new hashed chunks (otherwise browser requests get 404), and you must <code>set -a; source .env; set +a</code> before <code>pm2 restart --update-env</code> because Next.js standalone doesn't auto-load <code>.env</code></p>
+
+  <h3>Code Standards</h3>
+  <ul>
+    <li>TypeScript strict (no <code>any</code>) · Functional components only · ES Modules</li>
+    <li>Naming: <code>PascalCase.tsx</code> for components, <code>camelCase.ts</code> for utils</li>
+    <li>File ≤ 300 lines · No <code>console.log</code> in production (use <code>console.error</code>)</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<section id="how-built">
+  <h2><span class="num">08</span><span data-lang="th">โปรเจกต์นี้ถูกสร้างขึ้นมาได้ยังไง</span><span data-lang="en">How This Was Built</span></h2>
+
+  <p data-lang="th"><strong>aicheck เขียนด้วยวิธี "Vibe Coding"</strong> — สั่งงาน AI ด้วยภาษาพูด Developer เป็นผู้กำกับ (สั่ง/ตรวจ/ตัดสิน architecture) AI เป็นผู้เขียนโค้ด</p>
+  <p data-lang="en"><strong>aicheck was built with "Vibe Coding"</strong> — instructions in plain language. Developer directs (commands, reviews, decides architecture); AI implements.</p>
+
+  <p data-lang="th"><strong>Toolchain:</strong> <strong>Claude Code CLI</strong> (Opus 4.6, 1M context) ใน <strong>VS Code</strong> integrated terminal · <strong>Git + GitHub</strong> (AI ทำ branch/commit/PR ได้แต่ human review ก่อน merge) · <strong>Playwright MCP</strong> สำหรับให้ AI ควบคุม browser จริงตอน test</p>
+  <p data-lang="en"><strong>Toolchain:</strong> <strong>Claude Code CLI</strong> (Opus 4.6, 1M context) in <strong>VS Code</strong>'s integrated terminal · <strong>Git + GitHub</strong> (AI handles branches/commits/PRs, humans review before merge) · <strong>Playwright MCP</strong> so the AI can drive a real browser during testing</p>
+
+  <h3 data-lang="th">Subagents ตรวจคุณภาพโค้ด (4 ตัว — รัน parallel ผ่าน <code>/review-all</code>)</h3>
+  <h3 data-lang="en">Code Review Subagents (4 — run in parallel via <code>/review-all</code>)</h3>
+  <ul>
+    <li><code>security-auditor</code> — SSRF, XSS, injection, rate limiting, input validation, prompt injection</li>
+    <li><code>performance-error-reviewer</code> — memory leaks, timeouts, algorithm complexity, try-catch coverage</li>
+    <li><code>react-typescript-reviewer</code> — accessibility, memoization, type safety, re-render issues</li>
+    <li><code>maintainability-reviewer</code> — naming, dead code, duplication, "human reader" test</li>
+  </ul>
+  <p data-lang="th">ทุก agent อ่าน <code>.known-issues.md</code> ก่อนเสมอ เพื่อ skip findings ที่ทีมยอมรับแล้ว (เช่น CSP unsafe-inline, rate limiter in-memory) — ป้องกันการ flag ซ้ำทุกรอบ Phase 2 ของ <code>/review-all</code> ทดสอบกับเว็บจริงเพื่อจับ semantic bugs ที่ static review ไม่เห็น</p>
+  <p data-lang="en">Every agent reads <code>.known-issues.md</code> first to skip findings the team has explicitly accepted (e.g., CSP unsafe-inline, in-memory rate limiter), preventing repeated re-flagging. Phase 2 of <code>/review-all</code> tests against real websites to catch semantic bugs static review can't see.</p>
+</section>
+
+
+
+<footer>
+  <p><strong>AI Search Checker</strong> · Built by Lalintia · <a href="https://github.com/Lalintia/aicheck">GitHub</a> · <a href="https://aicheck.ohmai.me">Live Demo</a></p>
+  <p style="margin-top: 10px; font-size: 12px;"><span data-lang="th">อัปเดตล่าสุด 16 เมษายน 2569 · สร้างด้วย Claude Code</span><span data-lang="en">Last updated 16 April 2026 · Generated with Claude Code</span></p>
+</footer>
+
+</div>
+
+<script>
+  (function() {
+    const KEY = 'aicheck-lang';
+    const buttons = document.querySelectorAll('.lang-switcher button');
+    const saved = localStorage.getItem(KEY);
+    const initial = saved === 'en' || saved === 'th' ? saved : 'th';
+
+    function setLang(lang) {
+      document.documentElement.lang = lang;
+      localStorage.setItem(KEY, lang);
+      buttons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.setLang === lang);
+      });
+    }
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => setLang(btn.dataset.setLang));
+    });
+
+    setLang(initial);
+  })();
+</script>
+
+</body>
+</html>
