@@ -1,7 +1,7 @@
 /**
  * Open Graph Checker
  * Validates Open Graph meta tags for social sharing
- * Weight: 15%
+ * Weight: see `weights.openGraph` in `./base.ts` (single source of truth)
  */
 
 import type { CheckResult } from './base';
@@ -38,13 +38,17 @@ const OG_PROPERTIES: readonly OGProperty[] = [
 const MAX_OG_VALUE_LENGTH = 2048;
 
 export function checkOpenGraph(html: string): CheckResult {
+  // Scope regex scanning to <head> section to avoid redundant passes over large bodies
+  const headEnd = html.indexOf('</head>');
+  const scope = headEnd > 0 ? html.slice(0, headEnd + 7) : html.slice(0, 32_768);
+
   const found: string[] = [];
   const missing: string[] = [];
   const warnings: string[] = [];
   let weightedScore = 0;
 
   for (const prop of OG_PROPERTIES) {
-    const hasProperty = prop.existsPattern.test(html);
+    const hasProperty = prop.existsPattern.test(scope);
 
     if (hasProperty) {
       found.push(prop.name);
@@ -63,7 +67,7 @@ export function checkOpenGraph(html: string): CheckResult {
   const rawExtracted: Record<string, string> = {};
   const extracted: Record<string, string> = {};
   for (const prop of OG_PROPERTIES) {
-    const match = html.match(prop.contentPattern);
+    const match = scope.match(prop.contentPattern);
     if (match) {
       rawExtracted[prop.name] = match[1];
       extracted[prop.name] = sanitizeContent(match[1], 500);

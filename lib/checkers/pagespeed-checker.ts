@@ -1,7 +1,7 @@
 /**
  * Page Speed Checker
  * Basic load time measurement
- * Weight: 5%
+ * Weight: see `weights.pageSpeed` in `./base.ts` (single source of truth)
  */
 
 import type { CheckResult } from './base';
@@ -13,11 +13,13 @@ interface SpeedThreshold {
   readonly label: string;
 }
 
+// Thresholds calibrated for server-to-server TTFB (Singapore EC2 → target).
+// Well-CDN'd sites typically respond in 100–400ms; 1s+ indicates slow origin.
 const SPEED_THRESHOLDS: readonly SpeedThreshold[] = [
-  { max: 1000, score: 100, label: 'excellent' },
-  { max: 2000, score: 80, label: 'good' },
-  { max: 3000, score: 60, label: 'fair' },
-  { max: 5000, score: 40, label: 'slow' },
+  { max: 300,  score: 100, label: 'excellent' },
+  { max: 600,  score: 85,  label: 'good' },
+  { max: 1000, score: 70,  label: 'fair' },
+  { max: 2000, score: 50,  label: 'slow' },
 ];
 
 /**

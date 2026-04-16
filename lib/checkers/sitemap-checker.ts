@@ -1,12 +1,12 @@
 /**
  * Sitemap Checker
  * Validates sitemap.xml existence and content
- * Weight: 10%
+ * Weight: see `weights.sitemap` in `./base.ts` (single source of truth)
  */
 
 import type { CheckResult } from './base';
 import { createSuccessResult, createFailureResult, createPartialResult } from './base';
-import { isSafeUrlWithDns, safeFetch, sanitizeContent } from '@/lib/security';
+import { isSafeUrlWithDns, safeFetch, sanitizeContent, readWithTimeout } from '@/lib/security';
 
 const MAX_SITEMAP_SIZE = 5 * 1024 * 1024; // 5MB
 
@@ -14,6 +14,7 @@ interface FoundSitemap {
   readonly url: string;
   readonly content: string;
   readonly urls: number;
+  readonly sitemapEntries: number;
   readonly hasUrlset: boolean;
   readonly hasSitemapIndex: boolean;
   readonly hasLastmod: boolean;
@@ -60,18 +61,7 @@ async function trySitemapUrl(sitemapUrl: string, sharedSignal?: AbortSignal): Pr
     throw new Error('Sitemap too large');
   }
 
-  let bodyReadTimeoutId: ReturnType<typeof setTimeout> | undefined;
-  let rawContent: string;
-  try {
-    rawContent = await Promise.race([
-      response.text(),
-      new Promise<never>((_, reject) => {
-        bodyReadTimeoutId = setTimeout(() => reject(new Error('sitemap body read timeout')), 10000);
-      }),
-    ]);
-  } finally {
-    clearTimeout(bodyReadTimeoutId);
-  }
+  const rawContent = await readWithTimeout(response, 10000, 'sitemap body read timeout');
   if (rawContent.length > MAX_SITEMAP_SIZE) {
     throw new Error('Sitemap too large');
   }
@@ -85,11 +75,13 @@ async function trySitemapUrl(sitemapUrl: string, sharedSignal?: AbortSignal): Pr
   }
 
   const urlMatches = rawContent.match(/<url>/g);
+  const sitemapEntryMatches = rawContent.match(/<sitemap>/g);
 
   return {
     url: sitemapUrl,
     content: sanitizeContent(rawContent, 500),
     urls: urlMatches ? urlMatches.length : 0,
+    sitemapEntries: sitemapEntryMatches ? sitemapEntryMatches.length : 0,
     hasUrlset,
     hasSitemapIndex,
     hasLastmod: rawContent.includes('<lastmod>'),
@@ -157,16 +149,29 @@ export async function checkSitemap(
     }
 
     let score = 100;
-    if (!foundSitemap.urls) score -= 30;
-    if (!foundSitemap.hasLastmod) score -= 10;
-    if (!foundSitemap.hasChangefreq) score -= 10;
-    if (!foundSitemap.hasPriority) score -= 5;
+    if (foundSitemap.hasSitemapIndex) {
+      // sitemapindex uses <sitemap> entries — changefreq/priority are urlset-only fields
+      if (!foundSitemap.sitemapEntries) score -= 30;
+      if (!foundSitemap.hasLastmod) score -= 10;
+    } else {
+      // regular urlset
+      if (!foundSitemap.urls) score -= 30;
+      if (!foundSitemap.hasLastmod) score -= 10;
+      if (!foundSitemap.hasChangefreq) score -= 10;
+      if (!foundSitemap.hasPriority) score -= 5;
+    }
 
     score = Math.max(0, score);
+
+    const entryCount = foundSitemap.hasSitemapIndex
+      ? foundSitemap.sitemapEntries
+      : foundSitemap.urls;
+    const entryLabel = foundSitemap.hasSitemapIndex ? 'sub-sitemaps' : 'URLs';
 
     const data: Record<string, unknown> = {
       url: foundSitemap.url,
       urls: foundSitemap.urls,
+      sitemapEntries: foundSitemap.sitemapEntries,
       hasUrlset: foundSitemap.hasUrlset,
       hasSitemapIndex: foundSitemap.hasSitemapIndex,
       hasLastmod: foundSitemap.hasLastmod,
@@ -177,7 +182,7 @@ export async function checkSitemap(
 
     if (score >= 80) {
       return createSuccessResult(
-        `Sitemap found with ${foundSitemap.urls} URLs`,
+        `Sitemap found with ${entryCount} ${entryLabel}`,
         score,
         data
       );

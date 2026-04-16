@@ -18,6 +18,8 @@ node_modules/
 dist/
 build/
 out/
+*.tsbuildinfo
+deploy.tar.gz
 
 # IDE
 .vscode/

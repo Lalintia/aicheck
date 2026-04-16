@@ -1,7 +1,7 @@
 /**
  * Semantic HTML Checker
  * Validates proper use of semantic HTML5 elements
- * Weight: 5%
+ * Weight: see `weights.semanticHTML` in `./base.ts` (single source of truth)
  */
 
 import type { CheckResult } from './base';

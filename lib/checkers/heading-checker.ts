@@ -1,7 +1,7 @@
 /**
  * Heading Hierarchy Checker
  * Validates proper heading structure (H1-H6)
- * Weight: 5%
+ * Weight: see `weights.headingHierarchy` in `./base.ts` (single source of truth)
  */
 
 import type { CheckResult } from './base';

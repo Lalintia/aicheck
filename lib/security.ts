@@ -31,9 +31,11 @@ export function isSafeUrl(url: string): boolean {
         // Check if mapped IPv4 is private
         if (isPrivateIPv4(ipv4Part)) return false;
       }
-      if (/^f[cd][0-9a-f]{2}:/i.test(ipv6Literal)) return false; // fc00::/7 ULA (fc and fd)
+      if (/^f[cd]/i.test(ipv6Literal)) return false; // fc00::/7 ULA (fc and fd ranges)
       if (/^fe[89ab][0-9a-f]:/i.test(ipv6Literal)) return false; // fe80::/10 link-local
-      if (/^2001:/i.test(ipv6Literal)) return false; // Teredo tunnelling
+      // Teredo tunnelling: 2001:0000::/32 (NOT the entire 2001::/16 — that would block
+      // legitimate public IPv6 like Google's 2001:4860::/32, Cloudflare's 2606:4700::/32 etc.)
+      if (/^2001:0{0,4}:/i.test(ipv6Literal)) return false;
       if (/^2002:(?:7f|0a|c0a8|ac1)/i.test(ipv6Literal)) return false; // 6to4 mapping private IPv4
       if (ipv6Literal === '::') return false; // unspecified address
     }
@@ -123,10 +125,6 @@ export function sanitizeContent(content: string, maxLength: number = 1000): stri
 }
 
 /**
- * Validates that a hostname resolves to a safe IP address.
- * Performs an actual DNS lookup to prevent DNS rebinding attacks.
- */
-/**
  * Check if an IPv6 address is private/internal
  */
 function isPrivateIPv6(address: string): boolean {
@@ -146,7 +144,34 @@ function isPrivateIPv6(address: string): boolean {
   return false;
 }
 
+// Short-TTL DNS validation cache. Multiple checkers (robots, llms, sitemap with ≤5 URLs)
+// hit the same hostname within one user request — caching the validation result eliminates
+// 3-6s of redundant lookup latency. TTL is intentionally short (60s) so DNS rebinding
+// attacks remain blocked by the redirect-time re-check in safeFetch.
+const DNS_CACHE_TTL_MS = 60_000;
+const DNS_CACHE_MAX_ENTRIES = 1000;
+const dnsCache = new Map<string, { result: boolean; expiry: number }>();
+
+function pruneDnsCache(): void {
+  if (dnsCache.size < DNS_CACHE_MAX_ENTRIES) { return; }
+  const now = Date.now();
+  for (const [key, entry] of dnsCache) {
+    if (entry.expiry < now) { dnsCache.delete(key); }
+  }
+  // If still over limit after pruning expired entries, drop oldest (insertion order)
+  while (dnsCache.size >= DNS_CACHE_MAX_ENTRIES) {
+    const oldestKey = dnsCache.keys().next().value;
+    if (oldestKey === undefined) { break; }
+    dnsCache.delete(oldestKey);
+  }
+}
+
 export async function validateDnsResolution(hostname: string): Promise<boolean> {
+  const cached = dnsCache.get(hostname);
+  if (cached && cached.expiry > Date.now()) {
+    return cached.result;
+  }
+
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
     const dnsPromise = lookup(hostname, { all: true });
@@ -154,11 +179,14 @@ export async function validateDnsResolution(hostname: string): Promise<boolean> 
       timeoutId = setTimeout(() => reject(new Error('DNS timeout')), 3000);
     });
     const addresses = await Promise.race([dnsPromise, timeoutPromise]);
+    let result = addresses.length > 0;
     for (const entry of addresses) {
-      if (entry.family === 4 && isPrivateIPv4(entry.address)) { return false; }
-      if (entry.family === 6 && isPrivateIPv6(entry.address)) { return false; }
+      if (entry.family === 4 && isPrivateIPv4(entry.address)) { result = false; break; }
+      if (entry.family === 6 && isPrivateIPv6(entry.address)) { result = false; break; }
     }
-    return addresses.length > 0;
+    pruneDnsCache();
+    dnsCache.set(hostname, { result, expiry: Date.now() + DNS_CACHE_TTL_MS });
+    return result;
   } catch {
     return false;
   } finally {
@@ -182,51 +210,95 @@ export async function isSafeUrlWithDns(url: string): Promise<boolean> {
 
 /**
  * Fetch wrapper with SSRF-safe redirect handling.
- * Follows at most one redirect, re-validating the Location URL before following.
- * Prevents SSRF via 301/302 redirect to internal addresses.
+ * Follows up to MAX_REDIRECTS hops, re-validating each Location URL before following.
+ * Prevents SSRF via 301/302/307/308 redirect to internal addresses.
  */
+const MAX_REDIRECTS = 3;
+
 export async function safeFetch(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  const response = await fetch(url, { ...options, redirect: 'manual' });
+  let currentUrl = url;
+  const visited = new Set<string>();
 
-  // Not a redirect — return directly
-  if (response.status < 300 || response.status >= 400) {
-    return response;
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    const response = await fetch(currentUrl, { ...options, redirect: 'manual' });
+
+    // Not a redirect — return directly
+    if (response.status < 300 || response.status >= 400) {
+      return response;
+    }
+
+    // Exceeded redirect limit
+    if (hop === MAX_REDIRECTS) {
+      response.body?.cancel().catch(() => { /* already closed */ });
+      throw new Error(`Too many redirects (>${MAX_REDIRECTS})`);
+    }
+
+    // For 3xx, validate the Location before following
+    const location = response.headers.get('location');
+    if (!location) return response;
+
+    // Drain the redirect response body so the socket is released immediately
+    response.body?.cancel().catch(() => { /* already closed */ });
+
+    // Resolve relative redirect against the current URL
+    let resolvedUrl: string;
+    try {
+      resolvedUrl = new URL(location, currentUrl).href;
+    } catch {
+      throw new Error('Invalid redirect location');
+    }
+
+    // Abort check BEFORE DNS — avoids up to 3s of wasted lookup if caller aborted
+    if (options.signal?.aborted) {
+      throw new DOMException('Aborted', 'AbortError');
+    }
+
+    // Block redirects to unsafe (internal/private) addresses — DNS check prevents rebinding
+    if (!(await isSafeUrlWithDns(resolvedUrl))) {
+      throw new Error('Redirect to unsafe URL blocked');
+    }
+
+    // Re-check abort after DNS (in case it fired during lookup)
+    if (options.signal?.aborted) {
+      throw new DOMException('Aborted', 'AbortError');
+    }
+
+    if (visited.has(resolvedUrl)) {
+      throw new Error('Redirect loop detected');
+    }
+    visited.add(resolvedUrl);
+    currentUrl = resolvedUrl;
   }
 
-  // For 3xx, validate the Location before following
-  const location = response.headers.get('location');
-  if (!location) return response;
+  // Unreachable — loop always returns or throws
+  throw new Error('Redirect loop');
+}
 
-  // Drain the redirect response body so the socket is released immediately
-  // (Node.js fetch will otherwise hold the connection open until GC)
-  response.body?.cancel().catch(() => { /* already closed */ });
-
-  // Resolve relative redirect against the original URL
-  let resolvedUrl: string;
+/**
+ * Reads a response body to text with a hard timeout. Use this in place of
+ * `await response.text()` when the response comes from an untrusted source —
+ * a slow server can otherwise hold the body open indefinitely (slowloris).
+ *
+ * The timeout is cleared whether the read succeeds, throws, or the timeout
+ * itself fires, so no timer leaks.
+ */
+export async function readWithTimeout(
+  response: Response,
+  timeoutMs: number,
+  errorMessage: string = 'Body read timeout'
+): Promise<string> {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   try {
-    resolvedUrl = new URL(location, url).href;
-  } catch {
-    throw new Error('Invalid redirect location');
+    return await Promise.race([
+      response.text(),
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error(errorMessage)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  // Abort check BEFORE DNS — avoids up to 3s of wasted lookup if caller aborted
-  if (options.signal?.aborted) {
-    throw new DOMException('Aborted', 'AbortError');
-  }
-
-  // Block redirects to unsafe (internal/private) addresses — DNS check prevents rebinding
-  if (!(await isSafeUrlWithDns(resolvedUrl))) {
-    throw new Error('Redirect to unsafe URL blocked');
-  }
-
-  // Re-check abort after DNS too (in case it fired during lookup)
-  if (options.signal?.aborted) {
-    throw new DOMException('Aborted', 'AbortError');
-  }
-
-  // Follow once — never follow subsequent redirects
-  return fetch(resolvedUrl, { ...options, redirect: 'error' });
 }

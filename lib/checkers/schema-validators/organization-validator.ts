@@ -3,7 +3,7 @@
  * Validates JSON-LD Organization structured data
  */
 
-import { extractJsonLdScripts as _extractJsonLdScripts, isValidUrl, findSchemasByType } from './jsonld-utils';
+import { extractJsonLdScripts, isValidUrl, findSchemasByType } from './jsonld-utils';
 export { findSchemasByType };
 
 // ============================================================================
@@ -382,20 +382,8 @@ export function validateWebSite(schema: WebSiteSchema): SchemaValidationResult {
   };
 }
 
-// ============================================================================
-// JSON-LD Parser
-// ============================================================================
-
-/**
- * Extracts all JSON-LD scripts from HTML.
- * Delegates to the canonical implementation in jsonld-utils.ts.
- */
-export function extractJsonLdScripts(html: string): readonly unknown[] {
-  return _extractJsonLdScripts(html);
-}
-
-// findSchemasByType + isSchemaOfType moved to jsonld-utils.ts to avoid
-// duplicated logic. findSchemasByType is re-exported at top of this file.
+// findSchemasByType + isSchemaOfType + extractJsonLdScripts live in jsonld-utils.ts
+// to avoid duplicated logic. Imported at the top of this file and used directly.
 
 // ============================================================================
 // Main Validation Functions

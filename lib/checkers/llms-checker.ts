@@ -1,12 +1,12 @@
 /**
  * llms.txt Checker
  * Validates llms.txt file existence per Answer.AI standard
- * Weight: 15%
+ * Weight: see `weights.llmsTxt` in `./base.ts` (single source of truth)
  */
 
 import type { CheckResult } from './base';
-import { createSuccessResult, createFailureResult } from './base';
-import { isSafeUrlWithDns, safeFetch, sanitizeContent } from '@/lib/security';
+import { createSuccessResult, createFailureResult, createPartialResult } from './base';
+import { isSafeUrlWithDns, safeFetch, sanitizeContent, readWithTimeout } from '@/lib/security';
 
 const MAX_LLMS_SIZE = 512 * 1024; // 512KB
 
@@ -57,20 +57,21 @@ export async function checkLlmsTxt(url: string): Promise<CheckResult> {
       response.body?.cancel().catch(() => { /* already closed */ });
       return createFailureResult('llms.txt too large to analyze', { url: llmsUrl });
     }
-    let bodyReadTimeoutId: ReturnType<typeof setTimeout> | undefined;
-    let content: string;
-    try {
-      content = await Promise.race([
-        response.text(),
-        new Promise<never>((_, reject) => {
-          bodyReadTimeoutId = setTimeout(() => reject(new Error('llms.txt body read timeout')), 10000);
-        }),
-      ]);
-    } finally {
-      clearTimeout(bodyReadTimeoutId);
-    }
+    const content = await readWithTimeout(response, 10000, 'llms.txt body read timeout');
     if (content.length > MAX_LLMS_SIZE) {
       return createFailureResult('llms.txt too large to analyze', { url: llmsUrl });
+    }
+
+    // Detect soft 404 — some servers return an HTML page with HTTP 200
+    // Check Content-Type header first, then sniff content
+    const contentType = response.headers.get('content-type') ?? '';
+    const isHtml = contentType.includes('text/html') ||
+      /^\s*<!(?:DOCTYPE\s+html|html)/i.test(content.slice(0, 100));
+    if (isHtml) {
+      return createFailureResult('llms.txt not found (server returned HTML page)', {
+        url: llmsUrl,
+        status: response.status,
+      });
     }
 
     // Basic validation of llms.txt format per Answer.AI standard
@@ -107,7 +108,7 @@ export async function checkLlmsTxt(url: string): Promise<CheckResult> {
       return createSuccessResult('llms.txt found and properly formatted', score, data);
     }
 
-    return createSuccessResult('llms.txt found but could be improved', score, data);
+    return createPartialResult('llms.txt found but could be improved', score, data);
   } catch (error) {
     return createFailureResult('Unable to check llms.txt', {
       error: error instanceof Error ? error.message : 'Unknown error',

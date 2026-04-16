@@ -1,59 +1,58 @@
 import type { CheckResponse, CheckType, GradeInfo, CheckLabel } from '@/lib/types/checker';
+import { weights } from '@/lib/checkers/base';
 
 export type { CheckType, CheckLabel } from '@/lib/types/checker';
 
-export const checkLabels: Record<CheckType, CheckLabel> = {
+const labelMeta: Record<CheckType, { title: string; description: string }> = {
   schema: {
     title: 'Schema.org (JSON-LD)',
     description: 'Structured data for AI to understand content',
-    weight: 22,
   },
   ssrCsr: {
     title: 'Server-Side Rendering',
     description: 'Content visible without JavaScript',
-    weight: 17,
   },
   robotsTxt: {
     title: 'robots.txt',
     description: 'Tells AI which pages to access',
-    weight: 12,
   },
   headingHierarchy: {
     title: 'Heading Hierarchy',
-    description: 'Clear H1 → H2 → H3 order',
-    weight: 9,
+    description: 'Clear H1 \u2192 H2 \u2192 H3 order',
   },
   imageAI: {
     title: 'Image AI Readiness',
     description: 'Alt text and context for AI to understand images',
-    weight: 10,
   },
   semanticHTML: {
     title: 'Semantic HTML',
     description: 'Meaningful HTML structure',
-    weight: 7,
   },
   sitemap: {
     title: 'Sitemap.xml',
     description: 'Site map for AI discovery',
-    weight: 7,
   },
   openGraph: {
     title: 'Open Graph',
     description: 'Preview tags for AI and social platforms',
-    weight: 5,
   },
   llmsTxt: {
     title: 'llms.txt',
     description: 'LLM-specific guidance file',
-    weight: 6,
   },
   pageSpeed: {
     title: 'Page Speed',
     description: 'Page loading performance for crawlers',
-    weight: 5,
   },
 };
+
+const checkTypeKeys = Object.keys(labelMeta) as CheckType[];
+export const checkLabels: Record<CheckType, CheckLabel> = Object.fromEntries(
+  checkTypeKeys.map((key) => [
+    key,
+    { ...labelMeta[key], weight: weights[key] },
+  ])
+) as Record<CheckType, CheckLabel>;
 
 export function getGradeLabel(grade: CheckResponse['grade']): GradeInfo {
   switch (grade) {

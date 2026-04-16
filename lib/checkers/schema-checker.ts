@@ -1,7 +1,7 @@
 /**
  * Schema.org Checker with Deep Validation
  * Validates JSON-LD structured data implementation
- * Weight: 25% (increased from 20%)
+ * Weight: see `weights.schema` in `./base.ts` (single source of truth)
  */
 
 import type { CheckResult } from './base';
@@ -13,7 +13,7 @@ import {
   validateWebPage,
   validateLocalBusiness,
 } from './schema-validators';
-import { extractRawJsonLdScripts } from './schema-validators/jsonld-utils';
+import { extractRawJsonLdScripts, safeParseJsonLd } from './schema-validators/jsonld-utils';
 import type {
   SchemaValidationResult as OrgSchemaValidationResult,
 } from './schema-validators/organization-validator';
@@ -25,17 +25,48 @@ import type {
 } from './schema-validators';
 
 interface DetailedSchemaResult {
-  organizations: OrgSchemaValidationResult[];
-  websites: OrgSchemaValidationResult[];
-  articles: ArticleValidationResult[];
-  breadcrumbLists: BreadcrumbListResult[];
-  webPages: WebPageResult[];
-  localBusinesses: LocalBusinessResult[];
-  overallScore: number;
-  totalSchemas: number;
-  validSchemas: number;
-  invalidSchemas: number;
+  readonly organizations: OrgSchemaValidationResult[];
+  readonly websites: OrgSchemaValidationResult[];
+  readonly articles: ArticleValidationResult[];
+  readonly breadcrumbLists: BreadcrumbListResult[];
+  readonly webPages: WebPageResult[];
+  readonly localBusinesses: LocalBusinessResult[];
+  readonly overallScore: number;
+  readonly totalSchemas: number;
+  readonly validSchemas: number;
+  readonly invalidSchemas: number;
 }
+
+// Microdata types that map to schema.org concepts we validate
+const MICRODATA_ORG_TYPES = new Set([
+  'Organization', 'Corporation', 'NGO', 'EducationalOrganization', 'GovernmentOrganization',
+  'NewsMediaOrganization', 'OnlineBusiness', 'OnlineStore',
+]);
+const MICRODATA_WEBSITE_TYPES = new Set(['WebSite', 'WebPage']);
+
+/**
+ * Detect Schema.org Microdata (itemscope/itemtype) in HTML.
+ * Returns types found — used to give partial credit when JSON-LD is absent.
+ */
+function detectMicrodataTypes(html: string): { hasOrg: boolean; hasWebSite: boolean; types: string[] } {
+  const foundTypes = new Set<string>();
+  const pattern = /itemtype=["']https?:\/\/schema\.org\/([A-Za-z]+)["']/gi;
+  let m: RegExpExecArray | null;
+  while ((m = pattern.exec(html)) !== null) {
+    foundTypes.add(m[1]);
+  }
+  return {
+    hasOrg: [...foundTypes].some((t) => MICRODATA_ORG_TYPES.has(t)),
+    hasWebSite: [...foundTypes].some((t) => MICRODATA_WEBSITE_TYPES.has(t)),
+    types: [...foundTypes],
+  };
+}
+
+const LOCAL_BUSINESS_TYPES = new Set([
+  'LocalBusiness', 'Restaurant', 'Store', 'Dentist', 'Hospital', 'Hotel', 'AutoRepair',
+  'BarOrPub', 'Bakery', 'CafeOrCoffeeShop', 'FastFoodRestaurant', 'IceCreamShop',
+  'Pharmacy', 'MedicalClinic', 'Optician', 'Electrician', 'Plumber',
+]);
 
 export function checkSchema(_url: string, html: string): CheckResult {
   // Limit HTML size to prevent ReDoS and memory issues (5MB max)
@@ -56,7 +87,7 @@ export function checkSchema(_url: string, html: string): CheckResult {
     let invalidCount = 0;
     for (const raw of rawScripts) {
       try {
-        scripts.push(JSON.parse(raw));
+        scripts.push(safeParseJsonLd(raw));
         validCount++;
       } catch {
         invalidCount++;
@@ -95,35 +126,14 @@ export function checkSchema(_url: string, html: string): CheckResult {
         } else if (type === 'WebPage') {
           const result = validateWebPage(schemaObj);
           if (result) webPages.push(result);
-        } else if (typeof type === 'string' && 
-                   (type === 'LocalBusiness' || type.includes('Business') || 
-                    ['Restaurant', 'Store', 'Dentist', 'Hospital', 'Hotel', 'AutoRepair'].includes(type))) {
+        } else if (typeof type === 'string' && LOCAL_BUSINESS_TYPES.has(type)) {
           const result = validateLocalBusiness(schemaObj);
           if (result) localBusinesses.push(result);
         }
       }
     }
 
-    // Calculate overall score
-    const detailedResult: DetailedSchemaResult = {
-      organizations: [...orgWebSiteResult.organization.results],
-      websites: [...orgWebSiteResult.website.results],
-      articles: [...articleResult.articles],
-      breadcrumbLists,
-      webPages,
-      localBusinesses,
-      overallScore: 0,
-      totalSchemas: 0,
-      validSchemas: 0,
-      invalidSchemas: 0,
-    };
-
-    // Use pre-extracted counts from the single rawScripts pass at the top
-    detailedResult.totalSchemas = rawScripts.length;
-    detailedResult.validSchemas = validCount;
-    detailedResult.invalidSchemas = invalidCount;
-
-    // Calculate weighted score
+    // Calculate weighted score from all schema type results
     let totalScore = 0;
     let maxPossibleScore = 0;
 
@@ -167,17 +177,43 @@ export function checkSchema(_url: string, html: string): CheckResult {
       maxPossibleScore += 10;
     }
 
-    // Normalize score if not all schema types are present
-    if (maxPossibleScore > 0) {
-      detailedResult.overallScore = Math.round((totalScore / maxPossibleScore) * 100);
+    // Detect Microdata as fallback when JSON-LD is absent
+    const microdata = detectMicrodataTypes(html);
+    const hasMicrodataOnly = maxPossibleScore === 0 && microdata.types.length > 0;
+
+    // Compute overall score: Microdata fallback, JSON-LD weighted, or zero
+    let computedScore: number;
+    if (hasMicrodataOnly) {
+      // Microdata is readable by Google but less preferred by modern AI crawlers than JSON-LD
+      let microdataBase = 0;
+      if (microdata.hasOrg) { microdataBase += 30; }
+      if (microdata.hasWebSite) { microdataBase += 20; }
+      computedScore = Math.round(microdataBase * 0.7);
+      maxPossibleScore = 1; // signal that we have something
+    } else if (maxPossibleScore > 0) {
+      computedScore = Math.round((totalScore / maxPossibleScore) * 100);
     } else {
-      detailedResult.overallScore = 0;
+      computedScore = 0;
     }
 
     // Penalty for invalid JSON
     if (invalidCount > 0) {
-      detailedResult.overallScore = Math.floor(detailedResult.overallScore * 0.8);
+      computedScore = Math.floor(computedScore * 0.8);
     }
+
+    // Build detailedResult ONCE with all final values
+    const detailedResult: DetailedSchemaResult = {
+      organizations: [...orgWebSiteResult.organization.results],
+      websites: [...orgWebSiteResult.website.results],
+      articles: [...articleResult.articles],
+      breadcrumbLists,
+      webPages,
+      localBusinesses,
+      overallScore: computedScore,
+      totalSchemas: rawScripts.length,
+      validSchemas: validCount,
+      invalidSchemas: invalidCount,
+    };
 
     // Generate warnings and recommendations
     const warnings: string[] = [];
@@ -187,9 +223,17 @@ export function checkSchema(_url: string, html: string): CheckResult {
       warnings.push(`${invalidCount} invalid JSON-LD script(s) found`);
     }
 
-    if (!orgWebSiteResult.organization.found) {
-      warnings.push('Missing Organization schema (critical for AI understanding)');
-      recommendations.push('Add Organization schema with name, url, and logo');
+    if (hasMicrodataOnly) {
+      warnings.push(`Microdata detected (${microdata.types.join(', ')}) — legacy format, less compatible with modern AI crawlers`);
+      recommendations.push('Migrate from Microdata to JSON-LD for better AI Search compatibility');
+    } else if (!orgWebSiteResult.organization.found) {
+      if (microdata.hasOrg) {
+        warnings.push('Organization found only in Microdata (legacy) — add JSON-LD for full AI compatibility');
+        recommendations.push('Add Organization JSON-LD schema alongside existing Microdata');
+      } else {
+        warnings.push('Missing Organization schema (critical for AI understanding)');
+        recommendations.push('Add Organization schema with name, url, and logo');
+      }
     } else if (orgWebSiteResult.organization.results[0]) {
       const bestOrg = orgWebSiteResult.organization.results[0];
       if (bestOrg.missingRequired.length > 0) {
@@ -197,7 +241,7 @@ export function checkSchema(_url: string, html: string): CheckResult {
       }
     }
 
-    if (!orgWebSiteResult.website.found) {
+    if (!orgWebSiteResult.website.found && !hasMicrodataOnly) {
       warnings.push('Missing WebSite schema');
       recommendations.push('Add WebSite schema with name, url, and potentialAction (SearchAction)');
     }

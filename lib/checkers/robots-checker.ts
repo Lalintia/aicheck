@@ -1,12 +1,12 @@
 /**
  * robots.txt Checker
  * Validates robots.txt configuration for AI crawlers
- * Weight: 15%
+ * Weight: see `weights.robotsTxt` in `./base.ts` (single source of truth)
  */
 
 import type { CheckResult } from './base';
 import { createSuccessResult, createFailureResult, createPartialResult } from './base';
-import { isSafeUrlWithDns, safeFetch, sanitizeContent } from '@/lib/security';
+import { isSafeUrlWithDns, safeFetch, sanitizeContent, readWithTimeout } from '@/lib/security';
 
 const MAX_ROBOTS_SIZE = 1 * 1024 * 1024; // 1MB
 
@@ -66,18 +66,7 @@ export async function checkRobotsTxt(url: string): Promise<CheckResult> {
       response.body?.cancel().catch(() => { /* already closed */ });
       return createFailureResult('robots.txt too large to analyze', { url: robotsUrl });
     }
-    let bodyReadTimeoutId: ReturnType<typeof setTimeout> | undefined;
-    let content: string;
-    try {
-      content = await Promise.race([
-        response.text(),
-        new Promise<never>((_, reject) => {
-          bodyReadTimeoutId = setTimeout(() => reject(new Error('robots.txt body read timeout')), 10000);
-        }),
-      ]);
-    } finally {
-      clearTimeout(bodyReadTimeoutId);
-    }
+    const content = await readWithTimeout(response, 10000, 'robots.txt body read timeout');
     if (content.length > MAX_ROBOTS_SIZE) {
       return createFailureResult('robots.txt too large to analyze', { url: robotsUrl });
     }

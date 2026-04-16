@@ -1,3 +1,5 @@
+import { weights } from '@/lib/checkers/base';
+
 export interface CheckReference {
   readonly title: string;
   readonly description: string;
@@ -5,6 +7,11 @@ export interface CheckReference {
   readonly checks: readonly string[];
   readonly standards: ReadonlyArray<{ readonly name: string; readonly url: string; readonly source: string }>;
   readonly weight: string;
+}
+
+function weightStr(key: string): string {
+  const w = weights[key as keyof typeof weights];
+  return w !== undefined ? `${w}%` : '0% (Not scored)';
 }
 
 export const checkReferences: Readonly<Record<string, CheckReference>> = {
@@ -27,7 +34,7 @@ export const checkReferences: Readonly<Record<string, CheckReference>> = {
       { name: "Organization Schema", url: "https://developers.google.com/search/docs/appearance/structured-data/organization", source: "Google" },
       { name: "Local Business", url: "https://developers.google.com/search/docs/appearance/structured-data/local-business", source: "Google" },
     ],
-    weight: "25%",
+    weight: weightStr('schema'),
   },
   robotsTxt: {
     title: "robots.txt",
@@ -44,7 +51,7 @@ export const checkReferences: Readonly<Record<string, CheckReference>> = {
       { name: "robots.txt Specification", url: "https://developers.google.com/search/docs/crawling-indexing/robots/robots_txt", source: "Google" },
       { name: "RFC 9309 - Robots Exclusion Protocol", url: "https://www.rfc-editor.org/rfc/rfc9309.html", source: "IETF" },
     ],
-    weight: "20%",
+    weight: weightStr('robotsTxt'),
   },
   sitemap: {
     title: "XML Sitemap",
@@ -61,7 +68,7 @@ export const checkReferences: Readonly<Record<string, CheckReference>> = {
       { name: "Sitemaps Overview", url: "https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview", source: "Google" },
       { name: "Sitemap Protocol", url: "https://www.sitemaps.org/protocol.html", source: "Sitemaps.org" },
     ],
-    weight: "15%",
+    weight: weightStr('sitemap'),
   },
   pageSpeed: {
     title: "Page Speed & Core Web Vitals",
@@ -77,7 +84,7 @@ export const checkReferences: Readonly<Record<string, CheckReference>> = {
       { name: "PageSpeed Insights", url: "https://pagespeed.web.dev/", source: "Google" },
       { name: "Web Vitals Thresholds", url: "https://web.dev/articles/defining-core-web-vitals-thresholds", source: "web.dev" },
     ],
-    weight: "10%",
+    weight: weightStr('pageSpeed'),
   },
   semanticHTML: {
     title: "Semantic HTML",
@@ -95,7 +102,7 @@ export const checkReferences: Readonly<Record<string, CheckReference>> = {
       { name: "HTML5 Specification", url: "https://html.spec.whatwg.org/multipage/", source: "W3C" },
       { name: "Semantic Structure", url: "https://webaim.org/techniques/semanticstructure/", source: "WebAIM" },
     ],
-    weight: "10%",
+    weight: weightStr('semanticHTML'),
   },
   headingHierarchy: {
     title: "Heading Hierarchy",
@@ -112,7 +119,7 @@ export const checkReferences: Readonly<Record<string, CheckReference>> = {
       { name: "Heading Rank", url: "https://www.w3.org/WAI/tutorials/page-structure/headings/", source: "W3C" },
       { name: "Headings", url: "https://webaim.org/techniques/semanticstructure/#headings", source: "WebAIM" },
     ],
-    weight: "10%",
+    weight: weightStr('headingHierarchy'),
   },
   llmsTxt: {
     title: "llms.txt",
@@ -128,7 +135,7 @@ export const checkReferences: Readonly<Record<string, CheckReference>> = {
       { name: "llms.txt Specification", url: "https://llmstxt.org/", source: "llmstxt.org" },
       { name: "llms.txt GitHub", url: "https://github.com/AnswerDotAI/llms-txt", source: "GitHub" },
     ],
-    weight: "5%",
+    weight: weightStr('llmsTxt'),
   },
   openGraph: {
     title: "Open Graph Protocol",
@@ -147,39 +154,6 @@ export const checkReferences: Readonly<Record<string, CheckReference>> = {
       { name: "Sharing Debugger", url: "https://developers.facebook.com/tools/debug/", source: "Facebook" },
       { name: "Twitter Cards", url: "https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/abouts-cards", source: "Twitter" },
     ],
-    weight: "0% (Not scored)",
-  },
-  canonical: {
-    title: "Canonical URLs",
-    description: "Check Canonical URL",
-    why: "Solves duplicate content issues by telling Search Engines which URL is the original",
-    checks: [
-      'Has <link rel="canonical">',
-      "URL is absolute URL",
-      "No self-referencing loop",
-      "No multiple canonical tags",
-    ],
-    standards: [
-      { name: "Consolidate Duplicate URLs", url: "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls", source: "Google" },
-      { name: "RFC 6596 - Canonical Link Relation", url: "https://datatracker.ietf.org/doc/html/rfc6596", source: "IETF" },
-    ],
-    weight: "0% (Not scored)",
-  },
-  mobile: {
-    title: "Mobile Responsiveness",
-    description: "Check Mobile support",
-    why: "Google uses Mobile-First Indexing, 70%+ of searches come from mobile",
-    checks: [
-      'Has <meta name="viewport">',
-      "Content not wider than screen",
-      "Text readable without zoom",
-      "Touch targets have appropriate size",
-    ],
-    standards: [
-      { name: "Mobile-First Indexing", url: "https://developers.google.com/search/docs/crawling-indexing/mobile/mobile-first-indexing", source: "Google" },
-      { name: "Responsive Design Basics", url: "https://web.dev/articles/responsive-web-design-basics", source: "web.dev" },
-      { name: "Viewport Meta Tag", url: "https://www.w3.org/TR/css-device-adapt-1/#viewport-meta", source: "W3C" },
-    ],
-    weight: "0% (Not scored)",
+    weight: weightStr('openGraph'),
   },
 };

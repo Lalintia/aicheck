@@ -16,7 +16,7 @@
  * - OpenAI GPTBot documentation
  *   https://platform.openai.com/docs/bots/gptbot
  *
- * Weight: 15%
+ * Weight: see `weights.ssrCsr` in `./base.ts` (single source of truth)
  */
 
 import type { CheckResult } from './base';
@@ -24,6 +24,11 @@ import { createSuccessResult, createFailureResult, createPartialResult } from '.
 
 const MIN_CONTENT_LENGTH = 200;
 const MIN_TEXT_RATIO = 0.1;
+// Cap body slice scanned by stripHtmlTags — 200KB is more than enough to detect SSR
+// (the check just needs to know if substantial text exists in the initial HTML)
+const MAX_BODY_SCAN_BYTES = 200_000;
+// Threshold for considering rendered paragraphs as evidence of SSR
+const RENDERED_PARAGRAPH_THRESHOLD = 3;
 
 const SPA_FRAMEWORK_PATTERNS = [
   { name: 'React SPA', pattern: /<div\s+id=["'](?:root|app|__next)["']\s*>\s*<\/div>/i },
@@ -67,27 +72,33 @@ function hasSubstantialContent(html: string, tagName: string, minLength: number)
 /**
  * Strip script/style blocks and HTML tags safely without regex backtracking.
  * Uses indexOf-based extraction to avoid ReDoS on malformed HTML.
+ *
+ * Performance: lowercases the input ONCE per tag (not per-iteration) to avoid
+ * O(n²) memory blowup on multi-MB pages. Each tag pass also re-lowercases the
+ * joined output once at the end of its loop.
  */
 function stripHtmlTags(html: string): string {
   let result = html;
   for (const tag of ['script', 'style']) {
-    let cleaned = '';
+    const parts: string[] = [];
     let pos = 0;
-    while (pos < result.length) {
-      const openIdx = result.toLowerCase().indexOf(`<${tag}`, pos);
+    const lowerResult = result.toLowerCase();
+    const openMarker = `<${tag}`;
+    const closeMarker = `</${tag}>`;
+    while (pos < lowerResult.length) {
+      const openIdx = lowerResult.indexOf(openMarker, pos);
       if (openIdx === -1) {
-        cleaned += result.slice(pos);
+        parts.push(result.slice(pos));
         break;
       }
-      cleaned += result.slice(pos, openIdx);
-      const closeTag = `</${tag}>`;
-      const closeIdx = result.toLowerCase().indexOf(closeTag, openIdx);
+      parts.push(result.slice(pos, openIdx));
+      const closeIdx = lowerResult.indexOf(closeMarker, openIdx);
       if (closeIdx === -1) {
         break;
       }
-      pos = closeIdx + closeTag.length;
+      pos = closeIdx + closeMarker.length;
     }
-    result = cleaned;
+    result = parts.join('');
   }
   return result
     .replace(/<[^>]+>/g, '')
@@ -101,13 +112,20 @@ export function checkSSR(html: string): CheckResult {
 
   // Check 1: Empty body detection (critical)
   // Use indexOf instead of regex to avoid ReDoS on large HTML
-  const bodyStartIdx = html.toLowerCase().indexOf('<body');
+  // Lowercase once and reuse — avoids two full-string allocations on multi-MB pages
+  const lowerHtml = html.toLowerCase();
+  const bodyStartIdx = lowerHtml.indexOf('<body');
   const bodyTagEnd = bodyStartIdx !== -1 ? html.indexOf('>', bodyStartIdx) : -1;
-  const bodyCloseIdx = html.toLowerCase().lastIndexOf('</body>');
+  const bodyCloseIdx = lowerHtml.lastIndexOf('</body>');
   const bodyContent = (bodyTagEnd !== -1 && bodyCloseIdx > bodyTagEnd)
     ? html.slice(bodyTagEnd + 1, bodyCloseIdx)
     : html;
-  const textContent = stripHtmlTags(bodyContent);
+  // Cap body sample before stripping — SSR detection only needs to know if
+  // substantial text exists in the initial HTML, not process all of it
+  const bodySample = bodyContent.length > MAX_BODY_SCAN_BYTES
+    ? bodyContent.slice(0, MAX_BODY_SCAN_BYTES)
+    : bodyContent;
+  const textContent = stripHtmlTags(bodySample);
 
   if (textContent.length < MIN_CONTENT_LENGTH) {
     return createFailureResult(
@@ -160,9 +178,17 @@ export function checkSSR(html: string): CheckResult {
       ssrIndicators.push(indicator.name);
     }
   }
-  // Count rendered paragraphs without nested quantifier (avoids ReDoS)
-  const renderedParagraphCount = (html.match(/<p[^>]*>[^<]{20,}<\/p>/gi) ?? []).length;
-  if (renderedParagraphCount >= 3) {
+  // Count rendered paragraphs with early exit — only need to know if >= threshold,
+  // so stop once threshold is hit instead of allocating an array of every match
+  const paragraphRegex = /<p[^>]*>[^<]{20,}<\/p>/gi;
+  let renderedParagraphCount = 0;
+  let pMatch: RegExpExecArray | null;
+  while (renderedParagraphCount < RENDERED_PARAGRAPH_THRESHOLD && (pMatch = paragraphRegex.exec(html)) !== null) {
+    renderedParagraphCount++;
+    // Prevent infinite loop on zero-length matches (defensive — pattern requires {20,})
+    if (pMatch[0].length === 0) { paragraphRegex.lastIndex++; }
+  }
+  if (renderedParagraphCount >= RENDERED_PARAGRAPH_THRESHOLD) {
     ssrIndicators.push('rendered paragraphs');
   }
 

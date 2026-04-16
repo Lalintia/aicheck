@@ -22,7 +22,7 @@ export const th: Translations = {
     checklist: 'รายการตรวจสอบ',
     checksCount: '10 รายการ',
     recommendations: 'สิ่งที่ควรปรับปรุง',
-    itemsToImprove: 'รายการที่ควรแก้ไข',
+    itemsToImprove: (n) => `${n} รายการที่ควรแก้ไข`,
     allClear: 'ผ่านทั้งหมด',
     allClearMessage: 'เว็บไซต์ของคุณพร้อมสำหรับ AI Search แล้ว ไม่พบปัญหาสำคัญ',
     criticalIssues: 'ปัญหาเร่งด่วน',
@@ -84,6 +84,12 @@ export const th: Translations = {
       title: 'ความเร็วเว็บ',
       description: 'ประสิทธิภาพการโหลดหน้าเว็บสำหรับ Crawler',
     },
+  },
+  nav: {
+    checksLabel: '10 รายการตรวจ',
+    checksShort: 'ตรวจ',
+    aiVisibilityLabel: 'AI รู้จักไหม',
+    aiVisibilityShort: 'AI',
   },
   error: {
     title: 'วิเคราะห์ไม่สำเร็จ',

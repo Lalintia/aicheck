@@ -72,7 +72,7 @@ export function SchemaDetails({
       <div id={panelId} hidden={!expanded} className="mt-3 space-y-3">
         {organizations && organizations.map((org, i) => (
           <SchemaTypeDetail
-            key={`org-${i}`}
+            key={`org-${org.specificType ?? org.found[0] ?? i}`}
             type="Organization"
             detail={org}
             description={s.descriptions.organization}
@@ -82,7 +82,7 @@ export function SchemaDetails({
 
         {websites && websites.map((web, i) => (
           <SchemaTypeDetail
-            key={`web-${i}`}
+            key={`web-${web.found[0] ?? i}`}
             type="WebSite"
             detail={web}
             description={s.descriptions.website}
@@ -92,7 +92,7 @@ export function SchemaDetails({
 
         {articles && articles.map((art, i) => (
           <SchemaTypeDetail
-            key={`art-${i}`}
+            key={`art-${art.specificType ?? art.found[0] ?? i}`}
             type={art.specificType || 'Article'}
             detail={art}
             description={s.descriptions.article}
@@ -102,7 +102,7 @@ export function SchemaDetails({
 
         {breadcrumbLists && breadcrumbLists.map((bc, i) => (
           <SchemaTypeDetail
-            key={`bc-${i}`}
+            key={`bc-${bc.itemCount ?? bc.found[0] ?? i}`}
             type="BreadcrumbList"
             detail={bc}
             description={s.descriptions.breadcrumb}
@@ -112,7 +112,7 @@ export function SchemaDetails({
 
         {localBusinesses && localBusinesses.map((lb, i) => (
           <SchemaTypeDetail
-            key={`lb-${i}`}
+            key={`lb-${lb.specificType ?? lb.found[0] ?? i}`}
             type={lb.specificType || 'LocalBusiness'}
             detail={lb}
             description={s.descriptions.localBusiness}
@@ -151,6 +151,7 @@ function getIcon(score: number): React.ReactElement {
 
 function SchemaTypeDetail({ type, detail, description, strings: s }: SchemaTypeDetailProps): React.ReactElement {
   const [showDetails, setShowDetails] = useState(false);
+  const detailsPanelId = useId();
 
   const missingRequired = detail.missingRequired || [];
   const missingRecommended = detail.missingRecommended || [];
@@ -175,6 +176,7 @@ function SchemaTypeDetail({ type, detail, description, strings: s }: SchemaTypeD
             type="button"
             onClick={() => setShowDetails(!showDetails)}
             aria-expanded={showDetails}
+            aria-controls={detailsPanelId}
             aria-label={s.toggleDetailsLabel(showDetails ? s.hide : s.details, type)}
             className="text-gray-500 hover:text-gray-700 text-sm"
           >
@@ -183,7 +185,8 @@ function SchemaTypeDetail({ type, detail, description, strings: s }: SchemaTypeD
         </div>
       </div>
 
-      {showDetails && (
+      <div id={detailsPanelId} hidden={!showDetails}>
+        {showDetails && (
         <div className="mt-3 space-y-2 text-sm">
           {detail.found.length > 0 && (
             <div>
@@ -269,7 +272,8 @@ function SchemaTypeDetail({ type, detail, description, strings: s }: SchemaTypeD
             </p>
           )}
         </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

@@ -2,12 +2,15 @@
 
 import Link from 'next/link';
 import { Radar, Brain } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
 
 interface SiteNavProps {
   readonly active: 'checks' | 'ai-check';
 }
 
 export function SiteNav({ active }: SiteNavProps): React.ReactElement {
+  const { t } = useI18n();
+
   return (
     <nav className="fixed top-4 left-0 right-0 z-40 animate-fade-up flex justify-center pointer-events-none" aria-label="Main navigation">
       <div className="pointer-events-auto flex items-center gap-1 p-1 rounded-full bg-white/80 backdrop-blur-md border border-frost-200/50 shadow-lg shadow-frost-500/5">
@@ -21,8 +24,8 @@ export function SiteNav({ active }: SiteNavProps): React.ReactElement {
           }`}
         >
           <Radar className="w-4 h-4" aria-hidden="true" />
-          <span className="hidden sm:inline">10 Checks</span>
-          <span className="sm:hidden">Checks</span>
+          <span className="hidden sm:inline">{t.nav.checksLabel}</span>
+          <span className="sm:hidden">{t.nav.checksShort}</span>
         </Link>
         <Link
           href="/ai-check"
@@ -34,8 +37,8 @@ export function SiteNav({ active }: SiteNavProps): React.ReactElement {
           }`}
         >
           <Brain className="w-4 h-4" aria-hidden="true" />
-          <span className="hidden sm:inline">AI Visibility</span>
-          <span className="sm:hidden">AI</span>
+          <span className="hidden sm:inline">{t.nav.aiVisibilityLabel}</span>
+          <span className="sm:hidden">{t.nav.aiVisibilityShort}</span>
         </Link>
       </div>
     </nav>

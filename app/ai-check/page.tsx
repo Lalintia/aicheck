@@ -2,42 +2,43 @@
 
 import { useCallback, useState } from 'react';
 import { useI18n } from '@/lib/i18n';
+import { useAbortController } from '@/lib/hooks/useAbortController';
 import { SiteNav } from '@/components/site-nav';
 import { AICheckHero } from './_components/ai-check-hero';
 import { AICheckResult, type AICheckResponse } from './_components/ai-check-result';
 import { defaultAiCheck } from './_lib/default-ai-check';
+import { normalizeUrl } from '@/lib/utils/normalize-url';
 
 export default function AICheckPage(): React.ReactElement {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [result, setResult] = useState<AICheckResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { getSignal } = useAbortController();
 
   const ai = t.aiCheck ?? defaultAiCheck;
 
   const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError(null);
-    setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
     const rawUrl = formData.get('url');
     if (typeof rawUrl !== 'string' || rawUrl.trim() === '') {
       setError(t.form.errorEmpty);
-      setIsLoading(false);
       return;
     }
 
-    let url = rawUrl.trim();
-    if (!/^https?:\/\//i.test(url)) {
-      url = 'https://' + url;
-    }
+    const url = normalizeUrl(rawUrl);
+
+    setError(null);
+    setIsLoading(true);
 
     try {
       const response = await fetch('/api/ai-check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url }),
+        signal: getSignal(),
       });
 
       if (!response.ok) {
@@ -48,6 +49,9 @@ export default function AICheckPage(): React.ReactElement {
       const data: AICheckResponse = await response.json();
       setResult(data);
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        return;
+      }
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setIsLoading(false);
@@ -85,6 +89,7 @@ export default function AICheckPage(): React.ReactElement {
             data={result}
             onReset={handleReset}
             ai={ai}
+            locale={locale}
           />
         )}
       </div>

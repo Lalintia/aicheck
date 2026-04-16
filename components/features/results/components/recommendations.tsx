@@ -47,7 +47,7 @@ export function Recommendations({ recommendations }: RecommendationsProps): Reac
         </div>
         <div>
           <h2 className="text-xl font-bold text-frost-900">{t.results.recommendations}</h2>
-          <p className="text-frost-500 text-sm">{recommendations.length} {t.results.itemsToImprove}</p>
+          <p className="text-frost-500 text-sm">{t.results.itemsToImprove(recommendations.length)}</p>
         </div>
       </div>
 

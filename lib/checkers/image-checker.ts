@@ -18,7 +18,7 @@
  * - Google: "Structured data for images"
  *   https://developers.google.com/search/docs/appearance/structured-data/image-license-metadata
  *
- * Weight: 8%
+ * Weight: see `weights.imageAI` in `./base.ts` (single source of truth)
  */
 
 import type { CheckResult } from './base';
@@ -48,7 +48,8 @@ interface ImageInfo {
 function isPlaceholderAlt(alt: string): boolean {
   const trimmed = alt.trim();
   if (trimmed.length === 0) {
-    return true;
+    // alt="" is intentionally decorative — correct accessibility pattern, NOT a placeholder
+    return false;
   }
   return PLACEHOLDER_ALT_PATTERNS.some((pattern) => pattern.test(trimmed));
 }
@@ -74,12 +75,18 @@ function parseImages(html: string): ImageInfo[] {
       }
     }
 
-    // Skip images with role="presentation" or aria-hidden="true"
+    // Skip decorative images: role="presentation", aria-hidden="true", or alt=""
+    // alt="" is the correct HTML pattern for marking decorative images.
+    // Also handle unquoted alt attributes (e.g. alt=hello) per HTML spec.
+    const altMatch =
+      attrs.match(/alt=["']([^"']*)["']/i) ??
+      attrs.match(/alt=([^\s>]+)/i);
+    const isEmptyAlt = altMatch !== null && altMatch[1].trim() === '';
     const isDecorative =
       /role=["']presentation["']/i.test(attrs) ||
-      /aria-hidden=["']true["']/i.test(attrs);
+      /aria-hidden=["']true["']/i.test(attrs) ||
+      isEmptyAlt;
 
-    const altMatch = attrs.match(/alt=["']([^"']*)["']/i);
     const hasAlt = altMatch !== null;
     const altText = altMatch ? altMatch[1].trim() : '';
 
