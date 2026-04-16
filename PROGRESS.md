@@ -6,6 +6,131 @@
 
 ---
 
+## อัปเดตล่าสุด — 16 เมษายน 2569 (รอบบ่าย) — `/review-all` Round 2 + 32 Fixes + Deploy
+
+### Process
+
+รัน `/review-all` 4 agents parallel (security, performance, react-typescript, **maintainability** — ตัวใหม่):
+- Pass `.known-issues.md` ให้ทุก agent → skip 7 accepted findings
+- Verify finding ที่ขัดกัน (OG ReDoS Security บอก safe / Performance บอก high → Security ถูก, bounded `[^>]{0,500}`)
+- Skip M9 (frost-500 contrast) — false-positive (`#0369a1` บน white = 6.06:1 ผ่าน WCAG AA)
+
+### Fixes Bundle — 32 issues across 5 severity tiers
+
+#### 🔴 Critical (1)
+
+| # | ไฟล์ | ปัญหา → fix |
+|---|---|---|
+| C1 | `app/ai-check/_components/ai-check-result.tsx:103` | Rules of Hooks violation — `useMemo` ของ `breakdownItems` อยู่ **หลัง** `if (skipped) return`. เวลา `skipped=true` React เรียก hooks 4 ตัว, `false` เรียก 5 → throw "Rendered more hooks". Trigger ใน production: ตอน `OPENAI_API_KEY` หาย. **Fix:** ย้าย useMemo ขึ้นก่อน early return + comment เตือน |
+
+#### 🟠 High (6)
+
+| # | ไฟล์ | สิ่งที่ทำ |
+|---|---|---|
+| H1 | `lib/checkers/ssr-checker.ts` | `stripHtmlTags` เรียก `result.toLowerCase()` ทุก iteration → O(n²) memory. Fix: lowercase ครั้งเดียวต่อ tag → drop จาก ~30MB → ~10MB ต่อ request |
+| H2 | `lib/checkers/ssr-checker.ts` | Pre-cap body 200KB ก่อน strip + early-exit paragraph counter (หยุดที่ 3 ไม่ allocate array) |
+| H3 | `app/api/ai-check/route.ts` | Post-read content-length guard (ตรงข้าม `/api/check` มี) + try/finally รอบ Promise.race กัน timer leak |
+| H4 | `app/error.tsx` | Hardcoded English → `useI18n()` ดึง `t.error.title/message/tryAgain` (TH user เห็น "วิเคราะห์ไม่สำเร็จ") |
+| H5 | `components/features/results/components/schema-details.tsx` | `SchemaTypeDetail` เพิ่ม `useId()` + `aria-controls={detailsPanelId}` + panel always-mounted ด้วย `<div id={...} hidden={!showDetails}>` |
+| H6 | `app/layout.tsx` | metadata "13 key factors" → "10 key factors" (6 ที่: description, openGraph, twitter, websiteSchema, faqSchema) |
+
+#### 🟡 Medium (8)
+
+| # | ไฟล์ | สิ่งที่ทำ |
+|---|---|---|
+| M1 | `/api/ai-check/route.ts` | Timer leak fix — รวมใน H3 try/finally |
+| M2 | `lib/checkers/ai-visibility-checker.ts` + `app/api/ai-check/route.ts` | Thread `request.signal` → `checkAIVisibility(url, html, signal)` → `callOpenAI(apiKey, prompt, signal)` + `serperSearch(query, locale, signal)` ใช้ `AbortSignal.any([internalTimeout, externalSignal])` — client disconnect = abort OpenAI/Serper ไม่จ่าย token เปล่า. **Requires Node ≥ 20.3** (EC2 = v20.20.0 ✅) |
+| M3 | `middleware.ts` | CORS allowlist (`aicheck.ohmai.me` + localhost dev) — disallowed origin = 403, OPTIONS preflight headers, requests ไม่มี Origin (curl/server-to-server) ผ่านปกติ |
+| M4 | `lib/checkers/sitemap-checker.ts` (อ้อมผ่าน DNS cache) | DNS validation cache (60s TTL, 1000-entry LRU) ลด redundant lookup 5 URLs ของ host เดียว |
+| M5 | `robots-checker.ts`, `llms-checker.ts` | DNS check ของ host ที่ route.ts validate แล้ว — ใช้ cache แทน |
+| M6 | `app/page.tsx` | ลบ `<div role="alert" aria-live="assertive">` wrapper ที่ always-mounted → ใส่ `role="alert"` บน div ที่ render เฉพาะตอนมี error (NVDA จะไม่อ่าน empty live region) |
+| M7 | `lib/checkers/ai-visibility-checker.ts` | `sanitizeMeta` เพิ่ม regex detect prompt-injection trigger phrases (`ignore previous instructions`, `system:`, `<\|...\|>`, `### system`, `you are now a ...`) → truncate ที่จุด match + แทรก `[redacted]` |
+| M8 | `lib/security.ts:34-37` | `^2001:` block แคบเป็น `^2001:0{0,4}:` — เฉพาะ Teredo (`2001:0000::/32`) ไม่บล็อก Google `2001:4860::/32`, Cloudflare `2606:4700::/32` |
+| M9 | — | **False-positive** — `frost-500` ผ่าน WCAG AA (6.06:1 บน white) ไม่ต้องแก้ |
+
+#### 🟢 Low (5)
+
+| # | ไฟล์ | สิ่งที่ทำ |
+|---|---|---|
+| L1 | `lib/checkers/ai-visibility-checker.ts` | `parseAIResponse` non-greedy regex + try whole text first, fallback iterate `{...}` blocks (multiple JSON objects ไม่ fail เงียบ) |
+| L2 | `lib/rate-limiter.ts` + `middleware.ts` | Export `AI_RATE_LIMIT = 3` constant + middleware ใช้ constant แทน `'3'` hardcode |
+| L3 | `AiCheckSkipped.tsx`, `ScoreBreakdown.tsx` | เพิ่ม `aria-hidden="true"` บน decorative AlertTriangle + progress bar div |
+| L4 | — | `getClientIp` มี return type `: string` อยู่แล้ว — ไม่ต้องแก้ |
+| L5 | `lib/i18n/types.ts`, `en.ts`, `th.ts`, `recommendations.tsx` | `itemsToImprove` เปลี่ยนเป็น function `(n) => "1 item to improve" / "5 items to improve"` |
+
+#### 🧹 Maintainability (12)
+
+| Theme | สิ่งที่ทำ |
+|---|---|
+| **Stale weight comments** | 9 checker files — `Weight: X%` ที่ผิดทั้งหมด → `Weight: see weights.X in ./base.ts (single source of truth)` |
+| **Magic numbers** | `SCORE_RING_RADIUS = 54` constant ใน `ai-check-result.tsx` (ใช้ทั้ง `2 * Math.PI * R` และ `<circle r={...}>`) |
+| **Naming** | `d` → `resultData` ใน `ai-check-result.tsx` (replace_all 20+ usages) |
+| **Misleading data** | `extractGoogleSearchResult.totalResults` — เพิ่ม comment ชัดว่าเป็น **estimate** (`Math.max(n*100, 1000)` คือ presence signal ไม่ใช่ Google count จริง) |
+| **Dead exports** | `schema-validators/index.ts` — ตัด **15 unused exports** (validateSchema, isBreadcrumbListResult/WebPageResult/LocalBusinessResult, validateOrganizationsInHtml, validateWebSitesInHtml, ORGANIZATION_REQUIRED_FIELDS + 3 sibling consts, extractArticleSchemas, isArticleSchema, getArticleRecommendations, extractJsonLdScripts wrapper, findSchemasByType) |
+| **Wrapper passthrough** | ลบ `extractJsonLdScripts` wrapper ใน `organization-validator.ts:393-395` — call ตรงจาก `jsonld-utils.ts` |
+| **Dead schema** | ลบ `normalizedUrlSchema` + `NormalizedUrl` (zero callers) ใน `lib/validations/url.ts` |
+| **Duplicate JSDoc** | ลบ block ซ้ำใน `lib/security.ts:127-130` |
+| **DRY ใหญ่ #1** | สร้าง `readWithTimeout(response, ms, errorMsg)` ใน `lib/security.ts` — refactor **7 callsites** (robots, llms, sitemap, ai-visibility ×2, /api/check, /api/ai-check) — แต่ละที่ลด 11 บรรทัด → 1 |
+| **DRY ใหญ่ #2** | สร้าง `lib/utils/parse-check-request.ts` — extract body size cap + JSON parse + Zod validate — refactor 22 duplicate lines × 2 routes → 3 บรรทัด/route |
+
+#### 🛠️ Chore
+
+- `.gitignore` เพิ่ม `*.tsbuildinfo`, `deploy.tar.gz` (17MB build artifact ที่ไม่ควร commit)
+
+### Phase 2 — Manual Smoke Test (Playwright MCP)
+
+ใช้ Playwright MCP browser ทดสอบบน production build (port 3001) — **8/8 tests passed**:
+
+| # | Test | Result |
+|---|---|---|
+| 1 | `/` page loads, "10 Checks" visible | ✅ 0 console errors |
+| 2 | `/ai-check` skipped path (no API key) | ✅ Render `AiCheckSkipped` — **NOT crash** (C1 verified) |
+| 3 | EN ↔ TH toggle | ✅ "Check was skipped" → "ข้ามการตรวจ", nav text translated |
+| 4 | `/` submit `apple.com` → results | ✅ 8 pass / 1 partial / 1 fail / 10 รายการ |
+| 5 | Schema details `aria-controls` | ✅ 3 buttons, ทุก panel always-mounted, `aria-expanded` ↔ `hidden` sync |
+| 6 | CORS — same-origin (no Origin) | ✅ 200 OK |
+| 7 | CORS — allowed origin (localhost:3000) | ✅ 200 + headers + `x-ratelimit-limit: 3` (จาก `AI_RATE_LIMIT` constant) |
+| 8 | CORS — disallowed origin (`evil.com`) | ✅ **403 Forbidden** |
+
+**Bonus discovery:** ใน dev mode (`npm run dev`) มี CSP `unsafe-eval` block React Refresh → form ไม่ hydrate. **เป็น issue เดิม** (CSP set ตอน dev นานแล้ว, production ไม่กระทบ). DX issue ที่ค้าง
+
+### Deploy
+
+- Squash merge PR [Lalintia/aicheck#3](https://github.com/Lalintia/aicheck/pull/3) → commit `07d15a1` บน main
+- rsync `.next/standalone/` + `.next/static/` (with `--delete`) + `public/` → `/var/www/ai-checker/`
+- PM2 `restart ai-checker --update-env` + `pm2 save`
+- Verify production:
+  - `https://aicheck.ohmai.me/` → **200** (0.52s)
+  - `https://aicheck.ohmai.me/ai-check` → **200**
+  - `POST /api/check` apple.com → Score **80**, Grade good, 8/10 passed (0.67s)
+  - `POST /api/ai-check` apple.com → Score **97**, Knows: true (no regression — เท่า baseline)
+
+### GitHub Cleanup
+
+- ลบ stale branches ที่ merged แล้ว: `feat/6-dimension-scoring`, `fix/code-review-round-4`, `fix/scorer-calibration`
+- Local + remote `fix/review-all-batch-apr16` ลบโดย `gh pr merge --delete-branch`
+- เหลือแค่ `origin/main` — clean repo
+
+### ที่ยังเหลือ (skipped — ทำ followup)
+
+- Update `README.md` (build path + missing env vars)
+- Update `CLAUDE.md` weight table (outdated %)
+- Rename `_components/` ให้เป็น kebab-case ทั้งหมด
+- Extract `DIMENSION_SCORES` object สำหรับ AI scoring magic numbers
+- `checkPageSpeed` always returns success — semantic review
+- Phase 2 real-world testing เพิ่ม 6 sites (wikipedia, github, kasikornbank, scb.co.th, edge cases)
+- Production verification เพิ่ม (DNS cache hit rate, bilingual GPT EN+TH ใน 1 call)
+- Dev mode CSP `unsafe-eval` issue (DX broken)
+
+### Stats
+
+- **49 files changed, +1199 / -787 lines**
+- **Squash commit:** `07d15a1`
+- **PR:** [Lalintia/aicheck#3](https://github.com/Lalintia/aicheck/pull/3)
+- **Production:** https://aicheck.ohmai.me ✅
+
+---
+
 ## อัปเดตล่าสุด — 16 เมษายน 2569 — Bilingual GPT + Code Quality Sweep
 
 ### 1. Bilingual GPT Response (AI Visibility)
