@@ -22,7 +22,7 @@ export interface Translations {
     readonly checklist: string;
     readonly checksCount: string;
     readonly recommendations: string;
-    readonly itemsToImprove: string;
+    readonly itemsToImprove: (count: number) => string;
     readonly allClear: string;
     readonly allClearMessage: string;
     readonly criticalIssues: string;
@@ -51,6 +51,12 @@ export interface Translations {
     readonly title: string;
     readonly message: string;
     readonly tryAgain: string;
+  };
+  readonly nav: {
+    readonly checksLabel: string;
+    readonly checksShort: string;
+    readonly aiVisibilityLabel: string;
+    readonly aiVisibilityShort: string;
   };
   readonly loading: string;
   readonly checkReferences: {

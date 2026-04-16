@@ -5,31 +5,14 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAIVisibility } from '@/lib/checkers/ai-visibility-checker';
-import { checkRequestSchema } from '@/lib/validations/url';
-import { isSafeUrlWithDns, safeFetch } from '@/lib/security';
+import { isSafeUrlWithDns, safeFetch, readWithTimeout } from '@/lib/security';
+import { parseCheckRequest } from '@/lib/utils/parse-check-request';
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    // Hard body size cap — reads actual bytes, not the Content-Length header (which can be omitted)
-    const rawBody = await request.text();
-    if (rawBody.length > 4096) {
-      return NextResponse.json({ error: 'Request body too large' }, { status: 413 });
-    }
-    let body: unknown;
-    try {
-      body = JSON.parse(rawBody);
-    } catch {
-      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
-    }
-    const parsed = checkRequestSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues[0]?.message ?? 'Invalid URL' },
-        { status: 400 }
-      );
-    }
-
-    const normalizedUrl = parsed.data.url;
+    const parsed = await parseCheckRequest(request);
+    if ('response' in parsed) { return parsed.response; }
+    const normalizedUrl = parsed.url;
 
     if (!(await isSafeUrlWithDns(normalizedUrl))) {
       return NextResponse.json(
@@ -56,20 +39,20 @@ export async function POST(request: NextRequest) {
       if (!pageResponse.ok) {
         pageResponse.body?.cancel().catch(() => { /* already closed */ });
       } else {
-        const htmlCl = pageResponse.headers.get('content-length');
-        if (htmlCl && parseInt(htmlCl, 10) > 5 * 1024 * 1024) {
+        const MAX_HTML_BYTES = 5 * 1024 * 1024;
+        const contentLength = pageResponse.headers.get('content-length');
+        if (contentLength && parseInt(contentLength, 10) > MAX_HTML_BYTES) {
           pageResponse.body?.cancel().catch(() => { /* already closed */ });
           html = '';
         } else {
-          let htmlReadTimeout: ReturnType<typeof setTimeout> | undefined;
-          const text = await Promise.race([
-            pageResponse.text(),
-            new Promise<never>((_, reject) => {
-              htmlReadTimeout = setTimeout(() => reject(new Error('HTML read timeout')), 10000);
-            }),
-          ]);
-          clearTimeout(htmlReadTimeout);
-          html = text.slice(0, 100000);
+          const text = await readWithTimeout(pageResponse, 10000, 'HTML read timeout');
+          // Post-read size guard — defends against servers that omit Content-Length (chunked encoding)
+          // and stream multi-GB bodies that would OOM before the slice runs
+          if (text.length > MAX_HTML_BYTES) {
+            html = '';
+          } else {
+            html = text.slice(0, 100000);
+          }
         }
       }
     } catch (err) {
@@ -79,7 +62,9 @@ export async function POST(request: NextRequest) {
       clearTimeout(timeoutId);
     }
 
-    const result = await checkAIVisibility(normalizedUrl, html);
+    // Pass request.signal so client disconnects abort downstream OpenAI/Serper calls
+    // (avoids paying API tokens for requests the user has already abandoned)
+    const result = await checkAIVisibility(normalizedUrl, html, request.signal);
 
     return NextResponse.json({
       url: normalizedUrl,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useId } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { BookOpen, ExternalLink, ChevronDown, ChevronUp, X } from "lucide-react";
 import { checkReferences } from "@/lib/data/checkReferences";
@@ -11,6 +12,12 @@ let scrollLockCount = 0;
 let previousOverflow: string | null = null;
 
 function lockBodyScroll(): void {
+  if (typeof document === 'undefined') return;
+  // Safety valve: reset stale state if count is impossibly high (e.g. from Fast Refresh)
+  if (scrollLockCount > 10) {
+    scrollLockCount = 0;
+    previousOverflow = null;
+  }
   if (scrollLockCount === 0) {
     previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -19,6 +26,7 @@ function lockBodyScroll(): void {
 }
 
 function unlockBodyScroll(): void {
+  if (typeof document === 'undefined') return;
   scrollLockCount = Math.max(0, scrollLockCount - 1);
   if (scrollLockCount === 0) {
     document.body.style.overflow = previousOverflow ?? '';
@@ -76,15 +84,22 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
       wasOpen.current = true;
       lockBodyScroll();
       window.addEventListener('keydown', handleKeyDown);
-      requestAnimationFrame(() => closeButtonRef.current?.focus());
+      // Focus after DOM commit — useEffect runs post-paint so no rAF needed
+      closeButtonRef.current?.focus();
     } else if (wasOpen.current) {
       wasOpen.current = false;
-      requestAnimationFrame(() => triggerButtonRef.current?.focus());
+      triggerButtonRef.current?.focus();
     }
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
       if (open) { unlockBodyScroll(); }
+      window.removeEventListener('keydown', handleKeyDown);
+      // Reset stale state from Fast Refresh (dev only)
+      if (process.env.NODE_ENV !== 'production' && scrollLockCount > 0) {
+        scrollLockCount = 0;
+        document.body.style.overflow = previousOverflow ?? '';
+        previousOverflow = null;
+      }
     };
   }, [open]);
 
@@ -107,8 +122,9 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
         <span className="hidden sm:inline">{tr.referenceButtonLabel}</span>
       </button>
 
-      {open && (
+      {open && typeof document !== 'undefined' && createPortal(
         <div
+          role="presentation"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
           onClick={(e) => {
             if (e.target === e.currentTarget) setOpen(false);
@@ -226,6 +242,7 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
                         href={standard.url}
                         target="_blank"
                         rel="noopener noreferrer"
+                        aria-label={`${standard.name} (opens in new tab)`}
                         className="flex items-center justify-between p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors group"
                       >
                         <div className="flex items-center gap-3">
@@ -253,7 +270,8 @@ export function CheckReferenceButton({ checkType }: CheckReferenceButtonProps): 
               </p>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

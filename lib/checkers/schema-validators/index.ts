@@ -1,21 +1,15 @@
 /**
- * Schema Validators Index
- * Exports all schema validation functions
+ * Schema Validators — public API consumed by `schema-checker.ts`.
+ *
+ * Only re-exports symbols that the production checker uses. Test-only helpers
+ * (validateOrganizationsInHtml, isBreadcrumbListResult, etc.) are imported
+ * directly from their concrete files in `__tests__/`.
  */
 
-// Organization & WebSite validators
 export {
   validateOrganization,
   validateWebSite,
-  extractJsonLdScripts,
-  findSchemasByType,
-  validateOrganizationsInHtml,
-  validateWebSitesInHtml,
   validateOrganizationAndWebSite,
-  ORGANIZATION_REQUIRED_FIELDS,
-  ORGANIZATION_RECOMMENDED_FIELDS,
-  WEBSITE_REQUIRED_FIELDS,
-  WEBSITE_RECOMMENDED_FIELDS,
 } from './organization-validator';
 
 export type {
@@ -24,13 +18,9 @@ export type {
   WebSiteSchema,
 } from './organization-validator';
 
-// Article validators
 export {
   validateArticleSchema,
   validateArticleSchemas,
-  extractArticleSchemas,
-  isArticleSchema,
-  getArticleRecommendations,
 } from './article-validator';
 
 export type {
@@ -38,15 +28,10 @@ export type {
   ArticleValidationResult,
 } from './article-validator';
 
-// Other validators (BreadcrumbList, WebPage, LocalBusiness)
 export {
   validateBreadcrumbList,
   validateWebPage,
   validateLocalBusiness,
-  validateSchema,
-  isBreadcrumbListResult,
-  isWebPageResult,
-  isLocalBusinessResult,
 } from './other-validators';
 
 export type {

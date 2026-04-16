@@ -122,6 +122,7 @@ class RateLimiter {
 export const rateLimiter = new RateLimiter();
 
 // Stricter rate limiter for OpenAI-powered endpoints (3 req/min per IP)
-export const aiRateLimiter = new RateLimiter(3, 60 * 1000);
+export const AI_RATE_LIMIT = 3;
+export const aiRateLimiter = new RateLimiter(AI_RATE_LIMIT, 60 * 1000);
 
 export { RATE_LIMIT, RATE_WINDOW };

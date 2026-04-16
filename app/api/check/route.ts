@@ -21,34 +21,16 @@ import {
   calculateOverallScore,
   generateRecommendations,
 } from '@/lib/checkers';
-import { checkRequestSchema } from '@/lib/validations/url';
-import { isSafeUrlWithDns, safeFetch } from '@/lib/security';
+import { isSafeUrlWithDns, safeFetch, readWithTimeout } from '@/lib/security';
+import { parseCheckRequest } from '@/lib/utils/parse-check-request';
 
 
 // API Route Handler
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    // Hard body size cap — reads actual bytes, not the Content-Length header (which can be omitted)
-    const rawBody = await request.text();
-    if (rawBody.length > 4096) {
-      return NextResponse.json({ error: 'Request body too large' }, { status: 413 });
-    }
-    let body: unknown;
-    try {
-      body = JSON.parse(rawBody);
-    } catch {
-      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
-    }
-    const parsed = checkRequestSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: parsed.error.issues[0]?.message ?? 'Invalid URL' },
-        { status: 400 }
-      );
-    }
-
-    // Zod schema already trims, adds https://, and removes trailing slash
-    const normalizedUrl = parsed.data.url;
+    const parsed = await parseCheckRequest(request);
+    if ('response' in parsed) { return parsed.response; }
+    const normalizedUrl = parsed.url;
 
     // SSRF protection — string check + real DNS resolution to block rebinding
     if (!(await isSafeUrlWithDns(normalizedUrl))) {
@@ -68,8 +50,8 @@ export async function POST(request: NextRequest) {
       pageResponse = await safeFetch(normalizedUrl, {
         method: 'GET',
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; AISearchChecker/1.0)',
-          Accept: 'text/html',
+          'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+          Accept: 'text/html,application/xhtml+xml',
         },
         next: { revalidate: 0 },
         signal: controller.signal,
@@ -98,14 +80,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    let htmlReadTimeoutId: ReturnType<typeof setTimeout> | undefined;
-    const html = await Promise.race([
-      pageResponse.text(),
-      new Promise<never>((_, reject) => {
-        htmlReadTimeoutId = setTimeout(() => reject(new Error('HTML body read timeout')), 30000);
-      }),
-    ]);
-    clearTimeout(htmlReadTimeoutId);
+    const html = await readWithTimeout(pageResponse, 30000, 'HTML body read timeout');
     if (html.length > MAX_HTML_SIZE) {
       return NextResponse.json(
         { error: 'Website content too large to analyze' },

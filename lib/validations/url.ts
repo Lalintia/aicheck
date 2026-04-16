@@ -30,7 +30,3 @@ export const checkRequestSchema = z.object({
 });
 
 export type CheckRequestInput = z.infer<typeof checkRequestSchema>;
-
-export const normalizedUrlSchema = z.string().url();
-
-export type NormalizedUrl = z.infer<typeof normalizedUrlSchema>;

@@ -67,6 +67,22 @@ function extractRawBlocks(html: string): readonly string[] {
 }
 
 /**
+ * Attempts to parse JSON-LD content with fallback for common non-standard escapes.
+ * Some real-world sites (e.g. microsoft.com) emit `\_` which is not a valid JSON
+ * escape sequence but is otherwise harmless — strip invalid backslash escapes and retry.
+ */
+export function safeParseJsonLd(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    // Strip invalid backslash escapes: \x where x is not a valid JSON escape char
+    // Valid: \" \\ \/ \b \f \n \r \t \uXXXX
+    const cleaned = raw.replace(/\\([^"\\/bfnrtu])/g, '$1');
+    return JSON.parse(cleaned);
+  }
+}
+
+/**
  * Extracts all JSON-LD scripts from HTML content
  * Returns parsed objects with safety limits
  */
@@ -74,9 +90,9 @@ export function extractJsonLdScripts(html: string): readonly unknown[] {
   const scripts: unknown[] = [];
   for (const raw of extractRawBlocks(html)) {
     try {
-      scripts.push(JSON.parse(raw) as unknown);
+      scripts.push(safeParseJsonLd(raw));
     } catch {
-      // Invalid JSON, skip
+      // Invalid JSON even after sanitization, skip
     }
   }
   return scripts;
@@ -90,9 +106,9 @@ export function extractJsonLdScriptsWithRaw(html: string): readonly JsonLdScript
   const scripts: JsonLdScript[] = [];
   for (const raw of extractRawBlocks(html)) {
     try {
-      scripts.push({ content: JSON.parse(raw) as unknown, raw });
+      scripts.push({ content: safeParseJsonLd(raw), raw });
     } catch {
-      // Invalid JSON, skip
+      // Invalid JSON even after sanitization, skip
     }
   }
   return scripts;

@@ -1,27 +1,57 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { rateLimiter, aiRateLimiter, RATE_LIMIT } from './lib/rate-limiter';
+import { rateLimiter, aiRateLimiter, RATE_LIMIT, AI_RATE_LIMIT } from './lib/rate-limiter';
 
-export function middleware(request: NextRequest) {
+// Allowed origins for cross-origin API requests. Empty Origin header (same-origin
+// or non-browser callers like curl) is also allowed.
+const ALLOWED_ORIGINS = new Set([
+  'https://aicheck.ohmai.me',
+  'http://localhost:3000',
+  'http://localhost:3001',
+]);
+
+function applyCorsHeaders(response: NextResponse, origin: string | null): void {
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
+    response.headers.set('Access-Control-Allow-Origin', origin);
+    response.headers.set('Vary', 'Origin');
+    response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+    response.headers.set('Access-Control-Max-Age', '86400');
+  }
+}
+
+export function middleware(request: NextRequest): NextResponse {
   const response = NextResponse.next();
+  const origin = request.headers.get('origin');
 
   // Remove X-Powered-By header
   response.headers.delete('X-Powered-By');
 
   // Only apply rate limiting to API routes
   if (request.nextUrl.pathname.startsWith('/api/')) {
-    // Skip rate limiting for CORS preflight — OPTIONS don't consume API quota
+    // Block cross-origin requests from disallowed origins (CSRF / SSRF-relay protection).
+    // Same-origin and non-browser callers send no Origin header — those pass through.
+    if (origin && !ALLOWED_ORIGINS.has(origin)) {
+      return NextResponse.json(
+        { error: 'Cross-origin request not allowed' },
+        { status: 403 }
+      );
+    }
+
+    // CORS preflight — OPTIONS don't consume API quota
     if (request.method === 'OPTIONS') {
+      applyCorsHeaders(response, origin);
       return response;
     }
 
-    const ip = getClientIp(request);
+    applyCorsHeaders(response, origin);
 
-    // Skip per-IP rate limiting when the client IP cannot be determined.
-    // In this case, rely on infrastructure-level rate limiting (Nginx/Cloudflare).
-    // Keying on 'unknown' would unfairly throttle all such clients with one shared bucket.
+    let ip = getClientIp(request);
+
+    // Treat all unknown-IP requests as a single shared bucket with strict limit.
+    // This prevents unlimited access if someone bypasses Cloudflare.
     if (ip === 'unknown') {
-      return response;
+      ip = '__unknown__';
     }
 
     // Stricter rate limit for AI-powered endpoint (3 req/min — uses OpenAI API)
@@ -41,7 +71,7 @@ export function middleware(request: NextRequest) {
           }
         );
       }
-      response.headers.set('X-RateLimit-Limit', '3');
+      response.headers.set('X-RateLimit-Limit', String(AI_RATE_LIMIT));
       response.headers.set('X-RateLimit-Remaining', String(aiResult.remaining));
       return response;
     }

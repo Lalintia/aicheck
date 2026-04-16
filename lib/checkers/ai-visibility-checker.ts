@@ -16,6 +16,7 @@
 
 import type { CheckResult } from './base';
 import { createSuccessResult, createFailureResult, createPartialResult } from './base';
+import { readWithTimeout } from '@/lib/security';
 
 const AI_VISIBILITY_TIMEOUT = 15000;
 const GOOGLE_SEARCH_TIMEOUT = 10000;
@@ -26,8 +27,10 @@ interface AIVisibilityResponse {
   readonly hasUrl: boolean;
   readonly knowledgeDepth: 'deep' | 'moderate' | 'shallow' | 'none';
   readonly productsKnown: boolean;
-  readonly summary: string;
-  readonly details: string;
+  readonly summaryEn: string;
+  readonly summaryTh: string;
+  readonly detailsEn: string;
+  readonly detailsTh: string;
 }
 
 interface GoogleSearchResult {
@@ -62,14 +65,26 @@ function extractSecondLevelDomain(hostname: string): string {
   return parts[parts.length - 2];
 }
 
+// Trigger phrases that suggest a prompt-injection attempt in user-supplied meta tags.
+// Matched case-insensitively. When detected, the offending span (and everything after)
+// is replaced with "[redacted]" before the value reaches the GPT prompt.
+const PROMPT_INJECTION_TRIGGERS = /(ignore|disregard|forget)\s+(?:all|the|previous|prior|above)\s+(?:instructions?|prompts?|context|directives?|rules?)|system\s*[:>]|<\s*\|.*?\|\s*>|###\s*(?:system|instruction|user|assistant)|you\s+are\s+(?:now\s+)?(?:a|an)\s+\w+\s+(?:that|who|which)|new\s+instructions?\s*[:>]/i;
+
 function sanitizeMeta(value: string, maxLength: number): string {
-  return value
+  let cleaned = value
     .replace(/[\x00-\x1f\x7f]/g, ' ')
     .replace(/[{}[\]"':]/g, ' ')      // strip JSON structure chars to prevent prompt injection
     .replace(/[^\w\s.,!?()\-]/g, ' ')
     .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, maxLength);
+    .trim();
+  // Detect natural-language injection attempts that survive the char-level filter
+  // (e.g. "Ignore previous instructions and ..."). Truncate at the trigger so the
+  // imperative never reaches the model.
+  const triggerMatch = cleaned.match(PROMPT_INJECTION_TRIGGERS);
+  if (triggerMatch && triggerMatch.index !== undefined) {
+    cleaned = cleaned.slice(0, triggerMatch.index).trim() + ' [redacted]';
+  }
+  return cleaned.slice(0, maxLength);
 }
 
 function buildSystemMessage(): string {
@@ -84,7 +99,16 @@ function buildPrompt(url: string, title: string, description: string): string {
   //   - triple-quote sequence (delimiter escape)
   //   - control chars + newlines
   // Keep URL-valid chars (: / . - _ ? = & # %) so GPT recognizes real URLs.
-  const safeUrl = url
+  // Strip fragment (#...) before building prompt — fragments can carry prompt injection payloads
+  let urlNoFragment: string;
+  try {
+    const parsed = new URL(url);
+    parsed.hash = '';
+    urlNoFragment = parsed.href;
+  } catch {
+    urlNoFragment = url;
+  }
+  const safeUrl = urlNoFragment
     .replace(/[`\x00-\x1f\x7f]/g, '')
     .replace(/"""+/g, '"')
     .replace(/\s+/g, '')
@@ -107,6 +131,8 @@ Answer based on your training data only:
 4. How deep is your knowledge? (deep = industry position, history, leadership, competitors; moderate = what they do + some details; shallow = only name/category; none = nothing)
 5. Can you name specific products, services, or offerings of this organization?
 
+Write "summaryEn" and "detailsEn" in English. Write "summaryTh" and "detailsTh" in Thai.
+
 Respond in this exact JSON format only, no other text:
 {
   "knows": true/false,
@@ -114,8 +140,10 @@ Respond in this exact JSON format only, no other text:
   "hasUrl": true/false,
   "knowledgeDepth": "deep"/"moderate"/"shallow"/"none",
   "productsKnown": true/false,
-  "summary": "Brief 1-2 sentence summary of what you know",
-  "details": "What you know or don't know about this site"
+  "summaryEn": "Brief 1-2 sentence summary in English",
+  "summaryTh": "สรุปสั้นๆ 1-2 ประโยคเป็นภาษาไทย",
+  "detailsEn": "What you know or don't know in English",
+  "detailsTh": "รายละเอียดเป็นภาษาไทย"
 }`;
 }
 
@@ -134,35 +162,56 @@ function extractMeta(html: string): { title: string; description: string } {
 }
 
 function parseAIResponse(text: string): AIVisibilityResponse | null {
-  try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      return null;
+  // Try the whole response first (model usually returns pure JSON), then
+  // fall back to each `{...}` block found in order. Greedy `\{[\s\S]*\}`
+  // would capture from the first `{` to the LAST `}`, mis-parsing responses
+  // that contain reasoning prose followed by JSON.
+  const candidates: string[] = [text.trim()];
+  const blockRegex = /\{[\s\S]*?\}/g;
+  let blockMatch: RegExpExecArray | null;
+  while ((blockMatch = blockRegex.exec(text)) !== null) {
+    candidates.push(blockMatch[0]);
+  }
+
+  const validAccuracies = ['accurate', 'partial', 'inaccurate', 'unknown'] as const;
+  const validDepths = ['deep', 'moderate', 'shallow', 'none'] as const;
+  type Accuracy = typeof validAccuracies[number];
+  type Depth = typeof validDepths[number];
+
+  for (const candidate of candidates) {
+    let parsed: Record<string, unknown>;
+    try {
+      const raw = JSON.parse(candidate);
+      if (!raw || typeof raw !== 'object') { continue; }
+      parsed = raw as Record<string, unknown>;
+    } catch {
+      continue;
     }
-    const parsed = JSON.parse(jsonMatch[0]);
 
     if (typeof parsed.knows !== 'boolean') {
-      return null;
+      continue;
     }
 
-    const validDepths = ['deep', 'moderate', 'shallow', 'none'];
+    const accuracy: Accuracy = typeof parsed.accuracy === 'string' && (validAccuracies as readonly string[]).includes(parsed.accuracy)
+      ? parsed.accuracy as Accuracy
+      : 'unknown';
+    const knowledgeDepth: Depth = typeof parsed.knowledgeDepth === 'string' && (validDepths as readonly string[]).includes(parsed.knowledgeDepth)
+      ? parsed.knowledgeDepth as Depth
+      : 'none';
 
     return {
       knows: parsed.knows,
-      accuracy: ['accurate', 'partial', 'inaccurate', 'unknown'].includes(parsed.accuracy)
-        ? parsed.accuracy
-        : 'unknown',
+      accuracy,
       hasUrl: typeof parsed.hasUrl === 'boolean' ? parsed.hasUrl : false,
-      knowledgeDepth: validDepths.includes(parsed.knowledgeDepth)
-        ? parsed.knowledgeDepth
-        : 'none',
+      knowledgeDepth,
       productsKnown: typeof parsed.productsKnown === 'boolean' ? parsed.productsKnown : false,
-      summary: typeof parsed.summary === 'string' ? parsed.summary.slice(0, 500) : '',
-      details: typeof parsed.details === 'string' ? parsed.details.slice(0, 1000) : '',
+      summaryEn: typeof parsed.summaryEn === 'string' ? parsed.summaryEn.slice(0, 500) : '',
+      summaryTh: typeof parsed.summaryTh === 'string' ? parsed.summaryTh.slice(0, 500) : '',
+      detailsEn: typeof parsed.detailsEn === 'string' ? parsed.detailsEn.slice(0, 500) : '',
+      detailsTh: typeof parsed.detailsTh === 'string' ? parsed.detailsTh.slice(0, 500) : '',
     };
-  } catch {
-    return null;
   }
+  return null;
 }
 
 // Country-code TLD → Serper gl (geo-location) + hl (UI language) mapping.
@@ -205,7 +254,8 @@ function detectLocale(hostname: string): { gl: string; hl: string } | null {
 
 async function serperSearch(
   query: string,
-  locale?: { gl: string; hl: string } | null
+  locale?: { gl: string; hl: string } | null,
+  externalSignal?: AbortSignal
 ): Promise<Record<string, unknown> | null> {
   const apiKey = process.env.SERPER_API_KEY;
   if (!apiKey) { return null; }
@@ -213,6 +263,10 @@ async function serperSearch(
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), GOOGLE_SEARCH_TIMEOUT);
+    // Combine internal timeout with caller's signal so client disconnects abort the call
+    const signal = externalSignal
+      ? AbortSignal.any([controller.signal, externalSignal])
+      : controller.signal;
 
     const body: Record<string, unknown> = { q: query, num: 10 };
     if (locale) {
@@ -229,7 +283,7 @@ async function serperSearch(
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(body),
-        signal: controller.signal,
+        signal,
       });
     } finally {
       clearTimeout(timeoutId);
@@ -246,17 +300,13 @@ async function serperSearch(
       return null;
     }
 
-    let jsonTimeout: ReturnType<typeof setTimeout> | undefined;
+    const rawText = await readWithTimeout(response, 5000, 'Serper read timeout');
+    if (rawText.length > 512 * 1024) { return null; }
     try {
-      const data = await Promise.race([
-        response.json(),
-        new Promise<never>((_, reject) => {
-          jsonTimeout = setTimeout(() => reject(new Error('Serper read timeout')), 5000);
-        }),
-      ]);
-      return data as Record<string, unknown>;
-    } finally {
-      if (jsonTimeout !== undefined) { clearTimeout(jsonTimeout); }
+      return JSON.parse(rawText) as Record<string, unknown>;
+    } catch (parseErr) {
+      console.error('[serperSearch] JSON parse failed:', rawText.slice(0, 200));
+      return null;
     }
   } catch (err) {
     console.error('[serperSearch] failed:', err instanceof Error ? err.message : err);
@@ -267,7 +317,12 @@ async function serperSearch(
 function extractGoogleSearchResult(data: Record<string, unknown> | null, domain: string): GoogleSearchResult {
   if (!data) { return { totalResults: 0, topPosition: null }; }
 
-  const organic: Array<{ link?: string }> = (data.organic as Array<{ link?: string }>) ?? [];
+  const rawOrganic = data.organic;
+  const organic: Array<{ link?: string }> = Array.isArray(rawOrganic) ? rawOrganic as Array<{ link?: string }> : [];
+  // ESTIMATE — Serper's free tier returns at most 10 organic results, not the true
+  // SERP total count. We treat "any results returned" as evidence of indexed presence
+  // and floor it at 1000 for downstream scoring buckets. This is NOT the actual
+  // Google result count; consumers should treat it as a presence signal, not a number.
   const totalResults = organic.length > 0
     ? Math.max(organic.length * 100, 1000)
     : 0;
@@ -289,14 +344,16 @@ function extractKnowledgeGraph(data: Record<string, unknown> | null): KnowledgeG
     return { hasKnowledgeGraph: false, hasAnswerBox: false, descriptionSource: null, title: null };
   }
 
-  const kg = data.knowledgeGraph as Record<string, unknown> | undefined;
-  const answerBox = data.answerBox as Record<string, unknown> | undefined;
+  const rawKg = data.knowledgeGraph;
+  const kg = rawKg && typeof rawKg === 'object' ? rawKg as Record<string, unknown> : null;
+  const rawAnswerBox = data.answerBox;
+  const answerBox = rawAnswerBox && typeof rawAnswerBox === 'object' ? rawAnswerBox as Record<string, unknown> : null;
 
   return {
     hasKnowledgeGraph: Boolean(kg && (kg.title || kg.description)),
     hasAnswerBox: Boolean(answerBox && (answerBox.answer || answerBox.snippet)),
-    descriptionSource: (kg?.descriptionSource as string) ?? null,
-    title: (kg?.title as string) ?? null,
+    descriptionSource: typeof kg?.descriptionSource === 'string' ? kg.descriptionSource : null,
+    title: typeof kg?.title === 'string' ? kg.title : null,
   };
 }
 
@@ -400,7 +457,11 @@ function scoreFromResponse(
   return { score: Math.min(100, score), warnings, breakdown };
 }
 
-export async function checkAIVisibility(url: string, html: string): Promise<CheckResult> {
+export async function checkAIVisibility(
+  url: string,
+  html: string,
+  signal?: AbortSignal
+): Promise<CheckResult> {
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
@@ -433,9 +494,9 @@ export async function checkAIVisibility(url: string, html: string): Promise<Chec
     // when kgQuery collapses to domain (saves 1 quota on single-word domains)
     const dedupeKg = kgQuery === domain;
     const [aiSettled, seoSettled, kgSettled] = await Promise.allSettled([
-      callOpenAI(apiKey, prompt),
-      serperSearch(domain, locale),
-      dedupeKg ? Promise.resolve(null) : serperSearch(kgQuery, locale),
+      callOpenAI(apiKey, prompt, signal),
+      serperSearch(domain, locale, signal),
+      dedupeKg ? Promise.resolve(null) : serperSearch(kgQuery, locale, signal),
     ]);
 
     const aiResult = aiSettled.status === 'fulfilled'
@@ -496,14 +557,16 @@ export async function checkAIVisibility(url: string, html: string): Promise<Chec
         title: knowledgeGraph.title,
       },
       breakdown,
-      summary: aiResponse.summary,
-      details: aiResponse.details,
+      summaryEn: aiResponse.summaryEn,
+      summaryTh: aiResponse.summaryTh,
+      detailsEn: aiResponse.detailsEn,
+      detailsTh: aiResponse.detailsTh,
       model: 'gpt-4.1-nano',
     };
 
     if (score >= 80) {
       return createSuccessResult(
-        `AI recognizes this website — ${aiResponse.summary}`,
+        `AI recognizes this website — ${aiResponse.summaryEn}`,
         score,
         resultData,
         warnings.length > 0 ? warnings : undefined
@@ -512,7 +575,7 @@ export async function checkAIVisibility(url: string, html: string): Promise<Chec
 
     if (score >= 50) {
       return createPartialResult(
-        `AI partially knows this website — ${aiResponse.summary}`,
+        `AI partially knows this website — ${aiResponse.summaryEn}`,
         score,
         resultData,
         warnings.length > 0 ? warnings : undefined
@@ -521,7 +584,7 @@ export async function checkAIVisibility(url: string, html: string): Promise<Chec
 
     if (score > 0) {
       return createPartialResult(
-        `AI has limited knowledge of this website — ${aiResponse.summary}`,
+        `AI has limited knowledge of this website — ${aiResponse.summaryEn}`,
         score,
         resultData,
         warnings.length > 0 ? warnings : undefined
@@ -555,10 +618,16 @@ export async function checkAIVisibility(url: string, html: string): Promise<Chec
 
 async function callOpenAI(
   apiKey: string,
-  prompt: string
+  prompt: string,
+  externalSignal?: AbortSignal
 ): Promise<{ content: string } | { error: string; reason: string }> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), AI_VISIBILITY_TIMEOUT);
+  // Combine internal timeout with caller's signal so client disconnects abort the call
+  // (avoids paying OpenAI tokens for requests the user has already abandoned)
+  const signal = externalSignal
+    ? AbortSignal.any([controller.signal, externalSignal])
+    : controller.signal;
 
   let response: Response;
   try {
@@ -577,7 +646,7 @@ async function callOpenAI(
         temperature: 0.1,
         max_tokens: 400,
       }),
-      signal: controller.signal,
+      signal,
     });
   } finally {
     clearTimeout(timeoutId);
@@ -588,20 +657,32 @@ async function callOpenAI(
     return { error: 'API error', reason: 'api_error' };
   }
 
-  let bodyTimeoutId: ReturnType<typeof setTimeout> | undefined;
-  let data: unknown;
-  try {
-    data = await Promise.race([
-      response.json(),
-      new Promise<never>((_, reject) => {
-        bodyTimeoutId = setTimeout(() => reject(new Error('Response read timeout')), 10000);
-      }),
-    ]);
-  } finally {
-    clearTimeout(bodyTimeoutId);
+  // Guard content-length before buffering — OpenAI omits this header on chunked responses,
+  // so the post-read length check below is still the hard cap.
+  const clHeader = response.headers.get('content-length');
+  if (clHeader && parseInt(clHeader, 10) > 64 * 1024) {
+    response.body?.cancel().catch(() => { /* already closed */ });
+    return { error: 'response too large', reason: 'response_too_large' };
   }
 
-  const messageContent = (data as { choices?: Array<{ message?: { content?: string } }> } | null)?.choices?.[0]?.message?.content;
+  const rawText = await readWithTimeout(response, 10000, 'OpenAI response read timeout');
+  if (rawText.length > 64 * 1024) {
+    return { error: 'response too large', reason: 'response_too_large' };
+  }
+  let data: unknown;
+  try {
+    data = JSON.parse(rawText);
+  } catch {
+    return { error: 'JSON parse failed', reason: 'parse_error' };
+  }
+
+  const rawData = data && typeof data === 'object' ? data as Record<string, unknown> : null;
+  const choices = Array.isArray(rawData?.choices) ? rawData.choices as Array<Record<string, unknown>> : [];
+  const firstMessage = choices[0]?.message;
+  const rawContent = firstMessage && typeof firstMessage === 'object'
+    ? (firstMessage as Record<string, unknown>).content
+    : undefined;
+  const messageContent = typeof rawContent === 'string' ? rawContent : undefined;
   if (!messageContent) {
     return { error: 'empty response', reason: 'empty_response' };
   }

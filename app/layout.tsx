@@ -8,7 +8,7 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'AI Search Checker — Is Your Website AI-Ready?',
   description:
-    'Analyze 13 key factors that determine how AI search engines discover, understand, and cite your website. Free instant analysis.',
+    'Analyze 10 key factors that determine how AI search engines discover, understand, and cite your website. Free instant analysis.',
   keywords: ['AI Search', 'SEO', 'GEO', 'Schema.org', 'AI Readiness', 'LLMO', 'AI Visibility'],
   authors: [{ name: 'OhmAI' }],
   creator: 'OhmAI',
@@ -19,14 +19,14 @@ export const metadata: Metadata = {
     type: 'website',
     title: 'AI Search Checker — Is Your Website AI-Ready?',
     description:
-      'Analyze 13 key factors that determine how AI search engines discover, understand, and cite your website.',
+      'Analyze 10 key factors that determine how AI search engines discover, understand, and cite your website.',
     siteName: 'AI Search Checker',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'AI Search Checker',
     description:
-      'Analyze 13 key factors for AI search readiness. Free instant analysis.',
+      'Analyze 10 key factors for AI search readiness. Free instant analysis.',
   },
 };
 
@@ -42,7 +42,7 @@ const websiteSchema: Record<string, unknown> = {
   name: 'AI Search Checker',
   url: 'https://aicheck.ohmai.me',
   description:
-    'Analyze 13 key factors that determine how AI search engines discover, understand, and cite your website.',
+    'Analyze 10 key factors that determine how AI search engines discover, understand, and cite your website.',
   publisher: {
     '@type': 'Organization',
     name: 'OhmAI',
@@ -75,7 +75,7 @@ const faqSchema: Record<string, unknown> = {
       name: 'What is AI Search Checker?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'AI Search Checker analyzes 13 key factors that determine how AI search engines like ChatGPT, Perplexity, and Google AI Overview discover and cite your website.',
+        text: 'AI Search Checker analyzes 10 key factors that determine how AI search engines like ChatGPT, Perplexity, and Google AI Overview discover and cite your website.',
       },
     },
     {

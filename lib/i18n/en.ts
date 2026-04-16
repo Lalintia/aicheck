@@ -22,7 +22,7 @@ export const en: Translations = {
     checklist: 'Analysis Checklist',
     checksCount: '10 checks',
     recommendations: 'Recommendations',
-    itemsToImprove: 'items to improve',
+    itemsToImprove: (n) => (n === 1 ? '1 item to improve' : `${n} items to improve`),
     allClear: 'All Clear',
     allClearMessage: 'Your website is well-optimized for AI search engines. No critical issues found.',
     criticalIssues: 'Critical Issues',
@@ -84,6 +84,12 @@ export const en: Translations = {
       title: 'Page Speed',
       description: 'Page loading performance for crawlers',
     },
+  },
+  nav: {
+    checksLabel: '10 Checks',
+    checksShort: 'Checks',
+    aiVisibilityLabel: 'AI Visibility',
+    aiVisibilityShort: 'AI',
   },
   error: {
     title: 'Analysis Failed',

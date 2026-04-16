@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { AlertCircle, ArrowRight, Loader2, Globe } from 'lucide-react';
 import { useI18n } from '@/lib/i18n';
+import { useAbortController } from '@/lib/hooks/useAbortController';
 import type { CheckResponse } from '@/lib/types/checker';
+import { normalizeUrl } from '@/lib/utils/normalize-url';
 
 interface UrlFormProps {
   readonly onSuccess: (data: CheckResponse) => void;
@@ -14,6 +16,7 @@ export function UrlForm({ onSuccess, onError }: UrlFormProps): React.ReactElemen
   const { t } = useI18n();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [clientError, setClientError] = useState<string>('');
+  const { getSignal } = useAbortController();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
@@ -27,16 +30,14 @@ export function UrlForm({ onSuccess, onError }: UrlFormProps): React.ReactElemen
       setIsLoading(false);
       return;
     }
-    let url = rawUrl.trim();
-    if (!/^https?:\/\//i.test(url)) {
-      url = 'https://' + url;
-    }
+    const url = normalizeUrl(rawUrl);
 
     try {
       const response = await fetch('/api/check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url }),
+        signal: getSignal(),
       });
 
       if (!response.ok) {
@@ -47,6 +48,9 @@ export function UrlForm({ onSuccess, onError }: UrlFormProps): React.ReactElemen
       const result: CheckResponse = await response.json();
       onSuccess(result);
     } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return;
+      }
       const message = error instanceof Error ? error.message : 'An error occurred';
       setClientError(message);
       onError(message);
