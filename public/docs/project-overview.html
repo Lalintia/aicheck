@@ -80,9 +80,8 @@
     transition: all 0.2s;
   }
   .lang-switcher button.active {
-    background: var(--frost-500);
+    background: linear-gradient(135deg, var(--violet-600), var(--frost-500));
     color: white;
-    box-shadow: 0 1px 3px rgba(74, 111, 165, 0.3);
   }
   .lang-switcher button:hover:not(.active) { color: var(--slate-700); }
 
@@ -600,20 +599,186 @@
     nav.toc, .lang-switcher { display: none; }
     html[lang="th"] [data-lang="en"] { display: initial !important; }
   }
+
+  /* ─── JOURNEY FLOW ─── */
+  .journey-wrapper { margin: 28px 0; }
+  .journey-steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .journey-step {
+    flex: 1;
+    min-width: 130px;
+    background: white;
+    border: 1.5px solid var(--frost-200);
+    border-radius: 14px;
+    padding: 16px 14px;
+    text-align: center;
+    position: relative;
+  }
+  .journey-step .j-num {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, var(--violet-600), var(--frost-500));
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    margin: 0 auto 10px;
+  }
+  .journey-step .j-title { font-weight: 700; font-size: 13px; color: var(--slate-800); margin-bottom: 4px; }
+  .journey-step .j-sub { font-size: 11px; color: var(--slate-500); line-height: 1.4; }
+  .journey-arrow {
+    color: var(--frost-400);
+    font-size: 22px;
+    padding: 0 6px;
+    flex-shrink: 0;
+    align-self: center;
+  }
+  .journey-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .journey-branch {
+    border-radius: 14px;
+    padding: 20px 22px;
+  }
+  .journey-branch.checks { background: var(--frost-50); border: 1.5px solid var(--frost-200); }
+  .journey-branch.ai { background: var(--violet-50); border: 1.5px solid #c4b5fd; }
+  .journey-branch h4 {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid;
+  }
+  .journey-branch.checks h4 { color: var(--frost-600); border-color: var(--frost-200); }
+  .journey-branch.ai h4 { color: var(--violet-600); border-color: #c4b5fd; }
+  .branch-steps { display: flex; flex-direction: column; gap: 8px; }
+  .branch-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--slate-700);
+  }
+  .branch-step .b-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .journey-branch.checks .b-icon { background: var(--frost-100); }
+  .journey-branch.ai .b-icon { background: #ede9fe; }
+  .branch-result {
+    margin-top: 14px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .journey-branch.checks .branch-result { background: var(--frost-100); color: var(--frost-700); }
+  .journey-branch.ai .branch-result { background: #ede9fe; color: var(--violet-700, #6d28d9); }
+  @media (max-width: 640px) {
+    .journey-steps { flex-direction: column; align-items: stretch; }
+    .journey-arrow { transform: rotate(90deg); text-align: center; }
+    .journey-split { grid-template-columns: 1fr; }
+  }
+
+  /* ─── SKILL INVENTORY ─── */
+  .skill-inventory {
+    background: white;
+    border: 1.5px solid var(--slate-200);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin: 24px 0;
+  }
+  .skill-inventory-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .skill-stat {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .skill-stat .big { font-size: 32px; font-weight: 900; font-family: 'JetBrains Mono', monospace; color: var(--violet-600); line-height: 1; }
+  .skill-stat .label { font-size: 13px; color: var(--slate-500); }
+  .skill-stat-divider { width: 1px; height: 36px; background: var(--slate-200); }
+  .skill-legend { display: flex; gap: 16px; margin-left: auto; flex-wrap: wrap; }
+  .skill-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--slate-500); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .legend-dot.used { background: var(--violet-600); }
+  .legend-dot.installed { background: var(--slate-300); }
+  .skill-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .skill-chip {
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    border: 1.5px solid;
+    white-space: nowrap;
+  }
+  .skill-chip.used {
+    background: var(--violet-50);
+    border-color: #c4b5fd;
+    color: var(--violet-600);
+    font-weight: 700;
+  }
+  .skill-chip.installed {
+    background: var(--slate-50);
+    border-color: var(--slate-200);
+    color: var(--slate-400);
+  }
+  .skill-chip.command {
+    background: var(--emerald-50);
+    border-color: #6ee7b7;
+    color: var(--emerald-600);
+    font-weight: 700;
+  }
+
+  /* ─── REFS ─── */
+  .refs-note {
+    font-size: 12px;
+    color: var(--slate-500);
+    margin-top: 12px;
+    line-height: 1.7;
+  }
+  .refs-note a { color: var(--frost-500); text-decoration: none; }
+  .refs-note a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
 
 <div class="lang-switcher" role="group" aria-label="Language switcher">
+  <button type="button" data-set-lang="th" class="active">ไทย</button>
   <button type="button" data-set-lang="en">EN</button>
-  <button type="button" data-set-lang="th" class="active">TH</button>
 </div>
 
 <div class="container">
 
 <header class="hero">
   <div class="badge-row">
-    <div class="audience-badge">🔒 <span data-lang="th">ใช้ภายใน</span><span data-lang="en">Internal Use</span></div>
+    <div class="audience-badge"><span data-lang="th">ใช้ภายใน</span><span data-lang="en">Internal Use</span></div>
   </div>
   <h1>AI Search Checker</h1>
   <p class="subtitle" data-lang="th"><strong>เครื่องมือภายในสำหรับทีม Sale</strong> — ใช้ตรวจเว็บลูกค้าเพื่อตอบคำถามเรื่อง AI readiness แบบมีหลักฐาน ประกอบการนำเสนอ service และป้องกันไม่ให้ Sale over-promise กับลูกค้า</p>
@@ -626,12 +791,9 @@
   <ol>
     <li><a href="#overview"><span data-lang="th">สรุปภาพรวม</span><span data-lang="en">Executive Summary</span></a></li>
     <li><a href="#features"><span data-lang="th">สิ่งที่เราสร้าง</span><span data-lang="en">What We Built</span></a></li>
-    <li><a href="#scoring"><span data-lang="th">คะแนน + Case Studies</span><span data-lang="en">Scoring Logic + Case Studies</span></a></li>
+    <li><a href="#how-built"><span data-lang="th">โปรเจกต์นี้ถูกสร้างขึ้นมาได้ยังไง</span><span data-lang="en">How This Was Built</span></a></li>
     <li><a href="#stack"><span data-lang="th">Tech Stack</span><span data-lang="en">Tech Stack</span></a></li>
     <li><a href="#architecture"><span data-lang="th">สถาปัตยกรรม</span><span data-lang="en">Architecture</span></a></li>
-    <li><a href="#api"><span data-lang="th">API Reference</span><span data-lang="en">API Reference</span></a></li>
-    <li><a href="#dev-deploy"><span data-lang="th">การพัฒนาและ Deploy</span><span data-lang="en">Development & Deployment</span></a></li>
-    <li><a href="#how-built"><span data-lang="th">โปรเจกต์นี้ถูกสร้างขึ้นมาได้ยังไง</span><span data-lang="en">How This Was Built</span></a></li>
   </ol>
 </nav>
 
@@ -639,8 +801,8 @@
 <section id="overview">
   <h2><span class="num">01</span><span data-lang="th">สรุปภาพรวม</span><span data-lang="en">Executive Summary</span></h2>
 
-  <p data-lang="th"><strong>AI Search Checker</strong> วิเคราะห์เว็บไซต์ใดก็ได้ใน 5 วินาที เพื่อตอบ 2 คำถามสำคัญ:</p>
-  <p data-lang="en"><strong>AI Search Checker</strong> analyzes any website in 5 seconds to answer 2 key questions:</p>
+  <p data-lang="th"><strong>AI Search Checker</strong> วิเคราะห์เว็บไซต์เพื่อตอบ 2 คำถามสำคัญ:</p>
+  <p data-lang="en"><strong>AI Search Checker</strong> analyzes any website to answer 2 key questions:</p>
 
   <ol data-lang="th">
     <li><strong>เว็บของคุณพร้อมสำหรับ AI Search ไหม?</strong> — ตรวจ 10 ปัจจัยทางเทคนิค (Schema.org, Semantic HTML, SSR, robots.txt ฯลฯ)</li>
@@ -652,36 +814,28 @@
   </ol>
 
   <div class="callout callout-info">
-    <strong data-lang="th">🔒 Internal Use — เครื่องมือสำหรับทีม Sale เท่านั้น</strong>
-    <strong data-lang="en">🔒 Internal Use — Sales Team Only</strong>
-    <p data-lang="th"><strong>aicheck.ohmai.me ไม่ใช่ public product</strong> — เป็นเครื่องมือภายในที่ทีม Sale ของเราใช้ตรวจเว็บลูกค้าแบบ real-time ระหว่างการนำเสนอ</p>
-    <p data-lang="en"><strong>aicheck.ohmai.me is not a public product</strong> — it is an internal tool used by our Sales team to audit customer websites in real time during sales conversations.</p>
+    <strong data-lang="th">Internal Use — เครื่องมือสำหรับทีม Sale เท่านั้น</strong>
+    <strong data-lang="en">Internal Use — Sales Team Only</strong>
+    <p data-lang="th"><strong>aicheck.ohmai.me ไม่ใช่ public product</strong> — เป็นเครื่องมือภายในสำหรับตรวจสอบว่าเว็บไซต์ขาดองค์ประกอบใดที่ทำให้ AI ค้นหาและเข้าถึงข้อมูลได้ไม่ครบ</p>
+    <p data-lang="en"><strong>aicheck.ohmai.me is not a public product</strong> — it is an internal tool for checking which elements a website is missing that would otherwise allow AI to discover and access its content.</p>
   </div>
 
-  <h3 data-lang="th">🎯 ปัญหาที่ Sale เจอ &amp; วิธีที่ aicheck แก้</h3>
-  <h3 data-lang="en">🎯 The Sales Problem &amp; How aicheck Solves It</h3>
+  <p data-lang="th">เมื่อใช้ aicheck จะทราบได้ทันทีว่าเว็บไซต์ขาดองค์ประกอบทางเทคนิคในส่วนใด และสามารถตรวจสอบได้ว่า AI รู้จักแบรนด์หรือองค์กรนั้นมากน้อยเพียงใดในปัจจุบัน</p>
+  <p data-lang="en">aicheck immediately shows which technical elements a website is missing, and lets you verify how well AI systems currently recognize that brand or organization.</p>
 
-  <blockquote style="border-left: 4px solid var(--frost-500); padding: 16px 20px; margin: 20px 0; background: var(--frost-50); border-radius: 8px; font-style: italic; color: var(--slate-700);">
-    "Our clients are seeking assurance that our website design and content are fully optimized for AI discovery and recognition — specifically by models like Copilot, Gemini, and ChatGPT."
-  </blockquote>
-
-  <p data-lang="th">ก่อนมี aicheck ทีม Sale ตอบคำถามแบบนี้ได้แค่ <em>"ครับ เราทำให้ AI-friendly แล้ว"</em> โดยไม่มีหลักฐานประกอบ ทำให้ลูกค้าไม่เชื่อจริง</p>
-  <p data-lang="en">Before aicheck, the Sales team could only answer with <em>"Yes, we've made it AI-friendly"</em> — without evidence to back it up, customers remained unconvinced.</p>
-
-  <p data-lang="th"><strong>aicheck แก้ปัญหานี้โดย:</strong></p>
-  <p data-lang="en"><strong>aicheck solves this by:</strong></p>
-  <ul data-lang="th">
-    <li>Sale รันเช็คเว็บลูกค้าต่อหน้า ได้ผลจริงใน 5 วินาที (Grade A–D + 10 checks + AI Visibility score)</li>
-    <li>ตอบคำถามด้วย <strong>หลักฐานที่ตรวจสอบได้</strong> ไม่ใช่คำพูดลอยๆ</li>
-    <li>ถ้าคะแนนดี → ยืนยัน quality ที่ส่งมอบ → ปิดดีลง่ายขึ้น</li>
-    <li>ถ้าคะแนนต่ำ → ใช้ gap เป็น lead-in เสนอ service แก้ไข → upsell ได้</li>
-  </ul>
-  <ul data-lang="en">
-    <li>Sales runs the check live in front of the customer — real results in 5 seconds (Grade A–D + 10 checks + AI Visibility score)</li>
-    <li>Answers with <strong>verifiable evidence</strong>, not vague claims</li>
-    <li>If scores are good → confirms delivered quality → closes deals faster</li>
-    <li>If scores are low → turns the gap into a lead-in for a fix proposal → enables upsell</li>
-  </ul>
+  <div class="callout callout-warning">
+    <strong data-lang="th">สิ่งที่ 10 ข้อตรวจสอบบอกได้ และบอกไม่ได้</strong>
+    <strong data-lang="en">What the 10 Checks Can and Cannot Tell You</strong>
+    <p data-lang="th">การผ่านทั้ง 10 ข้อตรวจสอบไม่ได้การันตีว่า AI จะรู้จักแบรนด์ของคุณ — 10 ข้อนั้นเป็นเพียงการยืนยันว่าเว็บไซต์ "เปิดประตู" ให้ AI Crawler สามารถเข้าถึงและอ่านข้อมูลได้ถูกต้อง</p>
+    <p data-lang="en">Passing all 10 checks does not guarantee that AI will recognize your brand. Those checks only confirm that the website is technically accessible to AI crawlers — the door is open.</p>
+    <p data-lang="th">การที่ AI อย่าง ChatGPT หรือ Perplexity จะรู้จักและอ้างถึงแบรนด์ในคำตอบนั้น ต้องอาศัยสิ่งที่เรียกว่า <strong>GEO (Generative Engine Optimization)</strong> ซึ่งประกอบด้วย: การมีหน้า Wikipedia หรือ Knowledge Base, การถูกอ้างอิงในบทความข่าวและสื่อที่น่าเชื่อถือ, การมีเนื้อหาคุณภาพสูงที่ AI เลือกอ้างอิง, Backlink จากแหล่งที่มีสิทธิ์, และการมี Brand mention ข้ามแพลตฟอร์มอย่างสม่ำเสมอ</p>
+    <p data-lang="en">For AI to actually mention your brand in generated responses, you need <strong>GEO (Generative Engine Optimization)</strong>: a Wikipedia or knowledge base entry, citations in reputable news and media, high-quality content that AI systems choose to reference, authoritative backlinks, and consistent brand mentions across platforms.</p>
+    <p style="margin-top:12px; font-size:13px; color:var(--slate-500);">
+      <span data-lang="th">แหล่งอ้างอิง: </span><span data-lang="en">Sources: </span>
+      <a href="https://searchengineland.com/what-is-generative-engine-optimization-geo-444418" target="_blank" style="color:var(--violet-600);">Search Engine Land — What is GEO</a> ·
+      <a href="https://www.engagecoders.com/geo-in-2026-top-5-strategies-to-make-ai-engines-recommend-your-brand/" target="_blank" style="color:var(--violet-600);">EngageCoders — Top 5 GEO Strategies 2026</a>
+    </p>
+  </div>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -691,46 +845,60 @@
   <p data-lang="th">เว็บแอปที่มี 2 feature หลัก</p>
   <p data-lang="en">A web app with 2 main features.</p>
 
-  <h3 data-lang="th">1. 10 Checks — พื้นฐาน AI-Friendly (หน้า <code>/</code>)</h3>
-  <h3 data-lang="en">1. 10 Checks — AI-Friendly Fundamentals (at <code>/</code>)</h3>
-  <p data-lang="th">ตรวจ 10 ปัจจัยทางเทคนิคที่ทำให้เว็บ AI รู้จักได้ง่าย ให้ผลลัพธ์เป็น <strong>Grade A-D</strong> + per-check score + คำแนะนำการแก้ไข</p>
-  <p data-lang="en">Tests 10 technical factors that make a website AI-readable. Returns a <strong>Grade A-D</strong> + per-check score + actionable recommendations.</p>
+  <h3 data-lang="th">1. 10 Checks — พื้นฐาน AI-Friendly (หน้าแรกของเว็บ)</h3>
+  <h3 data-lang="en">1. 10 Checks — AI-Friendly Fundamentals (main page)</h3>
+  <p data-lang="th">ตรวจ 10 ปัจจัยทางเทคนิคที่ทำให้เว็บ AI รู้จักได้ง่าย ให้ผลลัพธ์เป็น <strong>Grade A-D</strong> + per-check score + คำแนะนำการแก้ไข น้ำหนักของแต่ละปัจจัยถูกตั้งตามผลกระทบจริงที่มีต่อความสามารถของ AI ในการเข้าถึงและเข้าใจเนื้อหา ไม่ใช่แบ่งเท่ากันทุกข้อ</p>
+  <p data-lang="en">Tests 10 technical factors that make a website AI-readable. Returns a <strong>Grade A-D</strong> + per-check score + actionable recommendations. Weights are assigned based on each factor's actual impact on AI accessibility — not split equally.</p>
 
   <table>
     <thead>
-      <tr><th>#</th><th>Checker</th><th>Weight</th><th>Tests</th></tr>
+      <tr><th>#</th><th>Checker</th><th>Weight</th><th>Tests</th><th data-lang="th">เหตุผลที่ weight เท่านี้</th><th data-lang="en">Why this weight</th></tr>
     </thead>
     <tbody>
-      <tr><td>1</td><td>Schema.org</td><td><code>22%</code></td><td>JSON-LD: Organization, Article, LocalBusiness</td></tr>
-      <tr><td>2</td><td>SSR/CSR Detection</td><td><code>17%</code></td><td>Server-rendered vs JavaScript-dependent</td></tr>
-      <tr><td>3</td><td>robots.txt</td><td><code>12%</code></td><td>robots.txt exists + allows AI crawlers</td></tr>
-      <tr><td>4</td><td>Image AI Readiness</td><td><code>10%</code></td><td>alt text + optimization</td></tr>
-      <tr><td>5</td><td>Heading Hierarchy</td><td><code>9%</code></td><td>H1-H6 order</td></tr>
-      <tr><td>6</td><td>Semantic HTML</td><td><code>7%</code></td><td>&lt;main&gt;, &lt;article&gt;, &lt;nav&gt;</td></tr>
-      <tr><td>7</td><td>sitemap.xml</td><td><code>7%</code></td><td>Sitemap exists + valid</td></tr>
-      <tr><td>8</td><td>llms.txt</td><td><code>6%</code></td><td>llms.txt presence (Answer.AI standard)</td></tr>
-      <tr><td>9</td><td>Open Graph</td><td><code>5%</code></td><td>og:title, og:description, og:image</td></tr>
-      <tr><td>10</td><td>Page Speed</td><td><code>5%</code></td><td>TTFB performance</td></tr>
+      <tr><td>1</td><td>Schema.org</td><td><code>22%</code></td><td>JSON-LD: Organization, Article, LocalBusiness</td><td data-lang="th">ข้อมูลโครงสร้างที่ AI อ่านได้โดยตรง — ส่งผลสูงสุดต่อความเข้าใจของ AI</td><td data-lang="en">Structured data AI reads directly — highest single impact on AI comprehension</td></tr>
+      <tr><td>2</td><td>SSR/CSR Detection</td><td><code>17%</code></td><td>Server-rendered vs JavaScript-dependent</td><td data-lang="th">ถ้าเว็บใช้ JavaScript render (CSR) AI Crawler จะเห็นหน้าว่างเปล่า — ปัญหาร้ายแรง</td><td data-lang="en">If the site renders via JavaScript (CSR), AI crawlers see a blank page — a critical blocker</td></tr>
+      <tr><td>3</td><td>robots.txt</td><td><code>12%</code></td><td>robots.txt exists + allows AI crawlers</td><td data-lang="th">ถ้า block AI bot ไว้ ไม่ว่าเนื้อหาจะดีแค่ไหนก็ไม่มีประโยชน์</td><td data-lang="en">Blocking AI bots makes all other optimizations irrelevant</td></tr>
+      <tr><td>4</td><td>Image AI Readiness</td><td><code>10%</code></td><td>alt text + optimization</td><td data-lang="th">รูปภาพที่ไม่มี alt text AI มองไม่เห็นบริบท — ส่งผลต่อความเข้าใจเนื้อหาโดยรวม</td><td data-lang="en">Images without alt text are invisible to AI context — affects overall content understanding</td></tr>
+      <tr><td>5</td><td>Heading Hierarchy</td><td><code>9%</code></td><td>H1-H6 order</td><td data-lang="th">โครงสร้างหัวข้อที่ถูกต้องช่วยให้ AI เข้าใจลำดับความสำคัญของเนื้อหา</td><td data-lang="en">Correct heading order helps AI understand content priority and structure</td></tr>
+      <tr><td>6</td><td>Semantic HTML</td><td><code>7%</code></td><td>&lt;main&gt;, &lt;article&gt;, &lt;nav&gt;</td><td data-lang="th">Tag ที่มีความหมายช่วยให้ AI แยกแยะส่วนต่างๆ ของหน้าได้ถูกต้อง</td><td data-lang="en">Semantic tags help AI distinguish page regions and their roles</td></tr>
+      <tr><td>7</td><td>sitemap.xml</td><td><code>7%</code></td><td>Sitemap exists + valid</td><td data-lang="th">ช่วยให้ AI Crawler ค้นพบทุกหน้าของเว็บ ไม่ใช่แค่หน้าแรก</td><td data-lang="en">Helps AI crawlers discover all pages, not just the homepage</td></tr>
+      <tr><td>8</td><td>llms.txt</td><td><code>6%</code></td><td>llms.txt presence (Answer.AI standard)</td><td data-lang="th">มาตรฐานใหม่สำหรับบอก LLM ว่าเว็บนี้อนุญาตให้ใช้เนื้อหาได้อย่างไร ยังอยู่ในช่วง adoption</td><td data-lang="en">Emerging standard for telling LLMs how to use site content — still gaining adoption</td></tr>
+      <tr><td>9</td><td>Open Graph</td><td><code>5%</code></td><td>og:title, og:description, og:image</td><td data-lang="th">ส่วนใหญ่ใช้สำหรับ social media preview — ผลกระทบต่อ AI Search น้อยกว่าข้ออื่น</td><td data-lang="en">Primarily for social media previews — lower direct impact on AI Search vs. other checks</td></tr>
+      <tr><td>10</td><td>Page Speed</td><td><code>5%</code></td><td>TTFB performance</td><td data-lang="th">เว็บที่ช้ามาก AI Crawler อาจ timeout ก่อนโหลดเสร็จ แต่ส่งผลน้อยกว่า content factors</td><td data-lang="en">Very slow sites may time out before crawlers finish loading — less impactful than content factors</td></tr>
     </tbody>
   </table>
+  <p class="refs-note">
+    <strong data-lang="th">แหล่งอ้างอิงสำหรับน้ำหนักคะแนน:</strong><strong data-lang="en">Weight references:</strong>
+    [1] <a href="https://developers.google.com/search/docs/appearance/structured-data/intro-structured-data" target="_blank">Google Search Central — Structured Data</a> ·
+    [2] <a href="https://developers.google.com/search/docs/crawling-indexing/javascript/javascript-seo-basics" target="_blank">Google — JavaScript SEO basics</a> ·
+    [3] <a href="https://developers.google.com/search/docs/crawling-indexing/robots/intro" target="_blank">Google — robots.txt introduction</a> ·
+    [4] <a href="https://llmstxt.org/" target="_blank">llms.txt specification — Answer.AI</a> ·
+    [5] <a href="https://arxiv.org/abs/2311.09735" target="_blank">GEO: Generative Engine Optimization (Aggarwal et al., 2024)</a>
+  </p>
 
-  <h3 data-lang="th">2. AI Visibility — 7 มิติ (หน้า <code>/ai-check</code>)</h3>
-  <h3 data-lang="en">2. AI Visibility — 7 Dimensions (at <code>/ai-check</code>)</h3>
+  <h3 data-lang="th">2. AI Visibility</h3>
+  <h3 data-lang="en">2. AI Visibility</h3>
   <p data-lang="th">หนึ่งในไม่กี่เครื่องมือในไทยที่ <strong>ถาม GPT ตรงๆ</strong> ว่ารู้จักเว็บนี้ไหม + เช็ค Google Knowledge Graph + วัดเป็น 7 มิติ รวม 100 คะแนน</p>
   <p data-lang="en">One of the few tools in Thailand that <strong>asks GPT directly</strong> whether it knows a website + checks Google Knowledge Graph + measures 7 dimensions totaling 100 points.</p>
 
   <table>
-    <thead><tr><th>Dimension</th><th>Points</th><th>Measures</th></tr></thead>
+    <thead><tr><th>Dimension</th><th>Points</th><th>Measures</th><th data-lang="th">เหตุผลที่ตั้งคะแนนเท่านี้</th><th data-lang="en">Why this score</th></tr></thead>
     <tbody>
-      <tr><td><strong>AI Recognition</strong></td><td>20</td><td>Does AI recognize the brand?</td></tr>
-      <tr><td><strong>Accuracy</strong></td><td>15</td><td>Is AI's knowledge accurate?</td></tr>
-      <tr><td><strong>URL Known</strong></td><td>10</td><td>Can AI provide the URL?</td></tr>
-      <tr><td><strong>Knowledge Depth</strong></td><td>15</td><td>How deep is the knowledge?</td></tr>
-      <tr><td><strong>Products/Services</strong></td><td>15</td><td>Can AI name products?</td></tr>
-      <tr><td><strong>Google Presence</strong></td><td>10</td><td>Google search ranking (SEO)</td></tr>
-      <tr><td><strong>AI Overview</strong></td><td>15</td><td>In Google Knowledge Graph</td></tr>
+      <tr><td><strong>AI Recognition</strong></td><td>20</td><td>Does AI recognize the brand?</td><td data-lang="th">พื้นฐานที่สุด — ถ้า AI ไม่รู้จักเลยก็ไม่มีประโยชน์ตรวจมิติอื่น คะแนนสูงสุด</td><td data-lang="en">Most fundamental — if AI doesn't recognize the brand at all, other dimensions are irrelevant</td></tr>
+      <tr><td><strong>Accuracy</strong></td><td>15</td><td>Is AI's knowledge accurate?</td><td data-lang="th">รู้จักแต่ข้อมูลผิดอาจเป็นอันตรายมากกว่าไม่รู้จัก — ความถูกต้องสำคัญสูง</td><td data-lang="en">Knowing wrong facts can be worse than not knowing — accuracy carries high weight</td></tr>
+      <tr><td><strong>URL Known</strong></td><td>10</td><td>Can AI provide the URL?</td><td data-lang="th">บ่งบอกว่า AI มีข้อมูลเฉพาะเจาะจงเพียงพอ ไม่ใช่แค่รู้จักชื่อแบรนด์กว้างๆ</td><td data-lang="en">Indicates AI has specific enough information, not just a vague brand awareness</td></tr>
+      <tr><td><strong>Knowledge Depth</strong></td><td>15</td><td>How deep is the knowledge?</td><td data-lang="th">ความลึกของข้อมูลสะท้อน Brand Authority — แบรนด์ที่ AI รู้ลึกมักถูก cite บ่อยกว่า</td><td data-lang="en">Depth reflects brand authority — brands AI knows deeply tend to get cited more often</td></tr>
+      <tr><td><strong>Products/Services</strong></td><td>15</td><td>Can AI name products?</td><td data-lang="th">ถ้า AI พูดถึง product ได้ แสดงว่าเนื้อหาเว็บถูก index อย่างสมบูรณ์</td><td data-lang="en">If AI can name products, the site's content has been indexed comprehensively</td></tr>
+      <tr><td><strong>Google Presence</strong></td><td>10</td><td>Google search ranking (SEO)</td><td data-lang="th">SEO แบบเดิมยังส่งผลต่อ AI training data — เว็บที่ rank ดีมักถูก crawl บ่อยกว่า</td><td data-lang="en">Traditional SEO still feeds AI training data — well-ranked sites get crawled more</td></tr>
+      <tr><td><strong>AI Overview</strong></td><td>15</td><td>In Google Knowledge Graph</td><td data-lang="th">การอยู่ใน Knowledge Graph คือสัญญาณที่แข็งแกร่งที่สุดว่า Google ยืนยันตัวตนแบรนด์แล้ว</td><td data-lang="en">Presence in the Knowledge Graph is the strongest signal that Google has verified the brand's identity</td></tr>
     </tbody>
   </table>
+  <p class="refs-note">
+    <strong data-lang="th">แหล่งอ้างอิงสำหรับคะแนน AI Visibility:</strong><strong data-lang="en">AI Visibility score references:</strong>
+    [5] <a href="https://arxiv.org/abs/2311.09735" target="_blank">GEO: Generative Engine Optimization (Aggarwal et al., 2024)</a> ·
+    [6] <a href="https://searchengineland.com/generative-engine-optimization-geo-441735" target="_blank">Search Engine Land — What is GEO?</a> ·
+    [7] <a href="https://developers.google.com/search/docs/appearance/google-knowledge-graph" target="_blank">Google — Knowledge Graph overview</a>
+  </p>
 
   <p data-lang="th">ทุกมิติมีคำอธิบาย 3 ส่วน: <strong>Why it matters</strong> · <strong>How to improve</strong> · <strong>How we detect this</strong></p>
   <p data-lang="en">Each dimension has three explanation panels: <strong>Why it matters</strong> · <strong>How to improve</strong> · <strong>How we detect this</strong></p>
@@ -738,44 +906,143 @@
   <h3 data-lang="th">Features อื่นๆ</h3>
   <h3 data-lang="en">Other Features</h3>
   <ul>
-    <li>🌐 <strong>Bilingual UI + GPT response (EN/TH)</strong> — i18n + GPT returns both languages in one call; instant locale switch, no re-fetch</li>
-    <li>❄️ <strong>Navy + Sky Bento UI</strong> — B2B sales-enablement design (from the ui-ux-pro-max recommendation engine)</li>
-    <li>🔒 <strong>Security</strong> — SSRF + DNS validation cache (60s), rate limiting (10/min main, 3/min AI), CORS allowlist, prompt-injection sanitizer, AbortSignal threading</li>
-    <li>🆓 <strong>No account required</strong> — stateless, no data storage</li>
+    <li><strong>Bilingual UI + GPT response (EN/TH)</strong> — i18n + GPT returns both languages in one call; instant locale switch, no re-fetch</li>
+    <li><strong>Navy + Sky Bento UI</strong> — B2B sales-enablement design (from the ui-ux-pro-max recommendation engine)</li>
+    <li><strong>Security</strong> — SSRF + DNS validation cache (60s), rate limiting (10/min main, 3/min AI), CORS allowlist, prompt-injection sanitizer, AbortSignal threading</li>
+    <li><strong>No account required</strong> — stateless, no data storage</li>
   </ul>
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════ -->
-<section id="scoring">
-  <h2><span class="num">03</span><span data-lang="th">Case Studies จริง</span><span data-lang="en">Real Case Studies</span></h2>
+<section id="how-built">
+  <h2><span class="num">03</span><span data-lang="th">โปรเจกต์นี้ถูกสร้างขึ้นมาได้ยังไง</span><span data-lang="en">How This Was Built</span></h2>
 
-  <p data-lang="th">ผลทดสอบจริงจากเว็บที่รันผ่านระบบ — แสดง gap ชัดเจนระหว่าง SEO แบบเดิมกับ AI Visibility</p>
-  <p data-lang="en">Real test results from websites run through the system — clearly showing the gap between traditional SEO and AI Visibility.</p>
+  <p data-lang="th"><strong>aicheck เขียนด้วยวิธี "Vibe Coding"</strong> — สั่งงาน AI ด้วยภาษาพูด Developer เป็นผู้กำกับ (สั่ง/ตรวจ/ตัดสิน architecture) AI เป็นผู้เขียนโค้ด</p>
+  <p data-lang="en"><strong>aicheck was built with "Vibe Coding"</strong> — instructions in plain language. Developer directs (commands, reviews, decides architecture); AI implements.</p>
 
-  <div class="case-study">
-    <div class="case-header">
-      <div class="case-title"><span data-lang="th">🍎 apple.com — แบรนด์ระดับโลก</span><span data-lang="en">🍎 apple.com — Global Brand</span></div>
-      <div class="case-score good">97/100</div>
+  <p data-lang="th"><strong>Toolchain:</strong> <strong>Claude Code CLI</strong> (Opus 4.6, 1M context) ใน <strong>VS Code</strong> integrated terminal · <strong>Git + GitHub</strong> (AI ทำ branch/commit/PR ได้แต่ human review ก่อน merge) · <strong>Playwright MCP</strong> สำหรับให้ AI ควบคุม browser จริงตอน test</p>
+  <p data-lang="en"><strong>Toolchain:</strong> <strong>Claude Code CLI</strong> (Opus 4.6, 1M context) in <strong>VS Code</strong>'s integrated terminal · <strong>Git + GitHub</strong> (AI handles branches/commits/PRs, humans review before merge) · <strong>Playwright MCP</strong> so the AI can drive a real browser during testing</p>
+
+  <h3 data-lang="th">วิธี Vibe Coding ที่ทำให้ MA ได้จริง</h3>
+  <h3 data-lang="en">Structured Vibe Coding — Built to be Maintainable</h3>
+
+  <p data-lang="th">aicheck ไม่ได้ถูกสร้างขึ้นด้วยการสั่ง AI ว่า "ทำเว็บนี้ให้หน่อย" — แต่มีกระบวนการที่ชัดเจนก่อนเขียนโค้ดบรรทัดแรก</p>
+  <p data-lang="en">aicheck was not built by simply telling AI to "make this website." There was a clear process established before the first line of code was written.</p>
+
+  <p data-lang="th">ก่อนเริ่ม มีการวางแผนผ่าน <strong>Global CLAUDE.md</strong> ซึ่งเป็นเอกสารที่กำหนดพฤติกรรมของ AI ตลอดโปรเจกต์ — ครอบคลุม User Flow, Architecture, Security edge cases และ Folder Structure ทั้งหมดต้องถูก confirm ก่อนที่ AI จะเริ่มสร้าง</p>
+  <p data-lang="en">Before starting, a <strong>Global CLAUDE.md</strong> was established — a document defining AI behavior throughout the project. User Flow, Architecture, Security edge cases, and Folder Structure were all confirmed before AI began building anything.</p>
+
+  <p data-lang="th">ในแต่ละส่วนงาน มีการเรียกใช้ <strong>Skill</strong> ที่เหมาะสม แทนที่จะให้ AI ตัดสินใจเองทั้งหมด:</p>
+  <p data-lang="en">Each phase of work called on a specific <strong>Skill</strong> rather than leaving all decisions to the AI:</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th data-lang="th">ส่วนงาน</th><th data-lang="en">Phase</th>
+        <th>Skill</th>
+        <th data-lang="th">วัตถุประสงค์</th><th data-lang="en">Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td data-lang="th">ออกแบบ UI</td><td data-lang="en">UI Design</td>
+        <td><code>ui-ux-pro-max</code></td>
+        <td data-lang="th">เลือก Navy + Sky Bento palette + B2B layout pattern</td>
+        <td data-lang="en">Selected Navy + Sky Bento palette and B2B layout pattern</td>
+      </tr>
+      <tr>
+        <td data-lang="th">สร้าง Frontend</td><td data-lang="en">Frontend Build</td>
+        <td><code>frontend-design</code></td>
+        <td data-lang="th">สร้าง component คุณภาพสูงพร้อม design system</td>
+        <td data-lang="en">Built production-grade components with a defined design system</td>
+      </tr>
+      <tr>
+        <td data-lang="th">แก้ Bug</td><td data-lang="en">Debugging</td>
+        <td><code>systematic-debugging</code></td>
+        <td data-lang="th">วิเคราะห์ root cause ก่อน fix ทุกครั้ง ห้ามเดาแล้วแก้</td>
+        <td data-lang="en">Root cause analysis before every fix — no guessing</td>
+      </tr>
+      <tr>
+        <td data-lang="th">ทดสอบ UI</td><td data-lang="en">UI Testing</td>
+        <td><code>Playwright MCP</code></td>
+        <td data-lang="th">AI ควบคุม browser จริงเพื่อทดสอบ flow ทุก scenario</td>
+        <td data-lang="en">AI drove a real browser to test every user flow scenario</td>
+      </tr>
+      <tr>
+        <td data-lang="th">ตรวจคุณภาพโค้ด</td><td data-lang="en">Code Review</td>
+        <td><code>/review-all</code></td>
+        <td data-lang="th">รัน 4 agent พร้อมกัน ครอบคลุม security, performance, React/TS, maintainability</td>
+        <td data-lang="en">Ran 4 agents in parallel covering security, performance, React/TS, and maintainability</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="skill-inventory">
+    <div class="skill-inventory-header">
+      <div class="skill-stat">
+        <span class="big">5</span>
+        <span class="label" data-lang="th">skills ที่ถูกเรียกใช้</span>
+        <span class="label" data-lang="en">skills called</span>
+      </div>
+      <div class="skill-stat-divider"></div>
+      <div class="skill-stat">
+        <span class="big">21</span>
+        <span class="label" data-lang="th">skills ที่ติดตั้งทั้งหมด</span>
+        <span class="label" data-lang="en">skills installed total</span>
+      </div>
+      <div class="skill-legend">
+        <div class="skill-legend-item"><div class="legend-dot used"></div><span data-lang="th">ใช้ในโปรเจกต์นี้</span><span data-lang="en">used in this project</span></div>
+        <div class="skill-legend-item"><div class="legend-dot" style="background:#10b981"></div><span data-lang="th">slash command</span><span data-lang="en">slash command</span></div>
+        <div class="skill-legend-item"><div class="legend-dot installed"></div><span data-lang="th">ติดตั้งแต่ไม่ได้ใช้</span><span data-lang="en">installed, not used here</span></div>
+      </div>
     </div>
-    <div class="case-bars">
-      <div class="case-bar-row"><div class="case-bar-label">AI Recognition</div><div class="case-bar-track"><div class="case-bar-fill" style="width:100%;background:#10b981"></div></div><div class="case-bar-value">20/20</div></div>
-      <div class="case-bar-row"><div class="case-bar-label">Accuracy</div><div class="case-bar-track"><div class="case-bar-fill" style="width:100%;background:#10b981"></div></div><div class="case-bar-value">15/15</div></div>
-      <div class="case-bar-row"><div class="case-bar-label">URL Known</div><div class="case-bar-track"><div class="case-bar-fill" style="width:100%;background:#10b981"></div></div><div class="case-bar-value">10/10</div></div>
-      <div class="case-bar-row"><div class="case-bar-label">Knowledge Depth</div><div class="case-bar-track"><div class="case-bar-fill" style="width:100%;background:#10b981"></div></div><div class="case-bar-value">15/15</div></div>
-      <div class="case-bar-row"><div class="case-bar-label">Products</div><div class="case-bar-track"><div class="case-bar-fill" style="width:100%;background:#10b981"></div></div><div class="case-bar-value">15/15</div></div>
-      <div class="case-bar-row"><div class="case-bar-label">Google Presence</div><div class="case-bar-track"><div class="case-bar-fill" style="width:100%;background:#10b981"></div></div><div class="case-bar-value">10/10</div></div>
-      <div class="case-bar-row"><div class="case-bar-label">AI Overview</div><div class="case-bar-track"><div class="case-bar-fill" style="width:80%;background:#10b981"></div></div><div class="case-bar-value">12/15</div></div>
+    <div class="skill-chips">
+      <span class="skill-chip used">ui-ux-pro-max</span>
+      <span class="skill-chip used">frontend-design</span>
+      <span class="skill-chip used">systematic-debugging</span>
+      <span class="skill-chip used">brand-design-ref</span>
+      <span class="skill-chip used">webapp-testing</span>
+      <span class="skill-chip command">/review-all</span>
+      <span class="skill-chip installed">agent-browser</span>
+      <span class="skill-chip installed">banner-design</span>
+      <span class="skill-chip installed">brand</span>
+      <span class="skill-chip installed">design</span>
+      <span class="skill-chip installed">design-system</span>
+      <span class="skill-chip installed">docx</span>
+      <span class="skill-chip installed">mcp-builder</span>
+      <span class="skill-chip installed">pdf</span>
+      <span class="skill-chip installed">pptx</span>
+      <span class="skill-chip installed">python-error-handling</span>
+      <span class="skill-chip installed">python-performance-optimization</span>
+      <span class="skill-chip installed">review-and-clean</span>
+      <span class="skill-chip installed">skill-creator</span>
+      <span class="skill-chip installed">slides</span>
+<span class="skill-chip installed">ui-styling</span>
+      <span class="skill-chip installed">xlsx</span>
     </div>
-    <p style="margin-top: 16px; font-size: 14px; color: var(--slate-600);" data-lang="th"><strong>Insight:</strong> แบรนด์ใหญ่ AI รู้จักครบเกือบทุกมิติ มี Wikipedia + Knowledge Graph</p>
-    <p style="margin-top: 16px; font-size: 14px; color: var(--slate-600);" data-lang="en"><strong>Insight:</strong> Large brand — AI knows it across nearly all dimensions, with Wikipedia + Knowledge Graph present.</p>
   </div>
 
-  <div class="callout callout-success">
-    <strong data-lang="th">รูปแบบที่เจอบ่อย</strong>
-    <strong data-lang="en">Common Pattern</strong>
-    <span data-lang="th">ธุรกิจไทยจำนวนมากอยู่ในสถานการณ์ "SEO ดี แต่ AI มองไม่เห็น" — เป็นจังหวะที่ Sale ใช้เสนอบริการ GEO audit + implementation ได้ทันที</span>
-    <span data-lang="en">Many Thai businesses are in a "good SEO but invisible to AI" situation — a clear opening for Sales to offer GEO audit + implementation services.</span>
+  <p data-lang="th">ผลลัพธ์คือโค้ดที่ developer คนใหม่เปิดมาแล้วเข้าใจได้ทันที — โครงสร้างไฟล์สม่ำเสมอ, naming convention ชัดเจน, ไม่มี magic number หรือ logic ที่ซ่อนอยู่</p>
+  <p data-lang="en">The result is code that a new developer can open and understand immediately — consistent file structure, clear naming conventions, no hidden logic or magic numbers.</p>
+
+  <div class="callout" style="border-left-color: var(--violet-500); background: var(--violet-50);">
+    <strong data-lang="th">ขยายต่อยอดในระดับองค์กร</strong>
+    <strong data-lang="en">Scaling this across a team</strong>
+    <span data-lang="th">ถ้าองค์กรมี coding pattern เป็นของตัวเอง — เช่น วิธีตั้งชื่อตัวแปร, โครงสร้างไฟล์, วิธีเขียน error handling — สามารถนำมาเขียนเป็น <code>Skill</code> ได้เลย เมื่อทุกคนในทีม vibe code แล้วเรียกใช้ skill นั้น AI จะเขียน code ตาม pattern ขององค์กรโดยอัตโนมัติ ไม่ว่า developer คนไหนจะเป็นคนสั่ง — code ที่ได้ออกมาก็จะหน้าตาเดียวกันหมด</span>
+    <span data-lang="en">If your organization has its own coding patterns — naming conventions, file structure, error handling style — those can be encoded as a <code>Skill</code>. Once every developer on the team invokes that skill, AI will write code that follows your organization's standards automatically. Regardless of who gives the instruction, the output looks the same — consistent code across the entire team.</span>
   </div>
+
+  <h3 data-lang="th">Subagents ตรวจคุณภาพโค้ด (4 ตัว — รัน parallel ผ่าน <code>/review-all</code>)</h3>
+  <h3 data-lang="en">Code Review Subagents (4 — run in parallel via <code>/review-all</code>)</h3>
+  <ul>
+    <li><code>security-auditor</code> — SSRF, XSS, injection, rate limiting, input validation, prompt injection</li>
+    <li><code>performance-error-reviewer</code> — memory leaks, timeouts, algorithm complexity, try-catch coverage</li>
+    <li><code>react-typescript-reviewer</code> — accessibility, memoization, type safety, re-render issues</li>
+    <li><code>maintainability-reviewer</code> — naming, dead code, duplication, "human reader" test</li>
+  </ul>
+  <p data-lang="th">ก่อน agent แต่ละตัวจะ report ผล จะอ่านไฟล์ <code>.known-issues.md</code> ก่อนเสมอ — ไฟล์นี้คือรายการ "ปัญหาที่ทีมรู้แล้วและยอมรับไว้แล้ว" เช่น สิ่งที่แก้ไม่ได้ตอนนี้หรือตั้งใจปล่อยไว้ agent จะข้ามสิ่งเหล่านี้ทั้งหมด ไม่ flag ซ้ำในทุกรอบ นอกจากนี้ <code>/review-all</code> ยังมี Phase 2 ที่ทดสอบกับเว็บไซต์จริง ไม่ใช่แค่อ่าน code — เพื่อจับ bug ที่อ่าน code อย่างเดียวไม่เห็น</p>
+  <p data-lang="en">Before each agent reports its findings, it reads <code>.known-issues.md</code> first — a file listing "problems the team already knows about and has accepted," such as things that can't be fixed right now or are intentionally left as-is. Agents skip all of these, so the same issues don't get flagged on every review. <code>/review-all</code> also runs a Phase 2 that tests against a real website — not just reading code — to catch bugs that only appear when the site is actually running.</p>
+
 </section>
 
 <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -788,7 +1055,7 @@
     <thead><tr><th>Layer</th><th>Technology</th><th>Version</th><th data-lang="th">วัตถุประสงค์</th><th data-lang="en">Purpose</th></tr></thead>
     <tbody>
       <tr><td>Framework</td><td>Next.js</td><td><code>15.5.14</code></td><td data-lang="th">App Router, standalone output, middleware</td><td data-lang="en">App Router, standalone output, middleware</td></tr>
-      <tr><td>Language</td><td>TypeScript</td><td><code>5.7.3</code></td><td data-lang="th">strict mode, ห้าม <code>any</code></td><td data-lang="en">strict mode, no <code>any</code></td></tr>
+      <tr><td>Language</td><td>TypeScript</td><td><code>5.7.3</code></td><td data-lang="th">strict mode, ห้าม any</td><td data-lang="en">strict mode, no any</td></tr>
       <tr><td>UI Library</td><td>React</td><td><code>19.0.0</code></td><td data-lang="th">Functional components + hooks only</td><td data-lang="en">Functional components + hooks only</td></tr>
       <tr><td>Styling</td><td>Tailwind CSS</td><td><code>3.4.19</code></td><td data-lang="th">Utility-first + Arctic Frost theme</td><td data-lang="en">Utility-first + Arctic Frost theme</td></tr>
       <tr><td>Icons</td><td>lucide-react</td><td><code>0.474</code></td><td data-lang="th">Tree-shakeable SVG</td><td data-lang="en">Tree-shakeable SVG</td></tr>
@@ -817,7 +1084,7 @@
     <tbody>
       <tr><td>Runtime</td><td>Node.js</td><td><code>20.20.0</code></td></tr>
       <tr><td>Process Manager</td><td>PM2</td><td data-lang="th">fork mode, auto-restart, pm2 save</td><td data-lang="en">fork mode, auto-restart, pm2 save</td></tr>
-      <tr><td>Server</td><td>AWS EC2</td><td>Singapore (ap-southeast-1), Ubuntu</td></tr>
+      <tr><td>Server</td><td>AWS EC2</td><td>Ubuntu</td></tr>
       <tr><td>Web Server</td><td>Nginx</td><td>Reverse proxy → <code>localhost:3001</code></td></tr>
       <tr><td>CDN</td><td>Cloudflare</td><td>DDoS, SSL, caching</td></tr>
     </tbody>
@@ -828,164 +1095,123 @@
 <section id="architecture">
   <h2><span class="num">05</span><span data-lang="th">สถาปัตยกรรม</span><span data-lang="en">Architecture</span></h2>
 
-  <h3 data-lang="th">Request Flow</h3>
-  <h3 data-lang="en">Request Flow</h3>
-  <div class="flow-diagram">
-    <div class="flow-step">User Browser</div>
-    <span class="flow-arrow">→</span>
-    <div class="flow-step">Cloudflare (CDN + SSL)</div>
-    <span class="flow-arrow">→</span>
-    <div class="flow-step">AWS EC2 Singapore</div>
-    <span class="flow-arrow">→</span>
-    <div class="flow-step">Nginx :80/:443</div>
-    <span class="flow-arrow">→</span>
-    <div class="flow-step">PM2 + Next.js :3001</div>
+  <h3 data-lang="th">เมื่อคุณกรอก URL แล้วกด Check — เกิดอะไรขึ้น?</h3>
+  <h3 data-lang="en">What Happens When You Click Check?</h3>
+
+  <div class="journey-wrapper">
+    <div class="journey-steps">
+      <div class="journey-step">
+        <div class="j-num">1</div>
+        <div class="j-title" data-lang="th">คุณส่ง URL</div>
+        <div class="j-title" data-lang="en">You submit URL</div>
+        <div class="j-sub" data-lang="th">เช่น https://example.com</div>
+        <div class="j-sub" data-lang="en">e.g. https://example.com</div>
+      </div>
+      <div class="journey-arrow">→</div>
+      <div class="journey-step">
+        <div class="j-num">2</div>
+        <div class="j-title" data-lang="th">ตรวจ URL ก่อนเสมอ</div>
+        <div class="j-title" data-lang="en">Safety check first</div>
+        <div class="j-sub" data-lang="th">บล็อก IP ภายใน, URL ปลอม, DNS rebinding</div>
+        <div class="j-sub" data-lang="en">Blocks internal IPs, spoofed URLs, DNS rebinding</div>
+      </div>
+      <div class="journey-arrow">→</div>
+      <div class="journey-step">
+        <div class="j-num">3</div>
+        <div class="j-title" data-lang="th">Server ดึงข้อมูลเว็บ</div>
+        <div class="j-title" data-lang="en">Server fetches website</div>
+        <div class="j-sub" data-lang="th">โหลด HTML ของเว็บนั้นจริงๆ</div>
+        <div class="j-sub" data-lang="en">Loads the actual HTML of that site</div>
+      </div>
+      <div class="journey-arrow">→</div>
+      <div class="journey-step">
+        <div class="j-num">4</div>
+        <div class="j-title" data-lang="th">แยกเส้นทางตามหน้า</div>
+        <div class="j-title" data-lang="en">Split by feature</div>
+        <div class="j-sub" data-lang="th">10 Checks หรือ AI Visibility</div>
+        <div class="j-sub" data-lang="en">10 Checks or AI Visibility</div>
+      </div>
+    </div>
+
+    <div class="journey-split">
+      <div class="journey-branch checks">
+        <h4 data-lang="th">10 Checks (หน้าแรก)</h4>
+        <h4 data-lang="en">10 Checks (home page)</h4>
+        <div class="branch-steps">
+          <div class="branch-step">
+            <div class="b-icon">⚡</div>
+            <span data-lang="th">รัน 10 checkers <strong>พร้อมกัน</strong> ไม่รอทีละตัว</span>
+            <span data-lang="en">Run all 10 checkers <strong>simultaneously</strong></span>
+          </div>
+          <div class="branch-step">
+            <div class="b-icon">📊</div>
+            <span data-lang="th">คำนวณคะแนนตาม weight แต่ละข้อ</span>
+            <span data-lang="en">Calculate weighted score per check</span>
+          </div>
+          <div class="branch-step">
+            <div class="b-icon">💡</div>
+            <span data-lang="th">สร้างคำแนะนำตามสิ่งที่พัง</span>
+            <span data-lang="en">Generate recommendations from failures</span>
+          </div>
+        </div>
+        <div class="branch-result" data-lang="th">คะแนน A–D + รายการที่ต้องแก้</div>
+        <div class="branch-result" data-lang="en">Grade A–D + fix recommendations</div>
+      </div>
+      <div class="journey-branch ai">
+        <h4 data-lang="th">AI Visibility (หน้า /ai-check)</h4>
+        <h4 data-lang="en">AI Visibility (/ai-check)</h4>
+        <div class="branch-steps">
+          <div class="branch-step">
+            <div class="b-icon">🤖</div>
+            <span data-lang="th">ถาม GPT ว่า "รู้จักเว็บนี้ไหม" โดยตรง</span>
+            <span data-lang="en">Ask GPT directly "do you know this website?"</span>
+          </div>
+          <div class="branch-step">
+            <div class="b-icon">🔍</div>
+            <span data-lang="th">ค้น Google + Knowledge Graph <strong>พร้อมกัน</strong></span>
+            <span data-lang="en">Search Google + Knowledge Graph <strong>simultaneously</strong></span>
+          </div>
+          <div class="branch-step">
+            <div class="b-icon">🌐</div>
+            <span data-lang="th">ตอบกลับ 2 ภาษาในครั้งเดียว — ไม่ call API ซ้ำ</span>
+            <span data-lang="en">Returns TH + EN in one call — no re-fetch on language switch</span>
+          </div>
+        </div>
+        <div class="branch-result" data-lang="th">คะแนน 7 มิติ รวม 100 คะแนน</div>
+        <div class="branch-result" data-lang="en">7-dimension score out of 100</div>
+      </div>
+    </div>
   </div>
 
-  <h3>Request Lifecycle</h3>
-<pre><code>POST /api/check or /api/ai-check
-  ↓
-parseCheckRequest()        <span class="comment">// 4KB body cap + JSON + Zod validate</span>
-isSafeUrlWithDns()         <span class="comment">// SSRF: string + DNS (60s cache); blocks rebinding</span>
-safeFetch()                <span class="comment">// re-validate every redirect</span>
-  ↓
-/api/check     →  10 checkers via Promise.all → calculateOverallScore + recommendations
-/api/ai-check  →  Promise.allSettled([callOpenAI, serperSearch×2]) with AbortSignal threading
-                  → parseAIResponse → 7-dimension score (bilingual EN+TH)</code></pre>
-
-  <h3 data-lang="th">ชั้นความปลอดภัย</h3>
-  <h3 data-lang="en">Security Layers</h3>
+  <h3 data-lang="th">ความปลอดภัย</h3>
+  <h3 data-lang="en">Security</h3>
   <ul>
-    <li>Zod validation + 4KB body cap (DoS + invalid input)</li>
-    <li>SSRF string check — block <code>127.0.0.1</code>, <code>::1</code>, AWS metadata, Teredo</li>
-    <li>SSRF DNS check (60s cache) — blocks DNS rebinding</li>
-    <li>safeFetch — re-validates redirect URLs at every hop</li>
-    <li>Response size caps (10MB HTML, 512KB Serper) — memory exhaustion</li>
-    <li>Rate limiter (10/min main, 3/min AI) + CORS allowlist (CSRF / SSRF-relay)</li>
-    <li><code>sanitizeMeta()</code> + system-message framing — LLM prompt injection</li>
-    <li>AbortSignal threading from request → OpenAI/Serper — cancels paid calls on client disconnect</li>
+    <li data-lang="th"><strong>ตรวจ URL ก่อนเสมอ</strong> — บล็อก IP ภายใน (127.0.0.1 ฯลฯ), metadata server ของ cloud, และ DNS rebinding เพื่อป้องกันไม่ให้ server ถูกหลอกไปดึงข้อมูลภายใน</li>
+    <li data-lang="en"><strong>URL safety check first</strong> — blocks internal IPs (127.0.0.1 etc.), cloud metadata endpoints, and DNS rebinding to prevent the server from being tricked into fetching internal resources</li>
+    <li data-lang="th"><strong>จำกัด request</strong> — 10 ครั้ง/นาที (10 Checks), 3 ครั้ง/นาที (AI Visibility), body สูงสุด 4KB</li>
+    <li data-lang="en"><strong>Rate limiting</strong> — 10 requests/min (10 Checks), 3 requests/min (AI Visibility), max 4KB body</li>
+    <li data-lang="th"><strong>ป้องกัน AI prompt injection</strong> — เนื้อหาเว็บที่ส่งให้ GPT ถูก sanitize + framing ก่อนทุกครั้ง</li>
+    <li data-lang="en"><strong>Prompt injection protection</strong> — website content sent to GPT is sanitized and framed before every call</li>
+    <li data-lang="th"><strong>ยกเลิก OpenAI call อัตโนมัติ</strong> — ถ้า user ปิดหน้าต่างกลางคัน server จะหยุดเรียก API ทันที ไม่เสีย cost</li>
+    <li data-lang="en"><strong>Auto-cancel on disconnect</strong> — if the user closes the page mid-check, OpenAI calls are cancelled immediately to avoid unnecessary cost</li>
   </ul>
 
   <h3 data-lang="th">โครงสร้างโปรเจกต์</h3>
   <h3 data-lang="en">Project Structure</h3>
 <pre><code>aicheck/
-├── app/                  <span class="comment">// Next.js routes + API handlers</span>
-│   ├── page.tsx          <span class="comment">//   home (10 Checks)</span>
-│   ├── ai-check/         <span class="comment">//   AI Visibility page (split into _components/)</span>
+├── app/                  <span class="comment">// หน้าเว็บ + API endpoints</span>
+│   ├── page.tsx          <span class="comment">//   หน้า 10 Checks</span>
+│   ├── ai-check/         <span class="comment">//   หน้า AI Visibility</span>
 │   └── api/{check,ai-check}/route.ts
-├── components/           <span class="comment">// shared React (SiteNav, i18n-provider, results UI)</span>
+├── components/           <span class="comment">// UI ที่ใช้ร่วมกัน (navbar, results)</span>
 ├── lib/
-│   ├── checkers/         <span class="comment">// 10 checkers + ai-visibility-checker; weights in base.ts</span>
-│   │   └── schema-validators/
-│   ├── i18n/             <span class="comment">// type-safe EN/TH (no library)</span>
-│   ├── hooks/            <span class="comment">// useAbortController</span>
-│   ├── utils/            <span class="comment">// normalize-url, parse-check-request, check-helpers</span>
-│   ├── security.ts       <span class="comment">// isSafeUrlWithDns + safeFetch + readWithTimeout + DNS cache (60s)</span>
-│   ├── rate-limiter.ts   <span class="comment">// 10/min main, AI_RATE_LIMIT=3/min</span>
-│   └── validations/url.ts
-├── middleware.ts         <span class="comment">// rate limit + CORS allowlist + security headers</span>
+│   ├── checkers/         <span class="comment">// 10 checkers + AI visibility; น้ำหนักอยู่ใน base.ts</span>
+│   ├── i18n/             <span class="comment">// ระบบ EN/TH ไม่ใช้ library</span>
+│   ├── security.ts       <span class="comment">// ตรวจ URL + fetch ปลอดภัย</span>
+│   └── rate-limiter.ts   <span class="comment">// จำกัดจำนวน request</span>
+├── middleware.ts         <span class="comment">// CORS + security headers</span>
 └── public/               <span class="comment">// robots.txt, sitemap.xml, llms.txt</span></code></pre>
-
-  <p data-lang="th"><strong>หลักการ:</strong> <code>_</code>-prefix folders = page-scoped (Next.js ignore เป็น route) · <code>lib/</code> = framework-agnostic (ทดสอบได้โดยไม่ต้อง mock Next.js) · co-location ของไฟล์ที่ใช้เฉพาะหน้าเดียว · file ≤ 300 lines</p>
-  <p data-lang="en"><strong>Principles:</strong> <code>_</code>-prefix folders are page-scoped (Next.js ignores them as routes) · <code>lib/</code> is framework-agnostic (testable without Next.js mocks) · co-locate single-page files under their route · file ≤ 300 lines</p>
 </section>
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<section id="api">
-  <h2><span class="num">06</span>API Reference</h2>
-
-  <h3>POST /api/check</h3>
-<pre><code><span class="comment">// Request</span>
-{ <span class="string">"url"</span>: <span class="string">"https://example.com"</span> }
-
-<span class="comment">// Response (200)</span>
-{
-  <span class="string">"url"</span>: <span class="string">"https://example.com"</span>,
-  <span class="string">"overallScore"</span>: 85,
-  <span class="string">"grade"</span>: <span class="string">"good"</span>,          <span class="comment">// excellent | good | fair | poor</span>
-  <span class="string">"checks"</span>: { <span class="string">"schema"</span>: {...}, <span class="string">"ssrCsr"</span>: {...}, ... },
-  <span class="string">"recommendations"</span>: [
-    { <span class="string">"priority"</span>: <span class="string">"critical"</span>, <span class="string">"message"</span>: <span class="string">"..."</span> }
-  ],
-  <span class="string">"summary"</span>: { <span class="string">"passed"</span>: 8, <span class="string">"warning"</span>: 1, <span class="string">"failed"</span>: 1, <span class="string">"total"</span>: 10 }
-}</code></pre>
-
-  <h3>POST /api/ai-check</h3>
-<pre><code><span class="comment">// Request</span>
-{ <span class="string">"url"</span>: <span class="string">"https://apple.com"</span> }
-
-<span class="comment">// Response (200)</span>
-{
-  <span class="string">"url"</span>: <span class="string">"https://apple.com"</span>,
-  <span class="string">"result"</span>: {
-    <span class="string">"score"</span>: 97,
-    <span class="string">"status"</span>: <span class="string">"success"</span>,
-    <span class="string">"data"</span>: {
-      <span class="string">"knows"</span>: true,
-      <span class="string">"accuracy"</span>: <span class="string">"accurate"</span>,
-      <span class="string">"hasUrl"</span>: true,
-      <span class="string">"knowledgeDepth"</span>: <span class="string">"deep"</span>,
-      <span class="string">"productsKnown"</span>: true,
-      <span class="string">"googlePresence"</span>: { <span class="string">"topPosition"</span>: 1 },
-      <span class="string">"knowledgeGraph"</span>: { <span class="string">"hasKnowledgeGraph"</span>: true },
-      <span class="string">"breakdown"</span>: { <span class="string">"recognition"</span>: 20, <span class="string">"accuracy"</span>: 15, ... },
-      <span class="comment">// Bilingual response — frontend picks per locale, no re-fetch on language switch</span>
-      <span class="string">"summaryEn"</span>: <span class="string">"Apple Inc. is an American multinational technology..."</span>,
-      <span class="string">"summaryTh"</span>: <span class="string">"Apple Inc. คือบริษัทเทคโนโลยีข้ามชาติของอเมริกา..."</span>,
-      <span class="string">"detailsEn"</span>: <span class="string">"Founded in 1976. Known for iPhone, Mac..."</span>,
-      <span class="string">"detailsTh"</span>: <span class="string">"ก่อตั้งปี 1976 เป็นที่รู้จักจาก iPhone, Mac..."</span>,
-      <span class="string">"model"</span>: <span class="string">"gpt-4.1-nano"</span>
-    }
-  }
-}</code></pre>
-
-  <p data-lang="th"><strong>หมายเหตุ:</strong> ทั้ง 2 endpoints ตอบ <code>403</code> ถ้ามาจาก origin ที่ไม่อยู่ใน allowlist (CSRF/SSRF-relay protection), <code>413</code> ถ้า body &gt; 4096 bytes, <code>429</code> ถ้าเกิน rate limit (10/min main, 3/min AI)</p>
-  <p data-lang="en"><strong>Note:</strong> Both endpoints return <code>403</code> for disallowed origins (CSRF/SSRF-relay protection), <code>413</code> when body exceeds 4096 bytes, and <code>429</code> when rate limit is exceeded (10/min main, 3/min AI)</p>
-</section>
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<section id="dev-deploy">
-  <h2><span class="num">07</span><span data-lang="th">การพัฒนาและ Deploy</span><span data-lang="en">Development & Deployment</span></h2>
-
-  <p data-lang="th"><strong>Local:</strong> <code>git clone</code> → <code>npm install</code> → ใส่ <code>OPENAI_API_KEY</code> + <code>SERPER_API_KEY</code> ใน <code>.env.local</code> → <code>npm run dev</code></p>
-  <p data-lang="en"><strong>Local:</strong> <code>git clone</code> → <code>npm install</code> → add <code>OPENAI_API_KEY</code> + <code>SERPER_API_KEY</code> to <code>.env.local</code> → <code>npm run dev</code></p>
-
-  <p data-lang="th"><strong>Production:</strong> <code>npm run build</code> → rsync 3 dirs (<code>.next/standalone</code> + <code>.next/static</code> + <code>public</code>) ไป EC2 → SSH + PM2 restart พร้อม env vars → verify HTTPS 200</p>
-  <p data-lang="en"><strong>Production:</strong> <code>npm run build</code> → rsync 3 dirs (<code>.next/standalone</code> + <code>.next/static</code> + <code>public</code>) to EC2 → SSH + PM2 restart with env vars → verify HTTPS 200</p>
-
-  <p data-lang="th"><strong>หมายเหตุสำคัญ:</strong> rsync ต้องใช้ <code>--delete</code> สำหรับ <code>.next/static</code> เพราะแต่ละ build สร้าง hashed chunk ใหม่ (ไม่งั้นจะ 404), และต้อง <code>set -a; source .env; set +a</code> ก่อน <code>pm2 restart --update-env</code> เพราะ Next.js standalone ไม่ auto-load <code>.env</code></p>
-  <p data-lang="en"><strong>Notes:</strong> rsync needs <code>--delete</code> on <code>.next/static</code> because each build creates new hashed chunks (otherwise browser requests get 404), and you must <code>set -a; source .env; set +a</code> before <code>pm2 restart --update-env</code> because Next.js standalone doesn't auto-load <code>.env</code></p>
-
-  <h3>Code Standards</h3>
-  <ul>
-    <li>TypeScript strict (no <code>any</code>) · Functional components only · ES Modules</li>
-    <li>Naming: <code>PascalCase.tsx</code> for components, <code>camelCase.ts</code> for utils</li>
-    <li>File ≤ 300 lines · No <code>console.log</code> in production (use <code>console.error</code>)</li>
-  </ul>
-</section>
-
-<!-- ═══════════════════════════════════════════════════════════════ -->
-<section id="how-built">
-  <h2><span class="num">08</span><span data-lang="th">โปรเจกต์นี้ถูกสร้างขึ้นมาได้ยังไง</span><span data-lang="en">How This Was Built</span></h2>
-
-  <p data-lang="th"><strong>aicheck เขียนด้วยวิธี "Vibe Coding"</strong> — สั่งงาน AI ด้วยภาษาพูด Developer เป็นผู้กำกับ (สั่ง/ตรวจ/ตัดสิน architecture) AI เป็นผู้เขียนโค้ด</p>
-  <p data-lang="en"><strong>aicheck was built with "Vibe Coding"</strong> — instructions in plain language. Developer directs (commands, reviews, decides architecture); AI implements.</p>
-
-  <p data-lang="th"><strong>Toolchain:</strong> <strong>Claude Code CLI</strong> (Opus 4.6, 1M context) ใน <strong>VS Code</strong> integrated terminal · <strong>Git + GitHub</strong> (AI ทำ branch/commit/PR ได้แต่ human review ก่อน merge) · <strong>Playwright MCP</strong> สำหรับให้ AI ควบคุม browser จริงตอน test</p>
-  <p data-lang="en"><strong>Toolchain:</strong> <strong>Claude Code CLI</strong> (Opus 4.6, 1M context) in <strong>VS Code</strong>'s integrated terminal · <strong>Git + GitHub</strong> (AI handles branches/commits/PRs, humans review before merge) · <strong>Playwright MCP</strong> so the AI can drive a real browser during testing</p>
-
-  <h3 data-lang="th">Subagents ตรวจคุณภาพโค้ด (4 ตัว — รัน parallel ผ่าน <code>/review-all</code>)</h3>
-  <h3 data-lang="en">Code Review Subagents (4 — run in parallel via <code>/review-all</code>)</h3>
-  <ul>
-    <li><code>security-auditor</code> — SSRF, XSS, injection, rate limiting, input validation, prompt injection</li>
-    <li><code>performance-error-reviewer</code> — memory leaks, timeouts, algorithm complexity, try-catch coverage</li>
-    <li><code>react-typescript-reviewer</code> — accessibility, memoization, type safety, re-render issues</li>
-    <li><code>maintainability-reviewer</code> — naming, dead code, duplication, "human reader" test</li>
-  </ul>
-  <p data-lang="th">ทุก agent อ่าน <code>.known-issues.md</code> ก่อนเสมอ เพื่อ skip findings ที่ทีมยอมรับแล้ว (เช่น CSP unsafe-inline, rate limiter in-memory) — ป้องกันการ flag ซ้ำทุกรอบ Phase 2 ของ <code>/review-all</code> ทดสอบกับเว็บจริงเพื่อจับ semantic bugs ที่ static review ไม่เห็น</p>
-  <p data-lang="en">Every agent reads <code>.known-issues.md</code> first to skip findings the team has explicitly accepted (e.g., CSP unsafe-inline, in-memory rate limiter), preventing repeated re-flagging. Phase 2 of <code>/review-all</code> tests against real websites to catch semantic bugs static review can't see.</p>
-</section>
-
 
 
 <footer>
