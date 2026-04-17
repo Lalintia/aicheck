@@ -6,7 +6,49 @@
 
 ---
 
-## อัปเดตล่าสุด — 16 เมษายน 2569 (รอบบ่าย) — `/review-all` Round 2 + 32 Fixes + Deploy
+## อัปเดตล่าสุด — 17 เมษายน 2569 — PROJECT_OVERVIEW.html Revamp + Deploy
+
+### สิ่งที่เปลี่ยนแปลง
+
+**เป้าหมาย:** ปรับ `public/docs/project-overview.html` ให้เหมาะกับการ present ให้ CEO/COO/Senior Dev — เอาเนื้อหาที่ technical เกินไปออก เพิ่มเนื้อหาที่ explain value ได้ชัดขึ้น
+
+#### โครงสร้าง Section
+| ก่อน | หลัง |
+|---|---|
+| 01 Overview | 01 Overview |
+| 02 Features & Scoring | 02 Features & Scoring |
+| 03 Case Studies | **03 How This Was Built** (ย้ายมาแทน) |
+| 04 Tech Stack | 04 Tech Stack |
+| 05 Architecture | 05 Architecture |
+| 06 API Reference | ~~06 API Reference~~ (ลบออก) |
+| 07 Dev & Deployment | ~~07 Dev & Deployment~~ (ลบออก) |
+| 08 How This Was Built | *(ย้ายขึ้นเป็น 03 แล้ว)* |
+
+#### เนื้อหาที่เพิ่ม
+- **Skill Inventory card** — แสดง 5/21 skills ที่ถูกเรียกใช้จริงในโปรเจกต์ (chip grid สีม่วง = used, เทา = installed)
+- **"Scaling this across a team" callout** — อธิบายว่าองค์กรสามารถ encode coding pattern เป็น Skill ให้ทุกคนใช้ได้
+- **References** — ใส่แหล่งอ้างอิง [1–5] ท้ายตาราง 10 Checks weights และ [5–7] ท้าย AI Visibility
+- **Journey Flow** — redesign Request Flow ใน Architecture เป็น step cards + 2-column split (10 Checks / AI Visibility)
+
+#### เนื้อหาที่ลบ
+- Case Studies (apple.com example)
+- API Reference section (POST /api/check, /api/ai-check, Error Codes)
+- Development & Deployment section (local setup, rsync commands)
+
+#### Bug fixes
+- ลบ duplicate `<section id="how-built">` ที่ bottom ของไฟล์
+- แก้ `Playwright MCP` ไม่มี `<code>` tag → เพิ่มให้ match style อันอื่น
+- แก้ `<code>any</code>` ใน TypeScript row → plain text (ไม่ลอยออกจาก context)
+- ลบ Singapore ออกจาก infrastructure table
+
+### Deploy
+- branch `docs/update-project-overview` → merge main → push GitHub
+- `npm run build` → rsync → PM2 restart `ai-checker`
+- Verify: `https://aicheck.ohmai.me/docs/project-overview.html` → **200** ✅
+
+---
+
+## 16 เมษายน 2569 (รอบบ่าย) — `/review-all` Round 2 + 32 Fixes + Deploy
 
 ### Process
 
